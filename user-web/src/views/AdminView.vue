@@ -38,18 +38,6 @@
             <el-form-item label="标签">
               <el-input v-model="form.tagsText" placeholder="多个标签用逗号分隔，如：TCP, 传输层" />
             </el-form-item>
-            <el-form-item label="关联题目">
-              <el-select
-                v-model="form.relatedIds"
-                multiple
-                filterable
-                collapse-tags
-                placeholder="选择相关联的题目（如：分布式锁）"
-                style="width: 100%"
-              >
-                <el-option v-for="a in relatedOptions" :key="a.id" :label="a.title" :value="a.id" />
-              </el-select>
-            </el-form-item>
             <el-form-item label="正文">
               <el-input v-model="form.content" type="textarea" :rows="10" placeholder="可选，支持 Markdown（## 标题、- 列表、代码块等）；留空则使用默认模板" />
             </el-form-item>
@@ -70,7 +58,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import AppHeader from '@/components/layout/AppHeader.vue'
 import AppFooter from '@/components/layout/AppFooter.vue'
-import { getArticleDetail, createArticleApi, updateArticleApi, getArticles } from '@/api/article'
+import { getArticleDetail, createArticleApi, updateArticleApi } from '@/api/article'
 import { useCategoryStore } from '@/stores/category'
 
 const router = useRouter()
@@ -78,7 +66,6 @@ const route = useRoute()
 const categoryStore = useCategoryStore()
 const saving = ref(false)
 const detailId = ref(0)
-const relatedOptions = ref<Array<{ id: number; title: string }>>([])
 
 const categories = computed(() => categoryStore.tree)
 
@@ -90,7 +77,6 @@ const form = reactive({
   difficulty: 'MEDIUM',
   tagsText: '',
   content: '',
-  relatedIds: [] as number[]
 })
 
 const editingSlug = computed(() => String(route.params.slug || ''))
@@ -108,20 +94,10 @@ function htmlToText(html: string): string {
 
 onMounted(() => {
   categoryStore.fetchTree()
-  loadRelatedOptions()
   if (isEdit.value) {
     loadForEdit()
   }
 })
-
-async function loadRelatedOptions() {
-  try {
-    const res = await getArticles({ page: 1, size: 200 })
-    relatedOptions.value = res.list.map((a) => ({ id: a.id, title: a.title }))
-  } catch {
-    // 关联题目加载失败不阻塞编辑
-  }
-}
 
 async function loadForEdit() {
   try {
@@ -135,7 +111,6 @@ async function loadForEdit() {
     form.difficulty = a.difficulty
     form.tagsText = a.tags.join(', ')
     form.content = htmlToText(a.contentHtml)
-    form.relatedIds = resp.relatedIds || []
   } catch {
     router.replace('/admin')
   }
@@ -163,8 +138,7 @@ async function submit() {
       categoryId: form.categoryId,
       difficulty: form.difficulty,
       tags,
-      contentMd: form.content,
-      relatedIds: form.relatedIds
+      contentMd: form.content
     }
     const article = isEdit.value
       ? await updateArticleApi(detailId.value, payload)

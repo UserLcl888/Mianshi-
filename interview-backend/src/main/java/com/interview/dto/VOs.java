@@ -91,8 +91,6 @@ public class VOs {
     @Data
     public static class DetailRespVO {
         private ArticleDetailVO article;
-        private List<ArticleListItemVO> related;
-        private List<Long> relatedIds;
         private ArticleBriefVO prev;
         private ArticleBriefVO next;
     }

@@ -9,7 +9,6 @@ export interface ArticleSavePayload {
   difficulty: string
   tags: string[]
   contentMd?: string
-  relatedIds?: number[]
 }
 
 export async function getArticles(params: ArticleQuery = {}): Promise<PageResult<ArticleListItem>> {

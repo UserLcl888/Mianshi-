@@ -50,7 +50,7 @@ function scrollTo(id: string) {
 
 <style scoped>
 .toc-panel {
-  width: 220px;
+  width: 240px;
   flex-shrink: 0;
   position: sticky;
   top: 72px;

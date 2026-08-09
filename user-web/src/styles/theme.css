@@ -121,6 +121,20 @@ a {
   color: #6b5208;
 }
 
+.article-body a {
+  color: #1a6fb5;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  font-weight: 600;
+  transition: color 0.15s, background-color 0.15s;
+}
+
+.article-body a:hover {
+  color: #0d4f8f;
+  background: rgba(26, 111, 181, 0.08);
+  border-radius: 3px;
+}
+
 .article-body table {
   border-collapse: collapse;
   width: 100%;

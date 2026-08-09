@@ -48,7 +48,6 @@ public class Requests {
         private String difficulty = "MEDIUM";
         private List<String> tags;
         private String contentMd;
-        private List<Long> relatedIds;
     }
 
     @Data

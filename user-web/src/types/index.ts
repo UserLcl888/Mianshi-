@@ -50,8 +50,6 @@ export interface ArticleBrief {
 
 export interface ArticleDetailResp {
   article: ArticleDetail
-  related: ArticleListItem[]
-  relatedIds?: number[]
   prev: ArticleBrief | null
   next: ArticleBrief | null
 }

@@ -11,7 +11,6 @@ import com.interview.dto.VOs;
 import com.interview.entity.Article;
 import com.interview.entity.Category;
 import com.interview.mapper.ArticleMapper;
-import com.interview.mapper.ArticleRelatedMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
@@ -19,17 +18,13 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
 import java.time.Duration;
-import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 @Service
 @RequiredArgsConstructor
 public class ArticleService {
 
     private final ArticleMapper articleMapper;
-    private final ArticleRelatedMapper articleRelatedMapper;
     private final CategoryService categoryService;
     private final TagService tagService;
     private final MarkdownService markdownService;
@@ -61,9 +56,6 @@ public class ArticleService {
 
         VOs.DetailRespVO resp = new VOs.DetailRespVO();
         resp.setArticle(detailVO);
-        List<Long> explicitIds = articleRelatedMapper.selectRelatedIdsByArticleId(article.getId());
-        resp.setRelated(related(article.getId(), article.getCategoryId(), explicitIds));
-        resp.setRelatedIds(explicitIds);
         resp.setPrev(neighbor(article.getId(), article.getCategoryId(), false));
         resp.setNext(neighbor(article.getId(), article.getCategoryId(), true));
         return resp;
@@ -88,38 +80,6 @@ public class ArticleService {
             return article.getViewCount() + 1;
         }
         return article.getViewCount();
-    }
-
-    private List<VOs.ArticleListItemVO> related(Long id, Long categoryId, List<Long> explicitIds) {
-        List<VOs.ArticleListItemVO> result = new ArrayList<>();
-        Set<Long> seen = new HashSet<>();
-        if (explicitIds != null) {
-            for (Long rid : explicitIds) {
-                if (rid == null || rid.equals(id)) {
-                    continue;
-                }
-                Article a = articleMapper.selectById(rid);
-                if (a != null && a.getStatus() != null && a.getStatus() == 1 && seen.add(rid)) {
-                    result.add(toListItem(a));
-                }
-            }
-        }
-        int remain = Math.max(0, 5 - result.size());
-        if (remain > 0) {
-            List<Article> auto = articleMapper.selectList(new LambdaQueryWrapper<Article>()
-                    .eq(Article::getCategoryId, categoryId)
-                    .eq(Article::getStatus, 1)
-                    .ne(Article::getId, id)
-                    .notIn(Article::getId, seen.isEmpty() ? List.of(-1L) : seen)
-                    .orderByDesc(Article::getViewCount)
-                    .last("LIMIT " + remain));
-            for (Article a : auto) {
-                if (seen.add(a.getId())) {
-                    result.add(toListItem(a));
-                }
-            }
-        }
-        return result;
     }
 
     private VOs.ArticleBriefVO neighbor(Long id, Long categoryId, boolean next) {
@@ -186,7 +146,6 @@ public class ArticleService {
         applySave(article, dto);
         articleMapper.insert(article);
         tagService.replaceArticleTags(article.getId(), dto.getTags());
-        replaceRelated(article.getId(), dto.getRelatedIds());
         categoryService.clearCache();
         return article;
     }
@@ -209,23 +168,8 @@ public class ArticleService {
         applySave(article, dto);
         articleMapper.updateById(article);
         tagService.replaceArticleTags(article.getId(), dto.getTags());
-        replaceRelated(article.getId(), dto.getRelatedIds());
         categoryService.clearCache();
         return article;
-    }
-
-    private void replaceRelated(Long articleId, List<Long> relatedIds) {
-        articleRelatedMapper.deleteByArticleId(articleId);
-        if (relatedIds == null) {
-            return;
-        }
-        for (Long rid : relatedIds) {
-            if (rid == null || rid.equals(articleId)) {
-                continue;
-            }
-            articleRelatedMapper.insertIgnore(articleId, rid);
-            articleRelatedMapper.insertIgnore(rid, articleId);
-        }
     }
 
     private void applySave(Article article, Requests.ArticleSaveDTO dto) {
@@ -252,7 +196,6 @@ public class ArticleService {
 
     @Transactional
     public void delete(Long id) {
-        articleRelatedMapper.deleteByArticleId(id);
         articleMapper.deleteById(id);
         tagService.replaceArticleTags(id, List.of());
     }

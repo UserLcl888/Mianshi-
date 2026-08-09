@@ -29,8 +29,7 @@
           </header>
 
           <div class="article-layout">
-            <TocPanel :toc="detail.article.toc" :active-id="activeTocId" @select="activeTocId = $event" />
-            <div ref="contentEl" class="article-body" v-html="detail.article.contentHtml"></div>
+            <div ref="contentEl" class="article-body" v-html="detail.article.contentHtml" @click="onBodyClick"></div>
           </div>
 
           <PrevNextNav :prev="detail.prev" :next="detail.next" />
@@ -40,7 +39,12 @@
           <EmptyState text="题目不存在或已下架" />
         </div>
       </main>
-      <RelatedArticles :articles="detail?.related || []" />
+      <TocPanel
+        v-if="detail"
+        :toc="detail.article.toc"
+        :active-id="activeTocId"
+        @select="activeTocId = $event"
+      />
     </div>
     <AppFooter />
   </div>
@@ -48,14 +52,13 @@
 
 <script setup lang="ts">
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import hljs from 'highlight.js'
 import AppHeader from '@/components/layout/AppHeader.vue'
 import AppFooter from '@/components/layout/AppFooter.vue'
 import CategorySidebar from '@/components/layout/CategorySidebar.vue'
 import DifficultyTag from '@/components/article/DifficultyTag.vue'
 import TocPanel from '@/components/article/TocPanel.vue'
-import RelatedArticles from '@/components/article/RelatedArticles.vue'
 import PrevNextNav from '@/components/article/PrevNextNav.vue'
 import EmptyState from '@/components/common/EmptyState.vue'
 import { getArticleDetail, recordViewApi } from '@/api/article'
@@ -65,6 +68,7 @@ import { getCategoryPath } from '@/utils/category'
 import type { ArticleDetailResp } from '@/types'
 
 const route = useRoute()
+const router = useRouter()
 const categoryStore = useCategoryStore()
 const auth = useAuthStore()
 
@@ -123,6 +127,16 @@ function clearViewTimer() {
   if (viewTimer !== null) {
     window.clearTimeout(viewTimer)
     viewTimer = null
+  }
+}
+
+function onBodyClick(e: MouseEvent) {
+  const target = (e.target as HTMLElement).closest('a') as HTMLAnchorElement | null
+  if (!target) return
+  const href = target.getAttribute('href') || ''
+  if (href.startsWith('/article/') || href.startsWith('/category/')) {
+    e.preventDefault()
+    router.push(href)
   }
 }
 
