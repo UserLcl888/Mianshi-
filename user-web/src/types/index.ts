@@ -36,6 +36,7 @@ export interface ArticleDetail {
   categorySlug: string
   difficulty: string
   tags: string[]
+  contentMd: string
   contentHtml: string
   toc: TocItem[]
   viewCount: number

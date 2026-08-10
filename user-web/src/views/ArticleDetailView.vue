@@ -7,10 +7,7 @@
       <main class="content">
         <el-breadcrumb class="breadcrumb-bar" separator="/">
           <el-breadcrumb-item :to="{ path: '/' }">首页</el-breadcrumb-item>
-          <template v-for="(c, idx) in categoryPath" :key="c.id">
-            <el-breadcrumb-item v-if="idx < categoryPath.length - 1" :to="`/category/${c.slug}`">{{ c.name }}</el-breadcrumb-item>
-            <el-breadcrumb-item v-else>{{ c.name }}</el-breadcrumb-item>
-          </template>
+          <el-breadcrumb-item v-for="c in categoryPath" :key="c.id" :to="`/category/${c.slug}`">{{ c.name }}</el-breadcrumb-item>
           <el-breadcrumb-item>{{ detail?.article.title }}</el-breadcrumb-item>
         </el-breadcrumb>
 
