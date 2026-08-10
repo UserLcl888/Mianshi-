@@ -127,6 +127,7 @@ public class ArticleService {
                 .categorySlug(category.getSlug())
                 .difficulty(a.getDifficulty())
                 .tags(tagService.namesByArticleId(a.getId()))
+                .contentMd(a.getContentMd())
                 .contentHtml(a.getContentHtml())
                 .toc(markdownService.extractToc(a.getContentHtml()))
                 .viewCount(a.getViewCount())

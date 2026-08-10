@@ -75,6 +75,7 @@ public class VOs {
         private String categorySlug;
         private String difficulty;
         private List<String> tags;
+        private String contentMd;
         private String contentHtml;
         private List<TocItemVO> toc;
         private Long viewCount;
