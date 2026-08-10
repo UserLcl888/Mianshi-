@@ -25,12 +25,18 @@
               <el-input v-model="form.summary" type="textarea" :rows="2" placeholder="一句话概括本题要点" />
             </el-form-item>
             <el-form-item label="所属分类" required>
-              <el-select v-model="form.categoryId" placeholder="选择分类（支持子分类）" style="width: 100%">
-                <el-option-group v-for="cat in categories" :key="cat.id" :label="cat.name">
-                  <el-option :label="cat.name" :value="cat.id" />
-                  <el-option v-for="sub in cat.children" :key="sub.id" :label="`　${sub.name}`" :value="sub.id" />
-                </el-option-group>
-              </el-select>
+              <div class="category-field">
+                <el-select v-model="form.categoryId" placeholder="选择分类（支持子分类）" class="category-select">
+                  <template v-for="cat in categories" :key="cat.id">
+                    <el-option-group v-if="cat.children.length" :label="cat.name">
+                      <el-option :label="cat.name" :value="cat.id" />
+                      <el-option v-for="sub in cat.children" :key="sub.id" :label="`　${sub.name}`" :value="sub.id" />
+                    </el-option-group>
+                    <el-option v-else :label="cat.name" :value="cat.id" />
+                  </template>
+                </el-select>
+                <el-button size="small" @click="categoryManageVisible = true">管理分类</el-button>
+              </div>
             </el-form-item>
             <el-form-item label="难度">
               <el-select v-model="form.difficulty" style="width: 160px">
@@ -62,6 +68,8 @@
         <el-dialog v-model="previewVisible" title="正文预览" width="960px" top="6vh" class="preview-dialog" append-to-body @open="onPreviewOpen">
           <div ref="previewBody" class="article-body preview-body" v-html="previewHtml"></div>
         </el-dialog>
+
+        <CategoryManageDialog v-model="categoryManageVisible" />
       </main>
     </div>
     <AppFooter />
@@ -78,6 +86,7 @@ import DOMPurify from 'dompurify'
 import { unsavedState } from '@/utils/unsaved'
 import AppHeader from '@/components/layout/AppHeader.vue'
 import AppFooter from '@/components/layout/AppFooter.vue'
+import CategoryManageDialog from '@/components/admin/CategoryManageDialog.vue'
 import { getArticleDetail, createArticleApi, updateArticleApi } from '@/api/article'
 import { useCategoryStore } from '@/stores/category'
 import { getCategoryPath } from '@/utils/category'
@@ -88,6 +97,7 @@ const categoryStore = useCategoryStore()
 const saving = ref(false)
 const detailId = ref(0)
 const previewVisible = ref(false)
+const categoryManageVisible = ref(false)
 const editCategorySlug = ref('')
 const previewBody = ref<HTMLElement | null>(null)
 
@@ -112,6 +122,16 @@ const categoryPath = computed(() =>
     ? getCategoryPath(editCategorySlug.value, categoryStore.tree) || []
     : []
 )
+
+watch(categories, () => {
+  if (!form.categoryId) return
+  const exists = categories.value.some(
+    (c) => c.id === form.categoryId || c.children.some((s) => s.id === form.categoryId)
+  )
+  if (!exists) {
+    form.categoryId = undefined
+  }
+})
 
 function snapshotForm(): string {
   return JSON.stringify({
@@ -231,6 +251,16 @@ async function submit() {
 
 .edit-form {
   width: 100%;
+}
+
+.category-field {
+  display: flex;
+  gap: 8px;
+  width: 100%;
+}
+
+.category-select {
+  flex: 1;
 }
 
 .section-title {
