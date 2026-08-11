@@ -11,21 +11,22 @@ public class Requests {
 
     @Data
     public static class LoginDTO {
-        @NotBlank(message = "请输入用户名")
-        private String username;
+        @NotBlank(message = "请输入邮箱或手机号")
+        private String account;
         @NotBlank(message = "请输入密码")
         private String password;
     }
 
     @Data
     public static class RegisterDTO {
-        @NotBlank(message = "请输入用户名")
-        @Size(min = 3, max = 20, message = "用户名长度为 3~20 位")
+        @Size(min = 3, max = 50, message = "用户名长度为 3~50 位")
         private String username;
         @NotBlank(message = "请输入密码")
         @Size(min = 6, max = 32, message = "密码长度为 6~32 位")
         private String password;
         private String nickname;
+        private String email;
+        private String phone;
     }
 
     @Data

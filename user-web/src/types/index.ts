@@ -68,6 +68,7 @@ export interface UserInfo {
   username: string
   nickname: string
   email: string
+  phone?: string
   role: string
   createdAt: string
 }

@@ -2,9 +2,16 @@
   <div class="auth-page">
     <div class="auth-card">
       <h2 class="auth-title">注册</h2>
+      <el-tabs v-model="registerType" class="auth-tabs">
+        <el-tab-pane label="邮箱注册" name="email" />
+        <el-tab-pane label="手机号注册" name="phone" />
+      </el-tabs>
       <el-form ref="formRef" :model="form" :rules="rules" label-position="top" @keyup.enter="submit">
-        <el-form-item label="用户名" prop="username">
-          <el-input v-model="form.username" placeholder="3~20 位字母或数字" />
+        <el-form-item :label="registerType === 'email' ? '邮箱' : '手机号'" prop="account">
+          <el-input
+            v-model="form.account"
+            :placeholder="registerType === 'email' ? '请输入邮箱' : '请输入 11 位手机号'"
+          />
         </el-form-item>
         <el-form-item label="昵称（可选）" prop="nickname">
           <el-input v-model="form.nickname" placeholder="请输入昵称" />
@@ -25,7 +32,7 @@
 </template>
 
 <script setup lang="ts">
-import { reactive, ref } from 'vue'
+import { computed, reactive, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage, type FormInstance, type FormRules } from 'element-plus'
 import { useAuthStore } from '@/stores/auth'
@@ -35,12 +42,20 @@ const auth = useAuthStore()
 
 const formRef = ref<FormInstance>()
 const loading = ref(false)
-const form = reactive({ username: '', nickname: '', password: '', confirmPassword: '' })
+const registerType = ref<'email' | 'phone'>('email')
+const form = reactive({ account: '', nickname: '', password: '', confirmPassword: '' })
 
-const rules: FormRules = {
-  username: [
-    { required: true, message: '请输入用户名', trigger: 'blur' },
-    { pattern: /^[a-zA-Z0-9_]{3,20}$/, message: '3~20 位字母、数字或下划线', trigger: 'blur' }
+watch(registerType, () => {
+  form.account = ''
+  formRef.value?.clearValidate()
+})
+
+const rules = computed<FormRules>(() => ({
+  account: [
+    { required: true, message: registerType.value === 'email' ? '请输入邮箱' : '请输入手机号', trigger: 'blur' },
+    registerType.value === 'email'
+      ? { pattern: /^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/, message: '邮箱格式不正确', trigger: 'blur' }
+      : { pattern: /^1[3-9]\d{9}$/, message: '手机号格式不正确', trigger: 'blur' }
   ],
   password: [
     { required: true, message: '请输入密码', trigger: 'blur' },
@@ -56,14 +71,18 @@ const rules: FormRules = {
       trigger: 'blur'
     }
   ]
-}
+}))
 
 async function submit() {
   const valid = await formRef.value?.validate().catch(() => false)
   if (!valid) return
   loading.value = true
   try {
-    await auth.register({ username: form.username, password: form.password, nickname: form.nickname })
+    const base = { password: form.password, nickname: form.nickname.trim() || undefined }
+    const payload = registerType.value === 'email'
+      ? { ...base, email: form.account.trim() }
+      : { ...base, phone: form.account.trim() }
+    await auth.register(payload)
     ElMessage.success('注册成功，请登录')
     router.push('/login')
   } catch (e) {
@@ -95,7 +114,11 @@ async function submit() {
 .auth-title {
   text-align: center;
   color: #6b5208;
-  margin: 0 0 24px;
+  margin: 0 0 16px;
+}
+
+.auth-tabs {
+  margin-bottom: 14px;
 }
 
 .submit-btn {

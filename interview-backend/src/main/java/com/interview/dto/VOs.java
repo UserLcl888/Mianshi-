@@ -18,6 +18,7 @@ public class VOs {
         private String rootPassword;
         private String avatar;
         private String email;
+        private String phone;
         private String role;
         private LocalDateTime createdAt;
     }

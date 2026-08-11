@@ -2,13 +2,15 @@ import request from './request'
 import type { LoginResult, UserInfo } from '@/types'
 
 export interface RegisterForm {
-  username: string
+  username?: string
   password: string
   nickname?: string
+  email?: string
+  phone?: string
 }
 
-export async function loginApi(username: string, password: string): Promise<LoginResult> {
-  return request.post('/auth/login', { username, password })
+export async function loginApi(account: string, password: string): Promise<LoginResult> {
+  return request.post('/auth/login', { account, password })
 }
 
 export async function registerApi(form: RegisterForm): Promise<void> {

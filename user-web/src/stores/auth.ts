@@ -20,8 +20,8 @@ export const useAuthStore = defineStore('auth', {
     isLoggedIn: (state) => !!state.token
   },
   actions: {
-    async login(username: string, password: string) {
-      const res = await loginApi(username, password)
+    async login(account: string, password: string) {
+      const res = await loginApi(account, password)
       this.token = res.token
       this.userInfo = res.userInfo
       localStorage.setItem('token', res.token)
