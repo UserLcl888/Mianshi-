@@ -24,6 +24,11 @@ public class UserController {
         return Result.ok(authService.profile());
     }
 
+    @PutMapping("/profile")
+    public Result<VOs.UserVO> updateProfile(@Valid @RequestBody Requests.UpdateNicknameDTO dto) {
+        return Result.ok(authService.updateNickname(dto));
+    }
+
     @PutMapping("/password")
     public Result<Void> changePassword(@Valid @RequestBody Requests.ChangePasswordDTO dto) {
         authService.changePassword(dto);

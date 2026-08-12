@@ -9,9 +9,9 @@
           <el-breadcrumb-item>修改密码</el-breadcrumb-item>
         </el-breadcrumb>
 
-        <div class="app-card">
+        <div class="app-card pwd-card">
           <h3 class="section-title">修改密码</h3>
-          <el-form ref="formRef" :model="form" :rules="rules" label-width="90px" style="max-width: 420px">
+          <el-form ref="formRef" :model="form" :rules="rules" label-width="90px" class="pwd-form">
             <el-form-item label="旧密码" prop="oldPassword">
               <el-input v-model="form.oldPassword" type="password" show-password />
             </el-form-item>
@@ -92,15 +92,27 @@ async function submit() {
 .page-body {
   flex: 1;
   width: 100%;
-  padding: 16px var(--layout-pad-x) 16px var(--sidebar-offset);
+  padding: 16px 24px;
+  display: flex;
+  justify-content: center;
 }
 
 .content {
-  max-width: 720px;
+  width: 100%;
+  max-width: 520px;
 }
 
 .section-title {
   margin: 0 0 16px;
   color: #6b5208;
+}
+
+.pwd-card {
+  padding: 28px 32px;
+  box-shadow: 0 8px 30px rgba(217, 167, 22, 0.1);
+}
+
+.pwd-form {
+  width: 100%;
 }
 </style>

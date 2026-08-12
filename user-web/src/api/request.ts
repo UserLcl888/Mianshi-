@@ -32,6 +32,7 @@ request.interceptors.response.use(
       auth.clearAuth()
       ElMessage.warning('登录已过期，请重新登录')
       router.push({ path: '/login', query: { redirect: router.currentRoute.value.fullPath } })
+      return Promise.reject(error)
     } else {
       const message = error.response?.data?.message || '网络错误，请稍后重试'
       ElMessage.error(message)

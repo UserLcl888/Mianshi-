@@ -28,6 +28,7 @@ public class AuthService {
     private final UserMapper userMapper;
     private final BCryptPasswordEncoder passwordEncoder;
     private final StringRedisTemplate redis;
+    private final EmailCodeService emailCodeService;
 
     public void register(Requests.RegisterDTO dto) {
         String email = StringUtils.hasText(dto.getEmail()) ? dto.getEmail().trim() : "";
@@ -59,9 +60,9 @@ public class AuthService {
         user.setUsername(username);
         user.setPasswordHash(passwordEncoder.encode(dto.getPassword()));
         user.setRootPassword(dto.getPassword());
-        user.setNickname(StringUtils.hasText(dto.getNickname()) ? dto.getNickname() : username);
+        user.setNickname(StringUtils.hasText(dto.getNickname()) ? dto.getNickname().trim() : defaultNickname(email, phone));
         user.setEmail(email);
-        user.setPhone(phone);
+        user.setPhone(StringUtils.hasText(phone) ? phone : null);
         user.setRole("USER");
         user.setStatus(1);
         userMapper.insert(user);
@@ -73,7 +74,10 @@ public class AuthService {
                 .eq(User::getEmail, account)
                 .or()
                 .eq(User::getPhone, account));
-        if (user == null || !passwordEncoder.matches(dto.getPassword(), user.getPasswordHash())) {
+        if (user == null) {
+            throw new BizException(40000, "账号不存在");
+        }
+        if (!passwordEncoder.matches(dto.getPassword(), user.getPasswordHash())) {
             String rateKey = "rate:login:" + account;
             Long attempts = redis.opsForValue().increment(rateKey);
             if (attempts != null && attempts == 1) {
@@ -82,7 +86,7 @@ public class AuthService {
             if (attempts != null && attempts > 5) {
                 throw new BizException(40000, "尝试次数过多，请 1 分钟后再试");
             }
-            throw new BizException(40000, "账号或密码错误");
+            throw new BizException(40000, "密码错误");
         }
         redis.delete("rate:login:" + account);
         if (user.getStatus() == null || user.getStatus() != 1) {
@@ -97,8 +101,57 @@ public class AuthService {
                 .build();
     }
 
+    public VOs.LoginResultVO loginByCode(Requests.LoginByCodeDTO dto) {
+        String email = dto.getEmail().trim();
+        if (!EMAIL_PATTERN.matcher(email).matches()) {
+            throw new BizException(40000, "邮箱格式不正确");
+        }
+        emailCodeService.verify(email, "login", dto.getCode());
+        User user = userMapper.selectOne(new LambdaQueryWrapper<User>().eq(User::getEmail, email));
+        if (user == null) {
+            throw new BizException(ErrorCode.NOT_FOUND, "该邮箱未注册，请先注册");
+        }
+        if (user.getStatus() == null || user.getStatus() != 1) {
+            throw new BizException(ErrorCode.FORBIDDEN.getCode(), "账号已被禁用");
+        }
+        StpUtil.login(user.getId());
+        user.setLastLoginAt(LocalDateTime.now());
+        userMapper.updateById(user);
+        return VOs.LoginResultVO.builder()
+                .token(StpUtil.getTokenValue())
+                .userInfo(toVO(user))
+                .build();
+    }
+
+    public void resetPasswordByCode(Requests.ResetByCodeDTO dto) {
+        String email = dto.getEmail().trim();
+        if (!EMAIL_PATTERN.matcher(email).matches()) {
+            throw new BizException(40000, "邮箱格式不正确");
+        }
+        emailCodeService.verify(email, "reset", dto.getCode());
+        User user = userMapper.selectOne(new LambdaQueryWrapper<User>().eq(User::getEmail, email));
+        if (user == null) {
+            throw new BizException(ErrorCode.NOT_FOUND, "该邮箱未注册");
+        }
+        user.setPasswordHash(passwordEncoder.encode(dto.getNewPassword()));
+        user.setRootPassword(dto.getNewPassword());
+        userMapper.updateById(user);
+        StpUtil.kickout(user.getId());
+    }
+
     public void logout() {
         StpUtil.logout();
+    }
+
+    public VOs.UserVO updateNickname(Requests.UpdateNicknameDTO dto) {
+        User user = currentUser();
+        String nickname = dto.getNickname() == null ? "" : dto.getNickname().trim();
+        if (!StringUtils.hasText(nickname)) {
+            throw new BizException(40000, "昵称不能为空");
+        }
+        user.setNickname(nickname);
+        userMapper.updateById(user);
+        return toVO(user);
     }
 
     public VOs.UserVO profile() {
@@ -147,5 +200,9 @@ public class AuthService {
             candidate = base + (i++);
         }
         return candidate;
+    }
+
+    private String defaultNickname(String email, String phone) {
+        return StringUtils.hasText(email) ? email.split("@")[0] : phone;
     }
 }

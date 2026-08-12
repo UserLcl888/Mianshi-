@@ -18,6 +18,33 @@ public class Requests {
     }
 
     @Data
+    public static class SendCodeDTO {
+        @NotBlank(message = "请输入邮箱")
+        private String email;
+        @NotBlank(message = "请指定场景")
+        private String scene;
+    }
+
+    @Data
+    public static class LoginByCodeDTO {
+        @NotBlank(message = "请输入邮箱")
+        private String email;
+        @NotBlank(message = "请输入验证码")
+        private String code;
+    }
+
+    @Data
+    public static class ResetByCodeDTO {
+        @NotBlank(message = "请输入邮箱")
+        private String email;
+        @NotBlank(message = "请输入验证码")
+        private String code;
+        @NotBlank(message = "请输入新密码")
+        @Size(min = 6, max = 32, message = "密码长度为 6~32 位")
+        private String newPassword;
+    }
+
+    @Data
     public static class RegisterDTO {
         @Size(min = 3, max = 50, message = "用户名长度为 3~50 位")
         private String username;
@@ -36,6 +63,13 @@ public class Requests {
         @NotBlank(message = "请输入新密码")
         @Size(min = 6, max = 32, message = "密码长度为 6~32 位")
         private String newPassword;
+    }
+
+    @Data
+    public static class UpdateNicknameDTO {
+        @NotBlank(message = "请输入昵称")
+        @Size(max = 50, message = "昵称最长 50 个字符")
+        private String nickname;
     }
 
     @Data

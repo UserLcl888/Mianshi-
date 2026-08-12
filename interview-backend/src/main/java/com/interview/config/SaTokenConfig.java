@@ -25,6 +25,9 @@ public class SaTokenConfig {
                         .excludePathPatterns(
                                 "/api/auth/login",
                                 "/api/auth/register",
+                                "/api/auth/code/email",
+                                "/api/auth/login/code",
+                                "/api/auth/reset-password",
                                 "/api/categories/tree");
             }
         };

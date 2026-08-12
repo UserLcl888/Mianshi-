@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia'
-import { loginApi, registerApi, logoutApi, getProfileApi, type RegisterForm } from '@/api/auth'
+import { loginApi, loginByCodeApi, registerApi, logoutApi, getProfileApi, type RegisterForm } from '@/api/auth'
 import type { UserInfo } from '@/types'
 
 function readStoredUser(): UserInfo | null {
@@ -22,6 +22,13 @@ export const useAuthStore = defineStore('auth', {
   actions: {
     async login(account: string, password: string) {
       const res = await loginApi(account, password)
+      this.token = res.token
+      this.userInfo = res.userInfo
+      localStorage.setItem('token', res.token)
+      localStorage.setItem('userInfo', JSON.stringify(res.userInfo))
+    },
+    async loginByCode(email: string, code: string) {
+      const res = await loginByCodeApi(email, code)
       this.token = res.token
       this.userInfo = res.userInfo
       localStorage.setItem('token', res.token)

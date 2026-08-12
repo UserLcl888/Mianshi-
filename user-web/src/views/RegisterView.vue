@@ -13,8 +13,8 @@
             :placeholder="registerType === 'email' ? '请输入邮箱' : '请输入 11 位手机号'"
           />
         </el-form-item>
-        <el-form-item label="昵称（可选）" prop="nickname">
-          <el-input v-model="form.nickname" placeholder="请输入昵称" />
+        <el-form-item label="昵称（可选，默认登录账号）" prop="nickname">
+          <el-input v-model="form.nickname" placeholder="不填则使用登录账号" />
         </el-form-item>
         <el-form-item label="密码" prop="password">
           <el-input v-model="form.password" type="password" show-password placeholder="6~32 位" />
@@ -84,7 +84,7 @@ async function submit() {
       : { ...base, phone: form.account.trim() }
     await auth.register(payload)
     ElMessage.success('注册成功，请登录')
-    router.push('/login')
+    router.push({ path: '/login', query: { type: registerType.value, account: form.account.trim() } })
   } catch (e) {
     // 错误提示由请求拦截器统一处理
   } finally {
