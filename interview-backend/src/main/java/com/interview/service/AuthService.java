@@ -188,6 +188,7 @@ public class AuthService {
                 .email(user.getEmail())
                 .phone(user.getPhone())
                 .role(user.getRole())
+                .status(user.getStatus())
                 .createdAt(user.getCreatedAt())
                 .build();
     }

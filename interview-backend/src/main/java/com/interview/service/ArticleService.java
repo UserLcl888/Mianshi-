@@ -18,7 +18,9 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
 import java.time.Duration;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
@@ -40,6 +42,23 @@ public class ArticleService {
             qw.in(Article::getCategoryId, categoryService.collectIds(categoryId));
         }
         qw.orderByAsc(Article::getId);
+        Page<Article> result = articleMapper.selectPage(new Page<>(page, size), qw);
+        List<VOs.ArticleListItemVO> list = result.getRecords().stream().map(this::toListItem).toList();
+        return PageResult.of(page, size, result.getTotal(), list);
+    }
+
+    /**
+     * 管理端题目列表：不限制发布状态，按 id 倒序。
+     */
+    public PageResult<VOs.ArticleListItemVO> adminList(Long categoryId, String difficulty, long page, long size) {
+        LambdaQueryWrapper<Article> qw = new LambdaQueryWrapper<>();
+        if (StringUtils.hasText(difficulty)) {
+            qw.eq(Article::getDifficulty, normalizeDifficulty(difficulty));
+        }
+        if (categoryId != null) {
+            qw.in(Article::getCategoryId, categoryService.collectIds(categoryId));
+        }
+        qw.orderByDesc(Article::getId);
         Page<Article> result = articleMapper.selectPage(new Page<>(page, size), qw);
         List<VOs.ArticleListItemVO> list = result.getRecords().stream().map(this::toListItem).toList();
         return PageResult.of(page, size, result.getTotal(), list);

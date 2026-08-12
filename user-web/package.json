@@ -12,6 +12,7 @@
     "@element-plus/icons-vue": "^2.3.1",
     "axios": "^1.7.2",
     "dompurify": "^3.1.6",
+    "echarts": "^6.1.0",
     "element-plus": "^2.7.5",
     "highlight.js": "^11.9.0",
     "marked": "^12.0.2",

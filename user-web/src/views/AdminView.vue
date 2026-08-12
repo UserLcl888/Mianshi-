@@ -1,9 +1,9 @@
 <template>
   <div class="page">
-    <AppHeader />
-    <div class="page-body">
+    <AppHeader v-if="!embedded" />
+    <div class="page-body" :class="{ embedded }">
       <main class="content">
-        <el-breadcrumb class="breadcrumb-bar" separator="/">
+        <el-breadcrumb v-if="!embedded" class="breadcrumb-bar" separator="/">
           <el-breadcrumb-item :to="{ path: '/' }">首页</el-breadcrumb-item>
           <el-breadcrumb-item>内容管理</el-breadcrumb-item>
           <template v-if="isEdit">
@@ -52,9 +52,12 @@
               <div class="content-editor">
                 <div class="editor-toolbar">
                   <span class="editor-hint">支持 Markdown：## 标题、- 列表、``` 代码块、**加粗**</span>
-                  <el-button size="small" type="primary" plain :disabled="!form.content.trim()" @click="previewVisible = true">
-                    预览
-                  </el-button>
+                  <div class="editor-actions">
+                    <el-button size="small" @click="mdImportVisible = true">导入 Markdown</el-button>
+                    <el-button size="small" type="primary" plain :disabled="!form.content.trim()" @click="previewVisible = true">
+                      预览
+                    </el-button>
+                  </div>
                 </div>
                 <el-input v-model="form.content" type="textarea" :rows="12" placeholder="支持 Markdown，留空则使用默认模板" />
               </div>
@@ -70,16 +73,40 @@
         </el-dialog>
 
         <CategoryManageDialog v-model="categoryManageVisible" />
+
+        <el-dialog v-model="mdImportVisible" title="导入 Markdown 正文" width="520px" top="12vh" append-to-body @open="onMdImportOpen">
+          <el-upload
+            drag
+            accept=".md,.markdown"
+            :auto-upload="false"
+            :limit="1"
+            :file-list="mdFileList"
+            :on-change="onMdFileChange"
+            :on-exceed="onMdExceed"
+          >
+            <div class="upload-hint">
+              <el-icon class="upload-icon"><UploadFilled /></el-icon>
+              <div>拖拽 .md 文件到此处，或 <em>点击选择</em></div>
+              <div class="upload-tip">只导入正文内容（自动去掉文件头 frontmatter），会替换当前正文；分类、难度、标签请在表单中填写</div>
+            </div>
+          </el-upload>
+          <div v-if="mdFileName" class="md-file-name">已选择：{{ mdFileName }}</div>
+          <template #footer>
+            <el-button @click="mdImportVisible = false">取消</el-button>
+            <el-button type="primary" :disabled="!mdContent" @click="applyMdImport">导入到正文</el-button>
+          </template>
+        </el-dialog>
       </main>
     </div>
-    <AppFooter />
+    <AppFooter v-if="!embedded" />
   </div>
 </template>
 
 <script setup lang="ts">
 import { computed, nextTick, onMounted, reactive, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { ElMessage } from 'element-plus'
+import { ElMessage, type UploadFile, type UploadUserFile } from 'element-plus'
+import { UploadFilled } from '@element-plus/icons-vue'
 import hljs from 'highlight.js'
 import { marked } from 'marked'
 import DOMPurify from 'dompurify'
@@ -94,10 +121,15 @@ import { getCategoryPath } from '@/utils/category'
 const router = useRouter()
 const route = useRoute()
 const categoryStore = useCategoryStore()
+const embedded = computed(() => route.meta.embedded === true)
 const saving = ref(false)
 const detailId = ref(0)
 const previewVisible = ref(false)
 const categoryManageVisible = ref(false)
+const mdImportVisible = ref(false)
+const mdFileList = ref<UploadUserFile[]>([])
+const mdContent = ref('')
+const mdFileName = ref('')
 const editCategorySlug = ref('')
 const previewBody = ref<HTMLElement | null>(null)
 
@@ -157,6 +189,49 @@ function onPreviewOpen() {
       hljs.highlightElement(block as HTMLElement)
     })
   })
+}
+
+function onMdImportOpen() {
+  mdFileList.value = []
+  mdContent.value = ''
+  mdFileName.value = ''
+}
+
+function onMdExceed() {
+  ElMessage.warning('只能选择一个 .md 文件')
+}
+
+function onMdFileChange(file: UploadFile, files: UploadUserFile[]) {
+  mdFileList.value = files.slice(-1)
+  const raw = file.raw
+  if (!raw) return
+  const reader = new FileReader()
+  reader.onload = () => {
+    mdContent.value = stripFrontmatter(String(reader.result || ''))
+    mdFileName.value = raw.name
+  }
+  reader.readAsText(raw, 'utf-8')
+}
+
+function stripFrontmatter(text: string): string {
+  const trimmed = text.trim()
+  if (trimmed.startsWith('---')) {
+    const end = trimmed.indexOf('\n---')
+    if (end > 0) {
+      return trimmed.slice(end + 4).trim()
+    }
+  }
+  return trimmed
+}
+
+function applyMdImport() {
+  if (!mdContent.value) {
+    ElMessage.warning('请先选择 .md 文件')
+    return
+  }
+  form.content = mdContent.value
+  ElMessage.success(`已导入 ${mdFileName.value}，可点击“预览”查看效果`)
+  mdImportVisible.value = false
 }
 
 function htmlToText(html: string): string {
@@ -244,6 +319,10 @@ async function submit() {
   justify-content: center;
 }
 
+.page-body.embedded {
+  padding: 0;
+}
+
 .content {
   width: 100%;
   max-width: 960px;
@@ -285,6 +364,12 @@ async function submit() {
   font-size: 12px;
 }
 
+.editor-actions {
+  display: flex;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
 .preview-dialog {
   background: var(--app-bg);
   border: 1px solid var(--app-border);
@@ -303,5 +388,28 @@ async function submit() {
   width: 100%;
   max-width: 920px;
   margin: 0 auto;
+}
+
+.upload-hint {
+  text-align: center;
+  padding: 8px 0;
+}
+
+.upload-icon {
+  font-size: 36px;
+  color: var(--app-text-secondary);
+  margin-bottom: 6px;
+}
+
+.upload-tip {
+  margin-top: 6px;
+  font-size: 12px;
+  color: var(--app-text-secondary);
+}
+
+.md-file-name {
+  margin-top: 10px;
+  font-size: 13px;
+  color: var(--app-text);
 }
 </style>

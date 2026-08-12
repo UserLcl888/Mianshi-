@@ -70,6 +70,7 @@ export interface UserInfo {
   email: string
   phone?: string
   role: string
+  status?: number
   createdAt: string
 }
 

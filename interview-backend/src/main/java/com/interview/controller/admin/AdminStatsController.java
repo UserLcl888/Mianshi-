@@ -29,4 +29,9 @@ public class AdminStatsController {
     public Result<List<VOs.TopArticleVO>> topArticles() {
         return Result.ok(statsService.topArticles(10));
     }
+
+    @GetMapping("/category-stats")
+    public Result<List<VOs.CategoryStatsVO>> categoryStats() {
+        return Result.ok(statsService.categoryStats());
+    }
 }

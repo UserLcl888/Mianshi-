@@ -10,6 +10,11 @@ import com.interview.mapper.UserMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.Deque;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -46,5 +51,58 @@ public class StatsService {
             vo.setCategoryName(category == null ? "" : category.getName());
             return vo;
         }).toList();
+    }
+
+    /**
+     * 各顶级分类的统计：聚合其全部子分类的题目数与浏览量。
+     */
+    public List<VOs.CategoryStatsVO> categoryStats() {
+        List<Category> all = categoryMapper.selectList(
+                new LambdaQueryWrapper<Category>().orderByAsc(Category::getSortOrder));
+        List<Article> articles = articleMapper.selectList(null);
+
+        Map<Long, Integer> countByCat = new HashMap<>();
+        Map<Long, Long> viewsByCat = new HashMap<>();
+        for (Article a : articles) {
+            countByCat.merge(a.getCategoryId(), 1, Integer::sum);
+            viewsByCat.merge(a.getCategoryId(), a.getViewCount() == null ? 0L : a.getViewCount(), Long::sum);
+        }
+
+        Map<Long, List<Long>> children = new HashMap<>();
+        for (Category c : all) {
+            children.computeIfAbsent(c.getParentId(), k -> new ArrayList<>()).add(c.getId());
+        }
+
+        List<VOs.CategoryStatsVO> result = new ArrayList<>();
+        for (Category c : all) {
+            if (c.getParentId() != null && c.getParentId() != 0L) {
+                continue;
+            }
+            List<Long> ids = new ArrayList<>();
+            Deque<Long> stack = new ArrayDeque<>();
+            stack.push(c.getId());
+            while (!stack.isEmpty()) {
+                Long id = stack.pop();
+                ids.add(id);
+                List<Long> subs = children.get(id);
+                if (subs != null) {
+                    subs.forEach(stack::push);
+                }
+            }
+            int count = 0;
+            long views = 0;
+            for (Long id : ids) {
+                count += countByCat.getOrDefault(id, 0);
+                views += viewsByCat.getOrDefault(id, 0L);
+            }
+            result.add(VOs.CategoryStatsVO.builder()
+                    .id(c.getId())
+                    .name(c.getName())
+                    .viewCount(views)
+                    .articleCount(count)
+                    .build());
+        }
+        result.sort(Comparator.comparingLong(VOs.CategoryStatsVO::getViewCount).reversed());
+        return result;
     }
 }

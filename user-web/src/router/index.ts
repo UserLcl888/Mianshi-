@@ -16,6 +16,58 @@ const router = createRouter({
     { path: '/profile/password', name: 'change-password', component: () => import('@/views/ChangePasswordView.vue'), meta: { requiresAuth: true } },
     { path: '/admin', name: 'admin', component: () => import('@/views/AdminView.vue'), meta: { requiresAuth: true, requiresAdmin: true } },
     { path: '/admin/edit/:slug', name: 'admin-edit', component: () => import('@/views/AdminView.vue'), meta: { requiresAuth: true, requiresAdmin: true } },
+    {
+      path: '/admin/articles/create',
+      component: () => import('@/components/layout/AdminLayout.vue'),
+      meta: { requiresAuth: true, requiresAdmin: true },
+      children: [
+        { path: '', name: 'admin-article-create', component: () => import('@/views/AdminView.vue'), meta: { embedded: true } }
+      ]
+    },
+    {
+      path: '/admin/articles/:slug/edit',
+      component: () => import('@/components/layout/AdminLayout.vue'),
+      meta: { requiresAuth: true, requiresAdmin: true },
+      children: [
+        { path: '', name: 'admin-article-edit', component: () => import('@/views/AdminView.vue'), meta: { embedded: true } }
+      ]
+    },
+    {
+      path: '/admin/dashboard',
+      component: () => import('@/components/layout/AdminLayout.vue'),
+      meta: { requiresAuth: true, requiresAdmin: true },
+      children: [{ path: '', name: 'admin-dashboard', component: () => import('@/views/admin/DashboardView.vue') }]
+    },
+    {
+      path: '/admin/articles',
+      component: () => import('@/components/layout/AdminLayout.vue'),
+      meta: { requiresAuth: true, requiresAdmin: true },
+      children: [{ path: '', name: 'admin-articles', component: () => import('@/views/admin/ArticleManageView.vue') }]
+    },
+    {
+      path: '/admin/categories',
+      component: () => import('@/components/layout/AdminLayout.vue'),
+      meta: { requiresAuth: true, requiresAdmin: true },
+      children: [{ path: '', name: 'admin-categories', component: () => import('@/views/admin/CategoryManageView.vue') }]
+    },
+    {
+      path: '/admin/users',
+      component: () => import('@/components/layout/AdminLayout.vue'),
+      meta: { requiresAuth: true, requiresAdmin: true },
+      children: [{ path: '', name: 'admin-users', component: () => import('@/views/admin/UserManageView.vue') }]
+    },
+    {
+      path: '/admin/tags',
+      component: () => import('@/components/layout/AdminLayout.vue'),
+      meta: { requiresAuth: true, requiresAdmin: true },
+      children: [{ path: '', name: 'admin-tags', component: () => import('@/views/admin/TagManageView.vue') }]
+    },
+    {
+      path: '/admin/logs',
+      component: () => import('@/components/layout/AdminLayout.vue'),
+      meta: { requiresAuth: true, requiresAdmin: true },
+      children: [{ path: '', name: 'admin-logs', component: () => import('@/views/admin/LogListView.vue') }]
+    },
     { path: '/:pathMatch(.*)*', name: 'not-found', component: () => import('@/views/NotFoundView.vue') }
   ],
   scrollBehavior() {
@@ -26,9 +78,10 @@ const router = createRouter({
 router.beforeEach(async (to) => {
   const auth = useAuthStore()
   const current = router.currentRoute.value
-  const leavingAdmin = current.path.startsWith('/admin')
-  const enteringAdmin = to.path.startsWith('/admin')
-  if (leavingAdmin && !enteringAdmin && unsavedState.dirty) {
+  const editPages = ['admin', 'admin-edit', 'admin-article-create', 'admin-article-edit']
+  const editPage = editPages.includes(String(current.name))
+  const targetEditPage = editPages.includes(String(to.name))
+  if (editPage && !targetEditPage && unsavedState.dirty) {
     try {
       await ElMessageBox.confirm('当前有未保存的修改，确定放弃并离开吗？', '提示', {
         confirmButtonText: '放弃修改',

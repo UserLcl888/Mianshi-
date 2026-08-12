@@ -20,6 +20,7 @@ public class VOs {
         private String email;
         private String phone;
         private String role;
+        private Integer status;
         private LocalDateTime createdAt;
     }
 
@@ -110,5 +111,14 @@ public class VOs {
         private String title;
         private String categoryName;
         private Long viewCount;
+    }
+
+    @Data
+    @Builder
+    public static class CategoryStatsVO {
+        private Long id;
+        private String name;
+        private Long viewCount;
+        private Integer articleCount;
     }
 }
