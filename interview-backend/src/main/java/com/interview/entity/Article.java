@@ -15,6 +15,7 @@ public class Article {
     private String slug;
     private String title;
     private String summary;
+    private String docUrl;
     private Long categoryId;
     private String difficulty;
     private Integer status;

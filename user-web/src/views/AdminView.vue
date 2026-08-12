@@ -24,6 +24,9 @@
             <el-form-item label="摘要">
               <el-input v-model="form.summary" type="textarea" :rows="2" placeholder="一句话概括本题要点" />
             </el-form-item>
+            <el-form-item label="文档链接">
+              <el-input v-model="form.docUrl" placeholder="选填，如 https://arthas.aliyun.com/（点击将在新标签页打开）" />
+            </el-form-item>
             <el-form-item label="所属分类" required>
               <div class="category-field">
                 <el-select v-model="form.categoryId" placeholder="选择分类（支持子分类）" class="category-select">
@@ -139,6 +142,7 @@ const form = reactive({
   title: '',
   slug: '',
   summary: '',
+  docUrl: '',
   categoryId: undefined as number | undefined,
   difficulty: 'MEDIUM',
   tagsText: '',
@@ -170,6 +174,7 @@ function snapshotForm(): string {
     title: form.title,
     slug: form.slug,
     summary: form.summary,
+    docUrl: form.docUrl,
     categoryId: form.categoryId,
     difficulty: form.difficulty,
     tagsText: form.tagsText,
@@ -257,6 +262,7 @@ async function loadForEdit() {
     form.title = a.title
     form.slug = a.slug
     form.summary = a.summary
+    form.docUrl = a.docUrl || ''
     form.categoryId = a.categoryId
     form.difficulty = a.difficulty
     form.tagsText = a.tags.join(', ')
@@ -286,6 +292,7 @@ async function submit() {
       title: form.title.trim(),
       slug: form.slug.trim() || undefined,
       summary: form.summary.trim(),
+      docUrl: form.docUrl.trim() || undefined,
       categoryId: form.categoryId,
       difficulty: form.difficulty,
       tags,

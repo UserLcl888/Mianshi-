@@ -78,6 +78,7 @@ public class Requests {
         private String title;
         private String slug;
         private String summary;
+        private String docUrl;
         @NotNull(message = "请选择所属分类")
         private Long categoryId;
         private String difficulty = "MEDIUM";

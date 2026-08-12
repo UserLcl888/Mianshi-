@@ -19,6 +19,15 @@
               <el-tag v-for="t in detail.article.tags" :key="t" size="small" effect="plain" type="warning">{{ t }}</el-tag>
               <span class="meta-text">{{ detail.article.viewCount }} 次浏览</span>
               <span class="meta-text">更新于 {{ detail.article.updatedAt }}</span>
+              <a
+                v-if="detail.article.docUrl"
+                :href="detail.article.docUrl"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="doc-link"
+              >
+                <el-button size="small" type="primary" plain>文档链接</el-button>
+              </a>
               <router-link v-if="isAdmin" :to="`/admin/edit/${detail.article.slug}`" class="edit-link">
                 <el-button size="small" type="warning" plain>编辑</el-button>
               </router-link>
@@ -134,6 +143,9 @@ function onBodyClick(e: MouseEvent) {
   if (href.startsWith('/article/') || href.startsWith('/category/')) {
     e.preventDefault()
     router.push(href)
+  } else if (/^https?:\/\//i.test(href)) {
+    e.preventDefault()
+    window.open(href, '_blank', 'noopener,noreferrer')
   }
 }
 
@@ -207,6 +219,10 @@ onBeforeUnmount(() => {
 }
 
 .edit-link {
+  margin-left: 8px;
+}
+
+.doc-link {
   margin-left: 8px;
 }
 

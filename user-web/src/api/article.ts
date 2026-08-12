@@ -5,6 +5,7 @@ export interface ArticleSavePayload {
   title: string
   slug?: string
   summary?: string
+  docUrl?: string
   categoryId: number
   difficulty: string
   tags: string[]

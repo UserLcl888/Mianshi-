@@ -72,6 +72,7 @@ public class VOs {
         private String slug;
         private String title;
         private String summary;
+        private String docUrl;
         private Long categoryId;
         private String categoryName;
         private String categorySlug;

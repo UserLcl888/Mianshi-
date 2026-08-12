@@ -31,6 +31,7 @@ export interface ArticleDetail {
   slug: string
   title: string
   summary: string
+  docUrl: string
   categoryId: number
   categoryName: string
   categorySlug: string

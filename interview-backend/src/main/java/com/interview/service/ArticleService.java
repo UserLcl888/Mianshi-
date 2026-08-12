@@ -141,6 +141,7 @@ public class ArticleService {
                 .slug(a.getSlug())
                 .title(a.getTitle())
                 .summary(a.getSummary())
+                .docUrl(a.getDocUrl())
                 .categoryId(a.getCategoryId())
                 .categoryName(category.getName())
                 .categorySlug(category.getSlug())
@@ -195,6 +196,7 @@ public class ArticleService {
     private void applySave(Article article, Requests.ArticleSaveDTO dto) {
         article.setTitle(dto.getTitle());
         article.setSummary(dto.getSummary() == null ? "" : dto.getSummary());
+        article.setDocUrl(dto.getDocUrl() == null ? "" : dto.getDocUrl().trim());
         article.setCategoryId(dto.getCategoryId());
         article.setDifficulty(normalizeDifficulty(dto.getDifficulty()));
         article.setStatus(1);
