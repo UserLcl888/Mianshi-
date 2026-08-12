@@ -15,10 +15,14 @@
           <el-input v-model="editing.slug" size="small" placeholder="slug" class="row-input" />
           <el-button size="small" type="primary" :loading="saving" @click="save">保存</el-button>
           <el-button size="small" @click="cancel">取消</el-button>
+          <el-input v-model="editing.description" size="small" placeholder="描述（选填，会显示在首页分类卡片）" class="desc-input" />
         </template>
         <template v-else>
           <span class="cat-name">{{ cat.name }}</span>
-          <span class="cat-slug">{{ cat.slug }}</span>
+          <span class="cat-slug">
+            <span class="slug-text">{{ cat.slug }}</span>
+            <span v-if="cat.description" class="cat-desc">{{ cat.description }}</span>
+          </span>
           <span class="cat-actions">
             <el-button size="small" text type="primary" @click="startAddChild(cat)">＋ 子集</el-button>
             <el-button size="small" text @click="startEdit(cat)">编辑</el-button>
@@ -33,19 +37,24 @@
         <el-input v-model="editing.slug" size="small" placeholder="slug" class="row-input" />
         <el-button size="small" type="primary" :loading="saving" @click="save">保存</el-button>
         <el-button size="small" @click="cancel">取消</el-button>
+        <el-input v-model="editing.description" size="small" placeholder="描述（选填）" class="desc-input" />
       </div>
 
       <!-- 子集行 -->
       <div v-for="sub in cat.children" :key="sub.id" class="cat-row cat-row-child">
         <template v-if="isEditing(sub)">
           <el-input v-model="editing.name" size="small" placeholder="分类名称" class="row-input" />
-          <el-input v-model="editing.slug" size="small" placeholder="slug" class="row-input" />
-          <el-button size="small" type="primary" :loading="saving" @click="save">保存</el-button>
-          <el-button size="small" @click="cancel">取消</el-button>
-        </template>
-        <template v-else>
-          <span class="cat-name">{{ sub.name }}</span>
-          <span class="cat-slug">{{ sub.slug }}</span>
+            <el-input v-model="editing.slug" size="small" placeholder="slug" class="row-input" />
+            <el-button size="small" type="primary" :loading="saving" @click="save">保存</el-button>
+            <el-button size="small" @click="cancel">取消</el-button>
+            <el-input v-model="editing.description" size="small" placeholder="描述（选填）" class="desc-input" />
+          </template>
+          <template v-else>
+            <span class="cat-name">{{ sub.name }}</span>
+            <span class="cat-slug">
+              <span class="slug-text">{{ sub.slug }}</span>
+              <span v-if="sub.description" class="cat-desc">{{ sub.description }}</span>
+            </span>
           <span class="cat-actions">
             <el-button size="small" text @click="startEdit(sub)">编辑</el-button>
             <el-button size="small" text type="danger" @click="remove(sub)">删除</el-button>
@@ -60,6 +69,7 @@
       <el-input v-model="editing.slug" size="small" placeholder="slug" class="row-input" />
       <el-button size="small" type="primary" :loading="saving" @click="save">保存</el-button>
       <el-button size="small" @click="cancel">取消</el-button>
+      <el-input v-model="editing.description" size="small" placeholder="描述（选填，会显示在首页分类卡片）" class="desc-input" />
     </div>
   </div>
 </template>
@@ -81,6 +91,7 @@ interface EditingState {
   target: CategoryNode | null
   name: string
   slug: string
+  description: string
 }
 
 const editing = ref<EditingState | null>(null)
@@ -98,15 +109,22 @@ function autoSlug(): string {
 }
 
 function startAddChild(parent: CategoryNode) {
-  editing.value = { mode: 'add', parentId: parent.id, target: null, name: '', slug: autoSlug() }
+  editing.value = { mode: 'add', parentId: parent.id, target: null, name: '', slug: autoSlug(), description: '' }
 }
 
 function startAddTop() {
-  editing.value = { mode: 'add', parentId: 0, target: null, name: '', slug: autoSlug() }
+  editing.value = { mode: 'add', parentId: 0, target: null, name: '', slug: autoSlug(), description: '' }
 }
 
 function startEdit(cat: CategoryNode) {
-  editing.value = { mode: 'edit', parentId: cat.parentId, target: cat, name: cat.name, slug: cat.slug }
+  editing.value = {
+    mode: 'edit',
+    parentId: cat.parentId,
+    target: cat,
+    name: cat.name,
+    slug: cat.slug,
+    description: cat.description || ''
+  }
 }
 
 function cancel() {
@@ -134,7 +152,7 @@ async function save() {
         slug,
         parentId: t.parentId,
         sortOrder: t.sortOrder,
-        description: t.description || ''
+        description: editing.value.description.trim()
       })
     } else {
       await createCategoryApi({
@@ -142,7 +160,7 @@ async function save() {
         slug,
         parentId: editing.value.parentId,
         sortOrder: 0,
-        description: ''
+        description: editing.value.description.trim()
       })
     }
     ElMessage.success('保存成功')
@@ -224,9 +242,25 @@ onMounted(() => {
 }
 
 .cat-slug {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.slug-text {
   color: var(--app-text-secondary);
   font-size: 12px;
-  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cat-desc {
+  font-size: 12px;
+  color: var(--app-text-secondary);
+  opacity: 0.75;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -241,9 +275,15 @@ onMounted(() => {
 .cat-form {
   background: var(--app-accent-soft);
   border-radius: 8px;
+  flex-wrap: wrap;
 }
 
 .row-input {
   width: 200px;
+}
+
+.desc-input {
+  width: 100%;
+  flex-basis: 100%;
 }
 </style>
