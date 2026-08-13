@@ -13,7 +13,6 @@ public class VOs {
     @Builder
     public static class UserVO {
         private Long id;
-        private String username;
         private String nickname;
         private String rootPassword;
         private String avatar;

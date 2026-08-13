@@ -76,10 +76,11 @@ export async function getAdminUsersApi(params: {
 }
 
 export async function createAdminUserApi(payload: {
-  username: string
   password: string
   nickname?: string
   role?: string
+  email?: string
+  phone?: string
 }): Promise<UserInfo> {
   return request.post('/admin/users', payload)
 }

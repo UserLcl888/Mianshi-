@@ -16,7 +16,6 @@
 
     <el-table :data="list" stripe>
       <el-table-column prop="id" label="ID" width="70" />
-      <el-table-column prop="username" label="用户名" width="140" />
       <el-table-column prop="nickname" label="昵称" width="140" />
       <el-table-column prop="email" label="邮箱" min-width="180" show-overflow-tooltip />
       <el-table-column prop="phone" label="手机号" width="130">
@@ -60,8 +59,11 @@
     <!-- 新增用户 -->
     <el-dialog v-model="createVisible" title="新增用户" width="440px" append-to-body>
       <el-form ref="createRef" :model="createForm" :rules="createRules" label-width="80px">
-        <el-form-item label="用户名" prop="username">
-          <el-input v-model="createForm.username" placeholder="3~20 位" />
+        <el-form-item label="邮箱" prop="email">
+          <el-input v-model="createForm.email" placeholder="选填，如 xx@qq.com" />
+        </el-form-item>
+        <el-form-item label="手机号" prop="phone">
+          <el-input v-model="createForm.phone" placeholder="选填，邮箱和手机号至少填一项" />
         </el-form-item>
         <el-form-item label="密码" prop="password">
           <el-input v-model="createForm.password" type="password" show-password placeholder="6~32 位" />
@@ -143,14 +145,33 @@ const resetVisible = ref(false)
 const createRef = ref<FormInstance>()
 const editRef = ref<FormInstance>()
 const resetRef = ref<FormInstance>()
-const createForm = reactive({ username: '', password: '', nickname: '', role: 'USER' })
+const createForm = reactive({ email: '', phone: '', password: '', nickname: '', role: 'USER' })
 const editForm = reactive({ id: 0, nickname: '', email: '', role: 'USER' })
 const resetForm = reactive({ id: 0, newPassword: '' })
 
+const emailPattern = /^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/
+const phonePattern = /^1[3-9]\d{9}$/
+
 const createRules: FormRules = {
-  username: [
-    { required: true, message: '请输入用户名', trigger: 'blur' },
-    { pattern: /^[a-zA-Z0-9_]{3,20}$/, message: '3~20 位字母、数字或下划线', trigger: 'blur' }
+  email: [
+    {
+      validator: (_r, v, cb) => {
+        const val = String(v || '').trim()
+        if (val && !emailPattern.test(val)) cb(new Error('邮箱格式不正确'))
+        else cb()
+      },
+      trigger: 'blur'
+    }
+  ],
+  phone: [
+    {
+      validator: (_r, v, cb) => {
+        const val = String(v || '').trim()
+        if (val && !phonePattern.test(val)) cb(new Error('手机号格式不正确'))
+        else cb()
+      },
+      trigger: 'blur'
+    }
   ],
   password: [
     { required: true, message: '请输入密码', trigger: 'blur' },
@@ -190,7 +211,8 @@ function onPage(p: number) {
 }
 
 function openCreate() {
-  createForm.username = ''
+  createForm.email = ''
+  createForm.phone = ''
   createForm.password = ''
   createForm.nickname = ''
   createForm.role = 'USER'
@@ -200,10 +222,15 @@ function openCreate() {
 async function submitCreate() {
   const valid = await createRef.value?.validate().catch(() => false)
   if (!valid) return
+  if (!createForm.email.trim() && !createForm.phone.trim()) {
+    ElMessage.warning('请填写邮箱或手机号')
+    return
+  }
   saving.value = true
   try {
     await createAdminUserApi({
-      username: createForm.username.trim(),
+      email: createForm.email.trim() || undefined,
+      phone: createForm.phone.trim() || undefined,
       password: createForm.password,
       nickname: createForm.nickname.trim() || undefined,
       role: createForm.role
@@ -246,9 +273,10 @@ async function submitEdit() {
 
 async function toggleStatus(row: UserInfo) {
   const next = row.status === 1 ? 0 : 1
+  const label = row.nickname || row.email
   try {
     await ElMessageBox.confirm(
-      next === 0 ? `确定禁用用户“${row.username}”吗？该用户会被立即踢下线。` : `确定启用用户“${row.username}”吗？`,
+      next === 0 ? `确定禁用用户“${label}”吗？该用户会被立即踢下线。` : `确定启用用户“${label}”吗？`,
       next === 0 ? '禁用确认' : '启用确认',
       { type: 'warning', confirmButtonText: '确定', cancelButtonText: '取消' }
     )
@@ -285,7 +313,7 @@ async function submitReset() {
 
 async function remove(row: UserInfo) {
   try {
-    await ElMessageBox.confirm(`确定删除用户“${row.username}”吗？`, '删除确认', {
+    await ElMessageBox.confirm(`确定删除用户“${row.nickname || row.email}”吗？`, '删除确认', {
       type: 'warning',
       confirmButtonText: '删除',
       cancelButtonText: '取消'

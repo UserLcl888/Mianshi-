@@ -2,7 +2,6 @@ import request from './request'
 import type { LoginResult, UserInfo } from '@/types'
 
 export interface RegisterForm {
-  username?: string
   password: string
   nickname?: string
   email?: string

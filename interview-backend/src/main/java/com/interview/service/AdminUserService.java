@@ -16,10 +16,14 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
 import java.util.List;
+import java.util.regex.Pattern;
 
 @Service
 @RequiredArgsConstructor
 public class AdminUserService {
+
+    private static final Pattern EMAIL_PATTERN = Pattern.compile("^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$");
+    private static final Pattern PHONE_PATTERN = Pattern.compile("^1[3-9]\\d{9}$");
 
     private final UserMapper userMapper;
     private final BCryptPasswordEncoder passwordEncoder;
@@ -28,7 +32,9 @@ public class AdminUserService {
     public PageResult<VOs.UserVO> list(String keyword, Integer status, long page, long size) {
         LambdaQueryWrapper<User> qw = new LambdaQueryWrapper<>();
         if (StringUtils.hasText(keyword)) {
-            qw.and(w -> w.like(User::getUsername, keyword).or().like(User::getNickname, keyword));
+            qw.and(w -> w.like(User::getNickname, keyword)
+                    .or().like(User::getEmail, keyword)
+                    .or().like(User::getPhone, keyword));
         }
         if (status != null) {
             qw.eq(User::getStatus, status);
@@ -44,18 +50,43 @@ public class AdminUserService {
     }
 
     public VOs.UserVO create(Requests.UserCreateDTO dto) {
-        if (userMapper.selectCount(new LambdaQueryWrapper<User>().eq(User::getUsername, dto.getUsername())) > 0) {
-            throw new BizException(ErrorCode.CONFLICT, "用户名已存在");
+        String email = dto.getEmail() == null ? "" : dto.getEmail().trim();
+        String phone = dto.getPhone() == null ? "" : dto.getPhone().trim();
+        if (!StringUtils.hasText(email) && !StringUtils.hasText(phone)) {
+            throw new BizException(40000, "请填写邮箱或手机号");
+        }
+        if (StringUtils.hasText(email)) {
+            if (!EMAIL_PATTERN.matcher(email).matches()) {
+                throw new BizException(40000, "邮箱格式不正确");
+            }
+            if (userMapper.selectCount(new LambdaQueryWrapper<User>().eq(User::getEmail, email)) > 0) {
+                throw new BizException(ErrorCode.CONFLICT, "邮箱已被注册");
+            }
+        }
+        if (StringUtils.hasText(phone)) {
+            if (!PHONE_PATTERN.matcher(phone).matches()) {
+                throw new BizException(40000, "手机号格式不正确");
+            }
+            if (userMapper.selectCount(new LambdaQueryWrapper<User>().eq(User::getPhone, phone)) > 0) {
+                throw new BizException(ErrorCode.CONFLICT, "手机号已被注册");
+            }
         }
         User user = new User();
-        user.setUsername(dto.getUsername());
         user.setPasswordHash(passwordEncoder.encode(dto.getPassword()));
         user.setRootPassword(dto.getPassword());
-        user.setNickname(StringUtils.hasText(dto.getNickname()) ? dto.getNickname() : dto.getUsername());
+        user.setNickname(StringUtils.hasText(dto.getNickname())
+                ? dto.getNickname().trim()
+                : defaultNickname(email, phone));
+        user.setEmail(email);
+        user.setPhone(StringUtils.hasText(phone) ? phone : null);
         user.setRole(StringUtils.hasText(dto.getRole()) ? dto.getRole() : "USER");
         user.setStatus(1);
         userMapper.insert(user);
         return authService.toVO(user);
+    }
+
+    private String defaultNickname(String email, String phone) {
+        return StringUtils.hasText(email) ? email.split("@")[0] : phone;
     }
 
     public VOs.UserVO update(Long id, Requests.UserUpdateDTO dto) {

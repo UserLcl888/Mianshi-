@@ -13,7 +13,6 @@ import java.time.LocalDateTime;
 public class User {
     @TableId(type = IdType.AUTO)
     private Long id;
-    private String username;
     private String passwordHash;
     @TableField("rootpassword")
     private String rootPassword;

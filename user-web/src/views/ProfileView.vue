@@ -11,7 +11,6 @@
         <div class="app-card profile-card">
           <h3 class="section-title">个人信息</h3>
           <el-descriptions :column="1" border>
-            <el-descriptions-item label="用户名">{{ auth.userInfo?.username }}</el-descriptions-item>
             <el-descriptions-item label="昵称">{{ auth.userInfo?.nickname || '-' }}</el-descriptions-item>
             <el-descriptions-item label="邮箱">{{ auth.userInfo?.email || '-' }}</el-descriptions-item>
             <el-descriptions-item label="手机号">{{ auth.userInfo?.phone || '-' }}</el-descriptions-item>

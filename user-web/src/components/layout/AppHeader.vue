@@ -20,7 +20,7 @@
           <el-dropdown @command="onCommand">
             <span class="user-entry">
               <el-icon><User /></el-icon>
-              {{ auth.userInfo?.nickname || auth.userInfo?.username }}
+              {{ auth.userInfo?.nickname || auth.userInfo?.email }}
               <el-icon class="el-icon--right"><ArrowDown /></el-icon>
             </span>
             <template #dropdown>

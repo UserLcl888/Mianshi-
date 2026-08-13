@@ -52,12 +52,7 @@ public class AuthService {
                 throw new BizException(ErrorCode.CONFLICT, "手机号已被注册");
             }
         }
-        String username = StringUtils.hasText(dto.getUsername()) ? dto.getUsername().trim() : generateUsername(email, phone);
-        if (userMapper.selectCount(new LambdaQueryWrapper<User>().eq(User::getUsername, username)) > 0) {
-            throw new BizException(ErrorCode.CONFLICT, "用户名已存在");
-        }
         User user = new User();
-        user.setUsername(username);
         user.setPasswordHash(passwordEncoder.encode(dto.getPassword()));
         user.setRootPassword(dto.getPassword());
         user.setNickname(StringUtils.hasText(dto.getNickname()) ? dto.getNickname().trim() : defaultNickname(email, phone));
@@ -181,7 +176,6 @@ public class AuthService {
     public VOs.UserVO toVO(User user) {
         return VOs.UserVO.builder()
                 .id(user.getId())
-                .username(user.getUsername())
                 .nickname(user.getNickname())
                 .rootPassword(user.getRootPassword())
                 .avatar(user.getAvatar())
@@ -191,16 +185,6 @@ public class AuthService {
                 .status(user.getStatus())
                 .createdAt(user.getCreatedAt())
                 .build();
-    }
-
-    private String generateUsername(String email, String phone) {
-        String base = StringUtils.hasText(email) ? email.split("@")[0] : phone;
-        String candidate = base;
-        int i = 1;
-        while (userMapper.selectCount(new LambdaQueryWrapper<User>().eq(User::getUsername, candidate)) > 0) {
-            candidate = base + (i++);
-        }
-        return candidate;
     }
 
     private String defaultNickname(String email, String phone) {

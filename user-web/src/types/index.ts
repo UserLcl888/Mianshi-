@@ -66,7 +66,6 @@ export interface PageResult<T> {
 
 export interface UserInfo {
   id: number
-  username: string
   nickname: string
   email: string
   phone?: string

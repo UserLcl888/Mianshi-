@@ -46,8 +46,6 @@ public class Requests {
 
     @Data
     public static class RegisterDTO {
-        @Size(min = 3, max = 50, message = "用户名长度为 3~50 位")
-        private String username;
         @NotBlank(message = "请输入密码")
         @Size(min = 6, max = 32, message = "密码长度为 6~32 位")
         private String password;
@@ -95,12 +93,12 @@ public class Requests {
 
     @Data
     public static class UserCreateDTO {
-        @NotBlank(message = "请输入用户名")
-        private String username;
         @NotBlank(message = "请输入密码")
         private String password;
         private String nickname;
         private String role;
+        private String email;
+        private String phone;
     }
 
     @Data

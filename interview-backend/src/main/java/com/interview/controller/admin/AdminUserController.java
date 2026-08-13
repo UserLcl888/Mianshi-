@@ -45,14 +45,14 @@ public class AdminUserController {
     @PostMapping
     public Result<VOs.UserVO> create(@Valid @RequestBody Requests.UserCreateDTO dto) {
         VOs.UserVO vo = adminUserService.create(dto);
-        adminLogService.write("USER_CREATE", "USER", vo.getId(), "创建用户 " + vo.getUsername());
+        adminLogService.write("USER_CREATE", "USER", vo.getId(), "创建用户 " + vo.getNickname());
         return Result.ok(vo);
     }
 
     @PutMapping("/{id}")
     public Result<VOs.UserVO> update(@PathVariable Long id, @RequestBody Requests.UserUpdateDTO dto) {
         VOs.UserVO vo = adminUserService.update(id, dto);
-        adminLogService.write("USER_UPDATE", "USER", id, "编辑用户 " + vo.getUsername());
+        adminLogService.write("USER_UPDATE", "USER", id, "编辑用户 " + vo.getNickname());
         return Result.ok(vo);
     }
 
