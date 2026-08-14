@@ -122,6 +122,9 @@ public class AdminUserService {
     }
 
     public void delete(Long id) {
+        if (StpUtil.getLoginIdAsLong() == id) {
+            throw new BizException(40000, "不能删除当前登录账号");
+        }
         userMapper.deleteById(id);
         StpUtil.kickout(id);
     }

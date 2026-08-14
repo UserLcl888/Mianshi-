@@ -15,33 +15,43 @@
     </div>
 
     <el-table :data="list" stripe>
-      <el-table-column prop="id" label="ID" width="70" />
-      <el-table-column prop="nickname" label="昵称" width="140" />
-      <el-table-column prop="email" label="邮箱" min-width="180" show-overflow-tooltip />
-      <el-table-column prop="phone" label="手机号" width="130">
-        <template #default="{ row }">{{ row.phone || '-' }}</template>
-      </el-table-column>
-      <el-table-column label="角色" width="100">
+      <el-table-column prop="id" label="ID" min-width="70" />
+      <el-table-column prop="nickname" label="昵称" min-width="140" />
+      <el-table-column prop="email" label="邮箱" min-width="210" show-overflow-tooltip />
+      <el-table-column prop="phone" label="手机号" min-width="130">
         <template #default="{ row }">
-          <el-tag :type="row.role === 'ADMIN' ? 'danger' : 'info'" size="small">{{ row.role }}</el-tag>
+          <span class="phone-cell">{{ row.phone || '-' }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="状态" width="90">
+      <el-table-column label="角色" min-width="100">
+        <template #default="{ row }">
+          <el-tag :type="row.role === 'ADMIN' ? 'danger' : 'warning'" size="small">{{ row.role }}</el-tag>
+        </template>
+      </el-table-column>
+      <el-table-column label="状态" min-width="90">
         <template #default="{ row }">
           <el-tag :type="row.status === 1 ? 'success' : 'danger'" size="small">
             {{ row.status === 1 ? '正常' : '禁用' }}
           </el-tag>
         </template>
       </el-table-column>
-      <el-table-column prop="createdAt" label="注册时间" width="170" />
-      <el-table-column label="操作" width="220" fixed="right">
+      <el-table-column prop="createdAt" label="注册时间" min-width="170" />
+      <el-table-column label="操作" min-width="300">
         <template #default="{ row }">
-          <el-button size="small" text type="primary" @click="openEdit(row)">编辑</el-button>
-          <el-button size="small" text :type="row.status === 1 ? 'warning' : 'success'" @click="toggleStatus(row)">
-            {{ row.status === 1 ? '禁用' : '启用' }}
-          </el-button>
-          <el-button size="small" text type="primary" @click="openReset(row)">重置密码</el-button>
-          <el-button size="small" text type="danger" @click="remove(row)">删除</el-button>
+          <div class="ops">
+            <el-button size="small" text type="primary" @click="openEdit(row)">编辑</el-button>
+            <el-button
+              v-if="row.id !== currentUserId"
+              size="small"
+              text
+              :type="row.status === 1 ? 'warning' : 'success'"
+              @click="toggleStatus(row)"
+            >
+              {{ row.status === 1 ? '禁用' : '启用' }}
+            </el-button>
+            <el-button v-if="row.id !== currentUserId" size="small" text type="primary" @click="openReset(row)">重置密码</el-button>
+            <el-button v-if="row.id !== currentUserId" size="small" text type="danger" @click="remove(row)">删除</el-button>
+          </div>
         </template>
       </el-table-column>
     </el-table>
@@ -122,7 +132,7 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, reactive, ref } from 'vue'
+import { computed, onMounted, reactive, ref } from 'vue'
 import { ElMessage, ElMessageBox, type FormInstance, type FormRules } from 'element-plus'
 import {
   getAdminUsersApi,
@@ -133,6 +143,10 @@ import {
   deleteAdminUserApi
 } from '@/api/admin'
 import type { UserInfo } from '@/types'
+import { useAuthStore } from '@/stores/auth'
+
+const auth = useAuthStore()
+const currentUserId = computed(() => auth.userInfo?.id)
 
 const list = ref<UserInfo[]>([])
 const total = ref(0)
@@ -323,8 +337,8 @@ async function remove(row: UserInfo) {
   }
   try {
     await deleteAdminUserApi(row.id)
+    await load()
     ElMessage.success('删除成功')
-    load()
   } catch {
   }
 }
@@ -362,5 +376,16 @@ onMounted(load)
   margin-top: 16px;
   display: flex;
   justify-content: flex-end;
+}
+
+.ops {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  white-space: nowrap;
+}
+
+.phone-cell {
+  white-space: nowrap;
 }
 </style>

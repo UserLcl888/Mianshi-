@@ -8,11 +8,29 @@
 
       <nav class="nav">
         <router-link to="/" class="nav-item" exact-active-class="active">首页</router-link>
-        <template v-for="cat in categories" :key="cat.id">
+        <template v-for="cat in visibleCategories" :key="cat.id">
           <router-link :to="`/category/${cat.slug}`" class="nav-item" :class="{ active: isCategoryActive(cat.slug) }">
             {{ cat.name }}
           </router-link>
         </template>
+        <el-dropdown v-if="moreCategories.length" trigger="click" :teleported="false" @command="onCategoryCommand">
+          <span class="nav-item category-trigger">
+            更多主题
+            <el-icon class="el-icon--right"><ArrowDown /></el-icon>
+          </span>
+          <template #dropdown>
+            <el-dropdown-menu class="category-menu">
+              <el-dropdown-item
+                v-for="cat in moreCategories"
+                :key="cat.id"
+                :command="cat.slug"
+                :class="{ 'menu-active': isCategoryActive(cat.slug) }"
+              >
+                {{ cat.name }}
+              </el-dropdown-item>
+            </el-dropdown-menu>
+          </template>
+        </el-dropdown>
       </nav>
 
       <div class="header-right">
@@ -55,11 +73,17 @@ const route = useRoute()
 const auth = useAuthStore()
 const categoryStore = useCategoryStore()
 const categories = computed(() => categoryStore.tree)
+const visibleCategories = computed(() => categories.value.slice(0, 13))
+const moreCategories = computed(() => categories.value.slice(13))
 const isAdmin = computed(() => auth.userInfo?.role === 'ADMIN')
 
 function isCategoryActive(slug: string): boolean {
   const current = String(route.params.slug || '')
   return current === slug || current.startsWith(`${slug}-`)
+}
+
+function onCategoryCommand(slug: string) {
+  router.push(`/category/${slug}`)
 }
 
 onMounted(() => {
@@ -128,7 +152,6 @@ async function onCommand(command: string) {
   align-items: center;
   justify-content: center;
   gap: 4px;
-  overflow-x: auto;
 }
 
 .nav-item {
@@ -149,6 +172,26 @@ async function onCommand(command: string) {
   color: #a87f18;
   font-weight: 600;
   box-shadow: inset 0 -2px 0 var(--app-accent);
+}
+
+.category-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  cursor: pointer;
+  outline: none;
+  user-select: none;
+}
+
+.category-menu {
+  max-height: 60vh;
+  overflow-y: auto;
+}
+
+.category-menu :deep(.el-dropdown-menu__item.menu-active) {
+  color: #a87f18;
+  font-weight: 600;
+  background: var(--app-accent-soft);
 }
 
 .header-right {
