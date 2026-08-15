@@ -1,6 +1,9 @@
 package com.interview.service;
 
 import com.interview.dto.VOs;
+import com.vladsch.flexmark.ext.gfm.strikethrough.StrikethroughExtension;
+import com.vladsch.flexmark.ext.gfm.tasklist.TaskListExtension;
+import com.vladsch.flexmark.ext.tables.TablesExtension;
 import com.vladsch.flexmark.html.HtmlRenderer;
 import com.vladsch.flexmark.parser.Parser;
 import com.vladsch.flexmark.util.data.MutableDataSet;
@@ -33,11 +36,18 @@ public class MarkdownService {
                 .allowAttributes("class").matching(Pattern.compile("(language-[\\w-]+|hljs)")).onElements("code")
                 .allowAttributes("href").onElements("a")
                 .allowAttributes("src", "alt").onElements("img")
+                .allowElements("input")
+                .allowAttributes("type", "checked", "disabled").onElements("input")
                 .toFactory();
     }
 
     public String render(String markdown) {
         MutableDataSet options = new MutableDataSet();
+        options.set(Parser.EXTENSIONS, List.of(
+                TablesExtension.create(),
+                StrikethroughExtension.create(),
+                TaskListExtension.create()
+        ));
         Parser parser = Parser.builder(options).build();
         HtmlRenderer renderer = HtmlRenderer.builder(options).build();
         String html = renderer.render(parser.parse(markdown == null ? "" : markdown));
