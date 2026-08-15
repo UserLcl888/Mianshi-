@@ -5,11 +5,12 @@
     <div class="filters">
       <el-select v-model="query.categoryId" placeholder="全部分类" clearable style="width: 200px">
         <template v-for="cat in categories" :key="cat.id">
-          <el-option-group v-if="cat.children.length" :label="cat.name">
-            <el-option :label="cat.name" :value="cat.id" />
-            <el-option v-for="sub in cat.children" :key="sub.id" :label="`　${sub.name}`" :value="sub.id" />
-          </el-option-group>
-          <el-option v-else :label="cat.name" :value="cat.id" />
+          <el-option :label="cat.name" :value="cat.id">
+            <span :class="{ 'cat-parent-label': cat.children.length }">{{ cat.name }}</span>
+          </el-option>
+          <el-option v-for="sub in cat.children" :key="sub.id" :label="sub.name" :value="sub.id">
+            <span class="cat-child-label">{{ sub.name }}</span>
+          </el-option>
         </template>
       </el-select>
       <el-select v-model="query.difficulty" placeholder="全部难度" clearable style="width: 140px">
@@ -170,5 +171,13 @@ onMounted(async () => {
   margin-top: 16px;
   display: flex;
   justify-content: flex-end;
+}
+
+.cat-parent-label {
+  font-weight: 600;
+}
+
+.cat-child-label {
+  padding-left: 18px;
 }
 </style>
