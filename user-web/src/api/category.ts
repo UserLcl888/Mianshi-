@@ -6,6 +6,7 @@ export interface CategorySavePayload {
   slug: string
   parentId: number
   sortOrder?: number
+  priority?: number
   description?: string
 }
 

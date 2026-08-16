@@ -20,6 +20,15 @@ export interface HomeOverview {
   hotTags: HotTag[]
 }
 
+export interface DailyQuote {
+  content: string
+  author: string
+}
+
 export async function getHomeOverviewApi(): Promise<HomeOverview> {
   return request.get('/home/overview')
+}
+
+export async function getHomeQuoteApi(): Promise<DailyQuote> {
+  return request.get('/home/quote')
 }

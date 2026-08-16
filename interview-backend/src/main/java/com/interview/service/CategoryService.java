@@ -45,7 +45,10 @@ public class CategoryService {
             }
         }
         List<Category> all = categoryMapper.selectList(
-                new LambdaQueryWrapper<Category>().orderByAsc(Category::getSortOrder).orderByAsc(Category::getId));
+                new LambdaQueryWrapper<Category>()
+                        .orderByDesc(Category::getPriority)
+                        .orderByAsc(Category::getName)
+                        .orderByAsc(Category::getId));
         List<VOs.CategoryVO> tree = buildTree(all, 0L);
         try {
             redis.opsForValue().set(CACHE_KEY, objectMapper.writeValueAsString(tree), Duration.ofMinutes(30));
@@ -84,6 +87,7 @@ public class CategoryService {
                 vo.setSlug(c.getSlug());
                 vo.setParentId(c.getParentId());
                 vo.setSortOrder(c.getSortOrder());
+                vo.setPriority(c.getPriority());
                 vo.setDescription(c.getDescription());
                 vo.setChildren(buildTree(all, c.getId()));
                 result.add(vo);
@@ -113,6 +117,7 @@ public class CategoryService {
         category.setSlug(dto.getSlug());
         category.setParentId(dto.getParentId() == null ? 0L : dto.getParentId());
         category.setSortOrder(dto.getSortOrder() == null ? 0 : dto.getSortOrder());
+        category.setPriority(dto.getPriority() == null ? 0 : dto.getPriority());
         category.setDescription(dto.getDescription() == null ? "" : dto.getDescription());
         categoryMapper.insert(category);
         clearCache();
@@ -128,6 +133,7 @@ public class CategoryService {
         category.setName(dto.getName());
         category.setSlug(dto.getSlug());
         category.setSortOrder(dto.getSortOrder() == null ? 0 : dto.getSortOrder());
+        category.setPriority(dto.getPriority() == null ? 0 : dto.getPriority());
         category.setDescription(dto.getDescription() == null ? "" : dto.getDescription());
         categoryMapper.updateById(category);
         clearCache();

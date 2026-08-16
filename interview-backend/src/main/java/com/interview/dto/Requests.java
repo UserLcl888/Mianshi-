@@ -121,6 +121,7 @@ public class Requests {
         private String slug;
         private Long parentId = 0L;
         private Integer sortOrder = 0;
+        private Integer priority = 0;
         private String description;
     }
 

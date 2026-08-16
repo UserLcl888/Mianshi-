@@ -5,10 +5,12 @@ import com.interview.common.Result;
 import com.interview.entity.Article;
 import com.interview.entity.ArticleTag;
 import com.interview.entity.Category;
+import com.interview.entity.DailyQuote;
 import com.interview.entity.Tag;
 import com.interview.mapper.ArticleMapper;
 import com.interview.mapper.ArticleTagMapper;
 import com.interview.mapper.CategoryMapper;
+import com.interview.mapper.DailyQuoteMapper;
 import com.interview.service.TagService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -19,6 +21,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.time.LocalDate;
 
 @RestController
 @RequestMapping("/api/home")
@@ -29,6 +32,24 @@ public class HomeController {
     private final CategoryMapper categoryMapper;
     private final TagService tagService;
     private final ArticleTagMapper articleTagMapper;
+    private final DailyQuoteMapper dailyQuoteMapper;
+
+    /**
+     * 每日一句：按日期轮换（当天固定，次日切换）。
+     */
+    @GetMapping("/quote")
+    public Result<Map<String, String>> quote() {
+        List<DailyQuote> list = dailyQuoteMapper.selectList(
+                new LambdaQueryWrapper<DailyQuote>().orderByAsc(DailyQuote::getId));
+        if (list.isEmpty()) {
+            return Result.ok(Map.of());
+        }
+        long day = LocalDate.now().toEpochDay();
+        DailyQuote q = list.get((int) Math.floorMod(day, list.size()));
+        return Result.ok(Map.of(
+                "content", q.getContent() == null ? "" : q.getContent(),
+                "author", q.getAuthor() == null ? "" : q.getAuthor()));
+    }
 
     /**
      * 首页公开数据：站点统计 + 热门文档 + 热门标签。

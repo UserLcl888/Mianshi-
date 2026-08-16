@@ -105,7 +105,7 @@ import AppHeader from '@/components/layout/AppHeader.vue'
 import CategorySidebar from '@/components/layout/CategorySidebar.vue'
 import { useCategoryStore } from '@/stores/category'
 import { useAuthStore } from '@/stores/auth'
-import { getHomeOverviewApi, type HomeOverview } from '@/api/home'
+import { getHomeOverviewApi, getHomeQuoteApi, type HomeOverview } from '@/api/home'
 
 const categoryStore = useCategoryStore()
 const auth = useAuthStore()
@@ -114,12 +114,7 @@ const overview = ref<HomeOverview | null>(null)
 const categories = computed(() => categoryStore.tree)
 const visibleCategories = computed(() => categories.value.slice(0, 8))
 
-const quotes = [
-  { text: '代码改变世界，技术成就梦想。', author: '每日一句' },
-  { text: '每一次坚持，都在为更好的自己铺路。', author: '每日一句' },
-  { text: '怕什么真理无穷，进一寸有一寸的欢喜。', author: '每日一句' }
-]
-const quote = quotes[Math.floor(Math.random() * quotes.length)]
+const quote = ref({ text: '每一天都是新的开始，加油！', author: '每日一句' })
 
 const banners = [
   { src: '/images/java-banner.png', title: 'Java 面试精选', desc: '集合、并发、JVM 高频考点' },
@@ -151,6 +146,14 @@ onMounted(async () => {
     overview.value = await getHomeOverviewApi()
   } catch {
     overview.value = { articleCount: 0, viewCount: 0, hotArticles: [], hotTags: [] }
+  }
+  try {
+    const q = await getHomeQuoteApi()
+    if (q.content) {
+      quote.value = { text: q.content, author: q.author || '每日一句' }
+    }
+  } catch {
+    // 保持默认语录
   }
 })
 </script>
