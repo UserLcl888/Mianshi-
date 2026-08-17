@@ -38,7 +38,9 @@
         </template>
       </el-table-column>
       <el-table-column prop="viewCount" label="浏览" width="90" />
-      <el-table-column prop="updatedAt" label="更新时间" width="170" />
+      <el-table-column label="更新时间" min-width="170">
+        <template #default="{ row }">{{ formatDateTime(row.updatedAt) }}</template>
+      </el-table-column>
       <el-table-column label="操作" width="150" fixed="right">
         <template #default="{ row }">
           <el-button size="small" text type="primary" @click="$router.push(`/admin/articles/${row.slug}/edit`)">编辑</el-button>
@@ -65,6 +67,7 @@ import { ElMessage, ElMessageBox } from 'element-plus'
 import { useCategoryStore } from '@/stores/category'
 import { getAdminArticlesApi, deleteArticleApi } from '@/api/admin'
 import type { ArticleListItem } from '@/types'
+import { formatDateTime } from '@/utils/format'
 
 const categoryStore = useCategoryStore()
 const categories = computed(() => categoryStore.tree)

@@ -8,7 +8,9 @@
     <el-table :data="list" stripe>
       <el-table-column prop="id" label="ID" width="80" />
       <el-table-column prop="name" label="标签名" min-width="200" />
-      <el-table-column prop="createdAt" label="创建时间" width="190" />
+      <el-table-column label="创建时间" width="190">
+        <template #default="{ row }">{{ formatDateTime(row.createdAt) }}</template>
+      </el-table-column>
       <el-table-column label="操作" width="150" fixed="right">
         <template #default="{ row }">
           <el-button size="small" text type="primary" @click="openDialog(row)">重命名</el-button>
@@ -42,6 +44,7 @@ import {
   deleteAdminTagApi,
   type AdminTag
 } from '@/api/admin'
+import { formatDateTime } from '@/utils/format'
 
 const list = ref<AdminTag[]>([])
 const saving = ref(false)

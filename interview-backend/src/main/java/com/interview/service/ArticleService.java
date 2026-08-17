@@ -18,6 +18,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
 import java.time.Duration;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -187,6 +188,7 @@ public class ArticleService {
             article.setSlug(slug);
         }
         applySave(article, dto);
+        article.setUpdatedAt(LocalDateTime.now());
         articleMapper.updateById(article);
         tagService.replaceArticleTags(article.getId(), dto.getTags());
         categoryService.clearCache();

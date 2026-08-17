@@ -11,7 +11,9 @@
       <el-table-column prop="targetType" label="对象类型" width="110" />
       <el-table-column prop="targetId" label="对象ID" width="90" />
       <el-table-column prop="detail" label="详情" min-width="260" show-overflow-tooltip />
-      <el-table-column prop="createdAt" label="时间" width="180" />
+      <el-table-column label="时间" width="180">
+        <template #default="{ row }">{{ formatDateTime(row.createdAt) }}</template>
+      </el-table-column>
     </el-table>
 
     <div class="pager">
@@ -29,6 +31,7 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue'
 import { getAdminLogsApi, type AdminLogItem } from '@/api/admin'
+import { formatDateTime } from '@/utils/format'
 
 const list = ref<AdminLogItem[]>([])
 const total = ref(0)

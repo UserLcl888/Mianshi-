@@ -35,7 +35,9 @@
           </el-tag>
         </template>
       </el-table-column>
-      <el-table-column prop="createdAt" label="注册时间" min-width="170" />
+      <el-table-column label="注册时间" min-width="170">
+        <template #default="{ row }">{{ formatDateTime(row.createdAt) }}</template>
+      </el-table-column>
       <el-table-column label="操作" min-width="300">
         <template #default="{ row }">
           <div class="ops">
@@ -144,6 +146,7 @@ import {
 } from '@/api/admin'
 import type { UserInfo } from '@/types'
 import { useAuthStore } from '@/stores/auth'
+import { formatDateTime } from '@/utils/format'
 
 const auth = useAuthStore()
 const currentUserId = computed(() => auth.userInfo?.id)

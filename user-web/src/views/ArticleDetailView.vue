@@ -18,7 +18,7 @@
               <DifficultyTag :difficulty="detail.article.difficulty" />
               <el-tag v-for="t in detail.article.tags" :key="t" size="small" effect="plain" type="warning">{{ t }}</el-tag>
               <span class="meta-text">{{ detail.article.viewCount }} 次浏览</span>
-              <span class="meta-text">更新于 {{ detail.article.updatedAt }}</span>
+              <span class="meta-text">更新于 {{ formatDateTime(detail.article.updatedAt) }}</span>
               <a
                 v-if="detail.article.docUrl"
                 :href="detail.article.docUrl"
@@ -71,6 +71,7 @@ import { getArticleDetail, recordViewApi } from '@/api/article'
 import { useCategoryStore } from '@/stores/category'
 import { useAuthStore } from '@/stores/auth'
 import { getCategoryPath } from '@/utils/category'
+import { formatDateTime } from '@/utils/format'
 import type { ArticleDetailResp } from '@/types'
 
 const route = useRoute()
