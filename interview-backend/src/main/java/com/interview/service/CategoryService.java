@@ -34,7 +34,6 @@ public class CategoryService {
     private final ArticleMapper articleMapper;
     private final StringRedisTemplate redis;
     private final ObjectMapper objectMapper;
-    private final ContentCacheService contentCacheService;
 
     public List<VOs.CategoryVO> tree() {
         String cached = redis.opsForValue().get(CACHE_KEY);
@@ -122,7 +121,6 @@ public class CategoryService {
         category.setDescription(dto.getDescription() == null ? "" : dto.getDescription());
         categoryMapper.insert(category);
         clearCache();
-        contentCacheService.bump();
         return category;
     }
 
@@ -139,7 +137,6 @@ public class CategoryService {
         category.setDescription(dto.getDescription() == null ? "" : dto.getDescription());
         categoryMapper.updateById(category);
         clearCache();
-        contentCacheService.bump();
         return category;
     }
 
@@ -152,6 +149,5 @@ public class CategoryService {
         }
         categoryMapper.deleteById(id);
         clearCache();
-        contentCacheService.bump();
     }
 }

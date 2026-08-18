@@ -1,9 +1,7 @@
 package com.interview.dto;
 
-import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
-import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -39,8 +37,6 @@ public class VOs {
 
     @Data
     @Builder
-    @NoArgsConstructor
-    @AllArgsConstructor
     public static class ArticleListItemVO {
         private Long id;
         private String slug;
@@ -71,8 +67,6 @@ public class VOs {
 
     @Data
     @Builder
-    @NoArgsConstructor
-    @AllArgsConstructor
     public static class ArticleDetailVO {
         private Long id;
         private String slug;

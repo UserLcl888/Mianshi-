@@ -26,7 +26,6 @@ public class StatsService {
     private final UserMapper userMapper;
     private final ArticleMapper articleMapper;
     private final CategoryMapper categoryMapper;
-    private final ViewCountService viewCountService;
 
     public Map<String, Object> overview() {
         Map<String, Object> data = new LinkedHashMap<>();
@@ -38,50 +37,41 @@ public class StatsService {
         return data;
     }
 
-    /**
-     * 浏览量 Top N：一条 JOIN 带出分类名，再叠加 Redis 未落库增量。
-     */
     public List<VOs.TopArticleVO> topArticles(int limit) {
-        int safeLimit = Math.min(Math.max(limit, 1), 50);
-        List<Map<String, Object>> rows = articleMapper.selectTopPublished(safeLimit);
-        if (rows.isEmpty()) {
-            return List.of();
-        }
-        List<Long> ids = rows.stream().map(r -> ((Number) r.get("id")).longValue()).toList();
-        Map<Long, Long> increments = viewCountService.countersOf(ids);
-        return rows.stream().map(r -> {
+        List<Article> articles = articleMapper.selectList(new LambdaQueryWrapper<Article>()
+                .eq(Article::getStatus, 1)
+                .orderByDesc(Article::getViewCount)
+                .last("LIMIT " + Math.min(Math.max(limit, 1), 50)));
+        return articles.stream().map(a -> {
             VOs.TopArticleVO vo = new VOs.TopArticleVO();
-            vo.setId(((Number) r.get("id")).longValue());
-            vo.setTitle(String.valueOf(r.get("title")));
-            long base = ((Number) r.get("viewCount")).longValue();
-            vo.setViewCount(base + increments.getOrDefault(vo.getId(), 0L));
-            vo.setCategoryName(String.valueOf(r.get("categoryName")));
+            vo.setId(a.getId());
+            vo.setTitle(a.getTitle());
+            vo.setViewCount(a.getViewCount());
+            Category category = categoryMapper.selectById(a.getCategoryId());
+            vo.setCategoryName(category == null ? "" : category.getName());
             return vo;
         }).toList();
     }
 
     /**
      * 各顶级分类的统计：聚合其全部子分类的题目数与浏览量。
-     * 聚合由 SQL GROUP BY 完成，仅分类树在内存组装。
      */
     public List<VOs.CategoryStatsVO> categoryStats() {
         List<Category> all = categoryMapper.selectList(
                 new LambdaQueryWrapper<Category>().orderByAsc(Category::getSortOrder));
+        List<Article> articles = articleMapper.selectList(null);
+
         Map<Long, Integer> countByCat = new HashMap<>();
         Map<Long, Long> viewsByCat = new HashMap<>();
-        for (Map<String, Object> row : articleMapper.selectCategoryAgg()) {
-            Long categoryId = ((Number) row.get("categoryId")).longValue();
-            countByCat.put(categoryId, ((Number) row.get("articleCount")).intValue());
-            viewsByCat.put(categoryId, ((Number) row.get("viewCount")).longValue());
+        for (Article a : articles) {
+            countByCat.merge(a.getCategoryId(), 1, Integer::sum);
+            viewsByCat.merge(a.getCategoryId(), a.getViewCount() == null ? 0L : a.getViewCount(), Long::sum);
         }
 
         Map<Long, List<Long>> children = new HashMap<>();
         for (Category c : all) {
             children.computeIfAbsent(c.getParentId(), k -> new ArrayList<>()).add(c.getId());
         }
-
-        List<Long> allIds = all.stream().map(Category::getId).toList();
-        Map<Long, Long> increments = viewCountService.countersOf(allIds);
 
         List<VOs.CategoryStatsVO> result = new ArrayList<>();
         for (Category c : all) {
@@ -104,7 +94,6 @@ public class StatsService {
             for (Long id : ids) {
                 count += countByCat.getOrDefault(id, 0);
                 views += viewsByCat.getOrDefault(id, 0L);
-                views += increments.getOrDefault(id, 0L);
             }
             result.add(VOs.CategoryStatsVO.builder()
                     .id(c.getId())

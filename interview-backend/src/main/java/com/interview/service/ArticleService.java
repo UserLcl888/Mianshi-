@@ -1,11 +1,8 @@
 package com.interview.service;
 
-import cn.dev33.satoken.stp.StpUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.interview.common.BizException;
 import com.interview.common.ErrorCode;
 import com.interview.common.PageResult;
@@ -22,49 +19,33 @@ import org.springframework.util.StringUtils;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
 public class ArticleService {
-
-    private static final Duration LIST_CACHE_TTL = Duration.ofMinutes(10);
-    private static final Duration DETAIL_CACHE_TTL = Duration.ofMinutes(30);
 
     private final ArticleMapper articleMapper;
     private final CategoryService categoryService;
     private final TagService tagService;
     private final MarkdownService markdownService;
     private final StringRedisTemplate redis;
-    private final ObjectMapper objectMapper;
-    private final ContentCacheService contentCacheService;
-    private final ViewCountService viewCountService;
 
     public PageResult<VOs.ArticleListItemVO> list(Long categoryId, String difficulty, long page, long size) {
-        String difficultyNorm = StringUtils.hasText(difficulty) ? normalizeDifficulty(difficulty) : null;
-        String cacheKey = listCacheKey(categoryId, difficultyNorm, page, size);
-        PageResult<VOs.ArticleListItemVO> cached = readListCache(cacheKey);
-        if (cached != null) {
-            refreshViewCounts(cached.getList());
-            return cached;
-        }
-
         LambdaQueryWrapper<Article> qw = new LambdaQueryWrapper<>();
         qw.eq(Article::getStatus, 1);
-        if (StringUtils.hasText(difficultyNorm)) {
-            qw.eq(Article::getDifficulty, difficultyNorm);
+        if (StringUtils.hasText(difficulty)) {
+            qw.eq(Article::getDifficulty, normalizeDifficulty(difficulty));
         }
         if (categoryId != null) {
             qw.in(Article::getCategoryId, categoryService.collectIds(categoryId));
         }
         qw.orderByAsc(Article::getId);
         Page<Article> result = articleMapper.selectPage(new Page<>(page, size), qw);
-        PageResult<VOs.ArticleListItemVO> pageResult = toPageResult(result, page, size);
-        writeListCache(cacheKey, pageResult);
-        refreshViewCounts(pageResult.getList());
-        return pageResult;
+        List<VOs.ArticleListItemVO> list = result.getRecords().stream().map(this::toListItem).toList();
+        return PageResult.of(page, size, result.getTotal(), list);
     }
 
     /**
@@ -80,26 +61,11 @@ public class ArticleService {
         }
         qw.orderByDesc(Article::getId);
         Page<Article> result = articleMapper.selectPage(new Page<>(page, size), qw);
-        PageResult<VOs.ArticleListItemVO> pageResult = toPageResult(result, page, size);
-        refreshViewCounts(pageResult.getList());
-        return pageResult;
+        List<VOs.ArticleListItemVO> list = result.getRecords().stream().map(this::toListItem).toList();
+        return PageResult.of(page, size, result.getTotal(), list);
     }
 
     public VOs.DetailRespVO detail(String slug) {
-        String cacheKey = detailCacheKey(slug);
-        String cached = redis.opsForValue().get(cacheKey);
-        if (cached != null) {
-            try {
-                VOs.DetailRespVO resp = objectMapper.readValue(cached, new TypeReference<VOs.DetailRespVO>() {
-                });
-                if (resp.getArticle() != null) {
-                    resp.getArticle().setViewCount(displayViewCount(resp.getArticle().getId()));
-                }
-                return resp;
-            } catch (JsonProcessingException ignored) {
-            }
-        }
-
         Article article = articleMapper.selectOne(new LambdaQueryWrapper<Article>()
                 .eq(Article::getSlug, slug).eq(Article::getStatus, 1));
         if (article == null) {
@@ -112,31 +78,28 @@ public class ArticleService {
         resp.setArticle(detailVO);
         resp.setPrev(neighbor(article.getId(), article.getCategoryId(), false));
         resp.setNext(neighbor(article.getId(), article.getCategoryId(), true));
-        try {
-            redis.opsForValue().set(cacheKey, objectMapper.writeValueAsString(resp), DETAIL_CACHE_TTL);
-        } catch (JsonProcessingException ignored) {
-        }
-        detailVO.setViewCount(displayViewCount(article.getId()));
         return resp;
     }
 
     /**
      * 浏览上报：同一用户 24 小时内对同一题目只计一次浏览。
-     * 计数先进 Redis 聚合，由定时任务批量落库；返回值为 DB + Redis 的实时总量，
-     * 并发下不再依赖 +1 的近似值。
+     * 由前端在停留超过 30 秒后调用。
      */
     public Long recordView(Long articleId) {
         Article article = articleMapper.selectById(articleId);
         if (article == null || article.getStatus() == null || article.getStatus() != 1) {
             throw new BizException(ErrorCode.NOT_FOUND, "题目不存在或已下架");
         }
-        Long userId = StpUtil.getLoginIdAsLong();
-        String dedupKey = "view:user:" + userId + ":article:" + articleId;
-        Boolean first = redis.opsForValue().setIfAbsent(dedupKey, "1", Duration.ofHours(24));
+        Long userId = cn.dev33.satoken.stp.StpUtil.getLoginIdAsLong();
+        String key = "view:user:" + userId + ":article:" + articleId;
+        Boolean first = redis.opsForValue().setIfAbsent(key, "1", Duration.ofHours(24));
         if (Boolean.TRUE.equals(first)) {
-            viewCountService.increment(articleId);
+            articleMapper.update(null, new LambdaUpdateWrapper<Article>()
+                    .eq(Article::getId, articleId)
+                    .setSql("view_count = view_count + 1"));
+            return article.getViewCount() + 1;
         }
-        return displayViewCount(articleId);
+        return article.getViewCount();
     }
 
     private VOs.ArticleBriefVO neighbor(Long id, Long categoryId, boolean next) {
@@ -159,16 +122,7 @@ public class ArticleService {
         return vo;
     }
 
-    private PageResult<VOs.ArticleListItemVO> toPageResult(Page<Article> result, long page, long size) {
-        List<Long> ids = result.getRecords().stream().map(Article::getId).toList();
-        Map<Long, List<String>> tagsByArticle = tagService.namesByArticleIds(ids);
-        List<VOs.ArticleListItemVO> list = result.getRecords().stream()
-                .map(a -> toListItem(a, tagsByArticle.getOrDefault(a.getId(), List.of())))
-                .toList();
-        return PageResult.of(page, size, result.getTotal(), list);
-    }
-
-    private VOs.ArticleListItemVO toListItem(Article a, List<String> tags) {
+    private VOs.ArticleListItemVO toListItem(Article a) {
         return VOs.ArticleListItemVO.builder()
                 .id(a.getId())
                 .slug(a.getSlug())
@@ -176,14 +130,13 @@ public class ArticleService {
                 .summary(a.getSummary())
                 .categoryId(a.getCategoryId())
                 .difficulty(a.getDifficulty())
-                .tags(tags)
+                .tags(tagService.namesByArticleId(a.getId()))
                 .viewCount(a.getViewCount())
                 .updatedAt(a.getUpdatedAt())
                 .build();
     }
 
     private VOs.ArticleDetailVO toDetail(Article a, Category category) {
-        Map<Long, List<String>> tagsByArticle = tagService.namesByArticleIds(List.of(a.getId()));
         return VOs.ArticleDetailVO.builder()
                 .id(a.getId())
                 .slug(a.getSlug())
@@ -194,44 +147,13 @@ public class ArticleService {
                 .categoryName(category.getName())
                 .categorySlug(category.getSlug())
                 .difficulty(a.getDifficulty())
-                .tags(tagsByArticle.getOrDefault(a.getId(), List.of()))
+                .tags(tagService.namesByArticleId(a.getId()))
                 .contentMd(a.getContentMd())
                 .contentHtml(a.getContentHtml())
                 .toc(markdownService.extractToc(a.getContentHtml()))
                 .viewCount(a.getViewCount())
                 .updatedAt(a.getUpdatedAt())
                 .build();
-    }
-
-    /**
-     * 批量刷新列表项的实时浏览量：DB 已落库值 + Redis 未落库增量。
-     */
-    private void refreshViewCounts(List<VOs.ArticleListItemVO> items) {
-        if (items == null || items.isEmpty()) {
-            return;
-        }
-        List<Long> ids = items.stream().map(VOs.ArticleListItemVO::getId).toList();
-        Map<Long, Long> dbCounts = loadDbViewCounts(ids);
-        Map<Long, Long> increments = viewCountService.countersOf(ids);
-        for (VOs.ArticleListItemVO item : items) {
-            long base = dbCounts.getOrDefault(item.getId(), item.getViewCount() == null ? 0L : item.getViewCount());
-            item.setViewCount(base + increments.getOrDefault(item.getId(), 0L));
-        }
-    }
-
-    private long displayViewCount(Long articleId) {
-        Map<Long, Long> dbCounts = loadDbViewCounts(List.of(articleId));
-        long base = dbCounts.getOrDefault(articleId, 0L);
-        return base + viewCountService.counterOf(articleId);
-    }
-
-    private Map<Long, Long> loadDbViewCounts(List<Long> ids) {
-        if (ids == null || ids.isEmpty()) {
-            return Map.of();
-        }
-        return articleMapper.selectViewCounts(ids).stream().collect(Collectors.toMap(
-                row -> ((Number) row.get("id")).longValue(),
-                row -> ((Number) row.get("viewCount")).longValue()));
     }
 
     @Transactional
@@ -247,7 +169,6 @@ public class ArticleService {
         articleMapper.insert(article);
         tagService.replaceArticleTags(article.getId(), dto.getTags());
         categoryService.clearCache();
-        contentCacheService.bump();
         return article;
     }
 
@@ -271,7 +192,6 @@ public class ArticleService {
         articleMapper.updateById(article);
         tagService.replaceArticleTags(article.getId(), dto.getTags());
         categoryService.clearCache();
-        contentCacheService.bump();
         return article;
     }
 
@@ -302,36 +222,5 @@ public class ArticleService {
     public void delete(Long id) {
         articleMapper.deleteById(id);
         tagService.replaceArticleTags(id, List.of());
-        contentCacheService.bump();
-    }
-
-    private String listCacheKey(Long categoryId, String difficulty, long page, long size) {
-        return "cache:article:list:v" + contentCacheService.version()
-                + ":" + categoryId + ":" + (difficulty == null ? "" : difficulty)
-                + ":" + page + ":" + size;
-    }
-
-    private String detailCacheKey(String slug) {
-        return "cache:article:detail:v" + contentCacheService.version() + ":" + slug;
-    }
-
-    private PageResult<VOs.ArticleListItemVO> readListCache(String cacheKey) {
-        String cached = redis.opsForValue().get(cacheKey);
-        if (cached == null) {
-            return null;
-        }
-        try {
-            return objectMapper.readValue(cached, new TypeReference<PageResult<VOs.ArticleListItemVO>>() {
-            });
-        } catch (JsonProcessingException e) {
-            return null;
-        }
-    }
-
-    private void writeListCache(String cacheKey, PageResult<VOs.ArticleListItemVO> result) {
-        try {
-            redis.opsForValue().set(cacheKey, objectMapper.writeValueAsString(result), LIST_CACHE_TTL);
-        } catch (JsonProcessingException ignored) {
-        }
     }
 }

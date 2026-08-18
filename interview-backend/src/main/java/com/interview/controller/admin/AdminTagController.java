@@ -9,7 +9,6 @@ import com.interview.entity.Tag;
 import com.interview.mapper.TagMapper;
 import com.interview.mapper.ArticleTagMapper;
 import com.interview.service.AdminLogService;
-import com.interview.service.ContentCacheService;
 import com.interview.service.TagService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -34,7 +33,6 @@ public class AdminTagController {
     private final TagMapper tagMapper;
     private final ArticleTagMapper articleTagMapper;
     private final AdminLogService adminLogService;
-    private final ContentCacheService contentCacheService;
 
     @GetMapping
     public Result<List<Tag>> list() {
@@ -46,7 +44,6 @@ public class AdminTagController {
         Tag tag = new Tag();
         tag.setName(dto.getName());
         tagMapper.insert(tag);
-        contentCacheService.bump();
         adminLogService.write("TAG_CREATE", "TAG", tag.getId(), "新增标签 " + tag.getName());
         return Result.ok(tag);
     }
@@ -59,7 +56,6 @@ public class AdminTagController {
         }
         tag.setName(dto.getName());
         tagMapper.updateById(tag);
-        contentCacheService.bump();
         adminLogService.write("TAG_UPDATE", "TAG", id, "编辑标签 " + tag.getName());
         return Result.ok(tag);
     }
@@ -68,7 +64,6 @@ public class AdminTagController {
     public Result<Void> delete(@PathVariable Long id) {
         articleTagMapper.deleteByTagId(id);
         tagMapper.deleteById(id);
-        contentCacheService.bump();
         adminLogService.write("TAG_DELETE", "TAG", id, "删除标签");
         return Result.ok();
     }
