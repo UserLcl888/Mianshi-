@@ -40,6 +40,10 @@ sa-token:
   token-style: uuid
   is-log: false
 
+app:
+  view:
+    flush-interval-ms: 60000
+
 logging:
   level:
     com.interview: info
