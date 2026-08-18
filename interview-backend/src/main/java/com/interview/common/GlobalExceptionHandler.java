@@ -36,8 +36,7 @@ public class GlobalExceptionHandler {
             case 40300 -> HttpStatus.FORBIDDEN;
             case 40400 -> HttpStatus.NOT_FOUND;
             case 40900 -> HttpStatus.CONFLICT;
-            case 50000 -> HttpStatus.INTERNAL_SERVER_ERROR;
-            default -> HttpStatus.INTERNAL_SERVER_ERROR;
+            default -> HttpStatus.OK;
         };
         return ResponseEntity.status(status).body(Result.fail(e.getCode(), e.getMessage()));
     }
