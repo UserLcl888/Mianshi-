@@ -5,8 +5,6 @@ import com.interview.common.PageResult;
 import com.interview.common.Result;
 import com.interview.dto.Requests;
 import com.interview.dto.VOs;
-import com.interview.entity.Article;
-import com.interview.service.AdminLogService;
 import com.interview.service.ArticleService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -27,7 +25,6 @@ import org.springframework.web.bind.annotation.RestController;
 public class AdminArticleController {
 
     private final ArticleService articleService;
-    private final AdminLogService adminLogService;
 
     @GetMapping
     public Result<PageResult<VOs.ArticleListItemVO>> list(
@@ -39,23 +36,18 @@ public class AdminArticleController {
     }
 
     @PostMapping
-    public Result<Article> create(@Valid @RequestBody Requests.ArticleSaveDTO dto) {
-        Article article = articleService.create(dto);
-        adminLogService.write("ARTICLE_CREATE", "ARTICLE", article.getId(), "新增题目：" + article.getTitle());
-        return Result.ok(article);
+    public Result<VOs.ArticleVO> create(@Valid @RequestBody Requests.ArticleSaveDTO dto) {
+        return Result.ok(articleService.create(dto));
     }
 
     @PutMapping("/{id}")
-    public Result<Article> update(@PathVariable Long id, @Valid @RequestBody Requests.ArticleSaveDTO dto) {
-        Article article = articleService.update(id, dto);
-        adminLogService.write("ARTICLE_UPDATE", "ARTICLE", id, "编辑题目：" + article.getTitle());
-        return Result.ok(article);
+    public Result<VOs.ArticleVO> update(@PathVariable Long id, @Valid @RequestBody Requests.ArticleSaveDTO dto) {
+        return Result.ok(articleService.update(id, dto));
     }
 
     @DeleteMapping("/{id}")
     public Result<Void> delete(@PathVariable Long id) {
         articleService.delete(id);
-        adminLogService.write("ARTICLE_DELETE", "ARTICLE", id, "删除题目");
         return Result.ok();
     }
 

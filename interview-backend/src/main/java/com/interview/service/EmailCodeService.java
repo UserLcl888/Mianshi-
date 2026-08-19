@@ -17,6 +17,7 @@ import org.springframework.util.StringUtils;
 
 import java.security.SecureRandom;
 import java.time.Duration;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
@@ -55,9 +56,9 @@ public class EmailCodeService {
     /**
      * 发送验证码：scene 仅允许 login / reset。开发环境（mock=true）不真实发信，验证码打印到日志并返回。
      *
-     * @return mock 模式下返回验证码，生产返回 null
+     * @return mock 模式下返回验证码，生产返回空 Map
      */
-    public String send(String email, String scene) {
+    public Map<String, String> send(String email, String scene) {
         String mail = email == null ? "" : email.trim();
         String sc = scene == null ? "" : scene.trim();
         if (!EMAIL_PATTERN.matcher(mail).matches()) {
@@ -88,10 +89,12 @@ public class EmailCodeService {
         String code = String.valueOf(RANDOM.nextInt(900000) + 100000);
         redis.opsForValue().set(codeKey(mail, sc), code, Duration.ofMinutes(ttlMinutes));
         redis.opsForValue().set(cooldownKey, "1", Duration.ofSeconds(resendSeconds));
+        // 重发即重置错误计数，避免旧 tries key 残留
+        redis.delete(codeKey(mail, sc) + ":tries");
 
         if (mock) {
             log.info("[MOCK EMAIL] 收件人={}, 场景={}, 验证码={}", mail, sc, code);
-            return code;
+            return Map.of("debugCode", code);
         }
         SimpleMailMessage message = new SimpleMailMessage();
         message.setFrom(StringUtils.hasText(from) ? from : mail);
@@ -99,7 +102,7 @@ public class EmailCodeService {
         message.setSubject("【面试题知识库】邮箱验证码");
         message.setText("您的验证码是：" + code + "，5 分钟内有效，请勿泄露给他人。");
         mailSender.send(message);
-        return null;
+        return Map.of();
     }
 
     /**
@@ -124,6 +127,7 @@ public class EmailCodeService {
             throw new BizException(40000, "验证码不存在或已过期，请重新获取");
         }
         Long tries = redis.opsForValue().increment(triesKey);
+        redis.expire(triesKey, Duration.ofMinutes(ttlMinutes));
         if (tries != null && tries > maxTries) {
             redis.delete(key);
             redis.delete(triesKey);

@@ -31,7 +31,7 @@ CREATE TABLE `user` (
   `rootpassword` varchar(50) NOT NULL DEFAULT '' COMMENT '原始密码（演示/联调用）',
   `nickname` varchar(50) NOT NULL DEFAULT '' COMMENT '昵称',
   `avatar` varchar(255) NOT NULL DEFAULT '' COMMENT '头像URL（OSS或静态资源），空=默认头像',
-  `email` varchar(100) NOT NULL DEFAULT '' COMMENT '邮箱',
+  `email` varchar(100) DEFAULT NULL COMMENT '邮箱（可空，唯一；未填写存 NULL 避免空串冲突）',
   `phone` varchar(20) DEFAULT NULL COMMENT '手机号',
   `role` varchar(20) NOT NULL DEFAULT 'USER' COMMENT 'USER/ADMIN',
   `status` tinyint NOT NULL DEFAULT '1' COMMENT '1正常 0禁用',
@@ -39,6 +39,7 @@ CREATE TABLE `user` (
   `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_email` (`email`),
   UNIQUE KEY `uk_phone` (`phone`),
   KEY `idx_status` (`status`),
   KEY `idx_role` (`role`)

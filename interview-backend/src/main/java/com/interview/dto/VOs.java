@@ -1,7 +1,9 @@
 package com.interview.dto;
 
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -37,6 +39,50 @@ public class VOs {
 
     @Data
     @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class TagVO {
+        private Long id;
+        private String name;
+        private LocalDateTime createdAt;
+    }
+
+    @Data
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class ArticleVO {
+        private Long id;
+        private String slug;
+        private String title;
+        private String summary;
+        private String docUrl;
+        private Long categoryId;
+        private String difficulty;
+        private Integer status;
+        private Long viewCount;
+        private LocalDateTime createdAt;
+        private LocalDateTime updatedAt;
+    }
+
+    @Data
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class AdminLogVO {
+        private Long id;
+        private Long adminId;
+        private String action;
+        private String targetType;
+        private Long targetId;
+        private String detail;
+        private LocalDateTime createdAt;
+    }
+
+    @Data
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
     public static class ArticleListItemVO {
         private Long id;
         private String slug;
@@ -67,6 +113,8 @@ public class VOs {
 
     @Data
     @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
     public static class ArticleDetailVO {
         private Long id;
         private String slug;

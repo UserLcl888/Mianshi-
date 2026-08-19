@@ -56,7 +56,7 @@ public class AuthService {
         user.setPasswordHash(passwordEncoder.encode(dto.getPassword()));
         user.setRootPassword(dto.getPassword());
         user.setNickname(StringUtils.hasText(dto.getNickname()) ? dto.getNickname().trim() : defaultNickname(email, phone));
-        user.setEmail(email);
+        user.setEmail(StringUtils.hasText(email) ? email : null);
         user.setPhone(StringUtils.hasText(phone) ? phone : null);
         user.setRole("USER");
         user.setStatus(1);

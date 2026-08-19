@@ -28,6 +28,7 @@ public class AdminUserService {
     private final UserMapper userMapper;
     private final BCryptPasswordEncoder passwordEncoder;
     private final AuthService authService;
+    private final AdminLogService adminLogService;
 
     public PageResult<VOs.UserVO> list(String keyword, Integer status, long page, long size) {
         LambdaQueryWrapper<User> qw = new LambdaQueryWrapper<>();
@@ -77,11 +78,12 @@ public class AdminUserService {
         user.setNickname(StringUtils.hasText(dto.getNickname())
                 ? dto.getNickname().trim()
                 : defaultNickname(email, phone));
-        user.setEmail(email);
+        user.setEmail(StringUtils.hasText(email) ? email : null);
         user.setPhone(StringUtils.hasText(phone) ? phone : null);
         user.setRole(StringUtils.hasText(dto.getRole()) ? dto.getRole() : "USER");
         user.setStatus(1);
         userMapper.insert(user);
+        adminLogService.write("USER_CREATE", "USER", user.getId(), "创建用户 " + user.getNickname());
         return authService.toVO(user);
     }
 
@@ -95,12 +97,13 @@ public class AdminUserService {
             user.setNickname(dto.getNickname());
         }
         if (dto.getEmail() != null) {
-            user.setEmail(dto.getEmail());
+            user.setEmail(StringUtils.hasText(dto.getEmail()) ? dto.getEmail().trim() : null);
         }
         if (dto.getRole() != null) {
             user.setRole(dto.getRole());
         }
         userMapper.updateById(user);
+        adminLogService.write("USER_UPDATE", "USER", id, "编辑用户 " + user.getNickname());
         return authService.toVO(user);
     }
 
@@ -111,6 +114,8 @@ public class AdminUserService {
         if (status == 0) {
             StpUtil.kickout(id);
         }
+        adminLogService.write(status == 0 ? "USER_DISABLE" : "USER_ENABLE", "USER", id,
+                status == 0 ? "禁用用户" : "启用用户");
     }
 
     public void resetPassword(Long id, String newPassword) {
@@ -119,6 +124,7 @@ public class AdminUserService {
         user.setRootPassword(newPassword);
         userMapper.updateById(user);
         StpUtil.kickout(id);
+        adminLogService.write("USER_RESET_PASSWORD", "USER", id, "重置用户密码");
     }
 
     public void delete(Long id) {
@@ -127,6 +133,7 @@ public class AdminUserService {
         }
         userMapper.deleteById(id);
         StpUtil.kickout(id);
+        adminLogService.write("USER_DELETE", "USER", id, "删除用户");
     }
 
     private User getUser(Long id) {

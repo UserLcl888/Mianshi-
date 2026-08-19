@@ -34,6 +34,8 @@ public class CategoryService {
     private final ArticleMapper articleMapper;
     private final StringRedisTemplate redis;
     private final ObjectMapper objectMapper;
+    private final ContentCacheService contentCacheService;
+    private final AdminLogService adminLogService;
 
     public List<VOs.CategoryVO> tree() {
         String cached = redis.opsForValue().get(CACHE_KEY);
@@ -108,7 +110,7 @@ public class CategoryService {
         return category;
     }
 
-    public Category create(Requests.CategorySaveDTO dto) {
+    public VOs.CategoryVO create(Requests.CategorySaveDTO dto) {
         if (categoryMapper.selectCount(new LambdaQueryWrapper<Category>().eq(Category::getSlug, dto.getSlug())) > 0) {
             throw new BizException(ErrorCode.CONFLICT, "slug 已存在");
         }
@@ -121,10 +123,12 @@ public class CategoryService {
         category.setDescription(dto.getDescription() == null ? "" : dto.getDescription());
         categoryMapper.insert(category);
         clearCache();
-        return category;
+        contentCacheService.bump();
+        adminLogService.write("CATEGORY_CREATE", "CATEGORY", category.getId(), "新增分类 " + category.getName());
+        return toVO(category);
     }
 
-    public Category update(Long id, Requests.CategorySaveDTO dto) {
+    public VOs.CategoryVO update(Long id, Requests.CategorySaveDTO dto) {
         Category category = getById(id);
         if (categoryMapper.selectCount(new LambdaQueryWrapper<Category>()
                 .eq(Category::getSlug, dto.getSlug()).ne(Category::getId, id)) > 0) {
@@ -137,7 +141,21 @@ public class CategoryService {
         category.setDescription(dto.getDescription() == null ? "" : dto.getDescription());
         categoryMapper.updateById(category);
         clearCache();
-        return category;
+        contentCacheService.bump();
+        adminLogService.write("CATEGORY_UPDATE", "CATEGORY", category.getId(), "编辑分类 " + category.getName());
+        return toVO(category);
+    }
+
+    private VOs.CategoryVO toVO(Category category) {
+        VOs.CategoryVO vo = new VOs.CategoryVO();
+        vo.setId(category.getId());
+        vo.setName(category.getName());
+        vo.setSlug(category.getSlug());
+        vo.setParentId(category.getParentId());
+        vo.setSortOrder(category.getSortOrder());
+        vo.setPriority(category.getPriority());
+        vo.setDescription(category.getDescription());
+        return vo;
     }
 
     public void delete(Long id) {
@@ -149,5 +167,7 @@ public class CategoryService {
         }
         categoryMapper.deleteById(id);
         clearCache();
+        contentCacheService.bump();
+        adminLogService.write("CATEGORY_DELETE", "CATEGORY", id, "删除分类");
     }
 }

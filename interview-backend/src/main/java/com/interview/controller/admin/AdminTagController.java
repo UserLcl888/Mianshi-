@@ -1,14 +1,9 @@
 package com.interview.controller.admin;
 
 import cn.dev33.satoken.annotation.SaCheckRole;
-import com.interview.common.BizException;
-import com.interview.common.ErrorCode;
 import com.interview.common.Result;
 import com.interview.dto.Requests;
-import com.interview.entity.Tag;
-import com.interview.mapper.TagMapper;
-import com.interview.mapper.ArticleTagMapper;
-import com.interview.service.AdminLogService;
+import com.interview.dto.VOs;
 import com.interview.service.TagService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -30,41 +25,25 @@ import java.util.List;
 public class AdminTagController {
 
     private final TagService tagService;
-    private final TagMapper tagMapper;
-    private final ArticleTagMapper articleTagMapper;
-    private final AdminLogService adminLogService;
 
     @GetMapping
-    public Result<List<Tag>> list() {
+    public Result<List<VOs.TagVO>> list() {
         return Result.ok(tagService.listAll());
     }
 
     @PostMapping
-    public Result<Tag> create(@Valid @RequestBody Requests.TagSaveDTO dto) {
-        Tag tag = new Tag();
-        tag.setName(dto.getName());
-        tagMapper.insert(tag);
-        adminLogService.write("TAG_CREATE", "TAG", tag.getId(), "新增标签 " + tag.getName());
-        return Result.ok(tag);
+    public Result<VOs.TagVO> create(@Valid @RequestBody Requests.TagSaveDTO dto) {
+        return Result.ok(tagService.create(dto.getName()));
     }
 
     @PutMapping("/{id}")
-    public Result<Tag> update(@PathVariable Long id, @Valid @RequestBody Requests.TagSaveDTO dto) {
-        Tag tag = tagMapper.selectById(id);
-        if (tag == null) {
-            throw new BizException(ErrorCode.NOT_FOUND, "标签不存在");
-        }
-        tag.setName(dto.getName());
-        tagMapper.updateById(tag);
-        adminLogService.write("TAG_UPDATE", "TAG", id, "编辑标签 " + tag.getName());
-        return Result.ok(tag);
+    public Result<VOs.TagVO> update(@PathVariable Long id, @Valid @RequestBody Requests.TagSaveDTO dto) {
+        return Result.ok(tagService.update(id, dto.getName()));
     }
 
     @DeleteMapping("/{id}")
     public Result<Void> delete(@PathVariable Long id) {
-        articleTagMapper.deleteByTagId(id);
-        tagMapper.deleteById(id);
-        adminLogService.write("TAG_DELETE", "TAG", id, "删除标签");
+        tagService.delete(id);
         return Result.ok();
     }
 }

@@ -3,8 +3,7 @@ package com.interview.controller.admin;
 import cn.dev33.satoken.annotation.SaCheckRole;
 import com.interview.common.Result;
 import com.interview.dto.Requests;
-import com.interview.entity.Category;
-import com.interview.service.AdminLogService;
+import com.interview.dto.VOs;
 import com.interview.service.CategoryService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -23,26 +22,20 @@ import org.springframework.web.bind.annotation.RestController;
 public class AdminCategoryController {
 
     private final CategoryService categoryService;
-    private final AdminLogService adminLogService;
 
     @PostMapping
-    public Result<Category> create(@Valid @RequestBody Requests.CategorySaveDTO dto) {
-        Category category = categoryService.create(dto);
-        adminLogService.write("CATEGORY_CREATE", "CATEGORY", category.getId(), "新增分类 " + category.getName());
-        return Result.ok(category);
+    public Result<VOs.CategoryVO> create(@Valid @RequestBody Requests.CategorySaveDTO dto) {
+        return Result.ok(categoryService.create(dto));
     }
 
     @PutMapping("/{id}")
-    public Result<Category> update(@PathVariable Long id, @Valid @RequestBody Requests.CategorySaveDTO dto) {
-        Category category = categoryService.update(id, dto);
-        adminLogService.write("CATEGORY_UPDATE", "CATEGORY", id, "编辑分类 " + category.getName());
-        return Result.ok(category);
+    public Result<VOs.CategoryVO> update(@PathVariable Long id, @Valid @RequestBody Requests.CategorySaveDTO dto) {
+        return Result.ok(categoryService.update(id, dto));
     }
 
     @DeleteMapping("/{id}")
     public Result<Void> delete(@PathVariable Long id) {
         categoryService.delete(id);
-        adminLogService.write("CATEGORY_DELETE", "CATEGORY", id, "删除分类");
         return Result.ok();
     }
 }

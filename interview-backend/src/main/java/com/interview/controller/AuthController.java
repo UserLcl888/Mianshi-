@@ -35,8 +35,7 @@ public class AuthController {
 
     @PostMapping("/code/email")
     public Result<Map<String, String>> sendEmailCode(@Valid @RequestBody Requests.SendCodeDTO dto) {
-        String debugCode = emailCodeService.send(dto.getEmail(), dto.getScene());
-        return Result.ok(debugCode == null ? Map.of() : Map.of("debugCode", debugCode));
+        return Result.ok(emailCodeService.send(dto.getEmail(), dto.getScene()));
     }
 
     @PostMapping("/login/code")

@@ -37,8 +37,13 @@ sa-token:
   active-timeout: -1
   is-concurrent: true
   is-share: false
+  max-login-count: 3
   token-style: uuid
   is-log: false
+
+app:
+  view:
+    flush-interval-ms: 60000
 
 logging:
   level:

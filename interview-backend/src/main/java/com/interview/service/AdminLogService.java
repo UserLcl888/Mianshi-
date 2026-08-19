@@ -4,6 +4,7 @@ import cn.dev33.satoken.stp.StpUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.interview.common.PageResult;
+import com.interview.dto.VOs;
 import com.interview.entity.AdminLog;
 import com.interview.mapper.AdminLogMapper;
 import lombok.RequiredArgsConstructor;
@@ -25,9 +26,22 @@ public class AdminLogService {
         adminLogMapper.insert(log);
     }
 
-    public PageResult<AdminLog> list(long page, long size) {
+    public PageResult<VOs.AdminLogVO> list(long page, long size) {
         Page<AdminLog> result = adminLogMapper.selectPage(new Page<>(page, size),
                 new LambdaQueryWrapper<AdminLog>().orderByDesc(AdminLog::getId));
-        return PageResult.of(page, size, result.getTotal(), result.getRecords());
+        return PageResult.of(page, size, result.getTotal(),
+                result.getRecords().stream().map(this::toVO).toList());
+    }
+
+    private VOs.AdminLogVO toVO(AdminLog log) {
+        return VOs.AdminLogVO.builder()
+                .id(log.getId())
+                .adminId(log.getAdminId())
+                .action(log.getAction())
+                .targetType(log.getTargetType())
+                .targetId(log.getTargetId())
+                .detail(log.getDetail())
+                .createdAt(log.getCreatedAt())
+                .build();
     }
 }
