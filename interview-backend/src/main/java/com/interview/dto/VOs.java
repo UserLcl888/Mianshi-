@@ -32,7 +32,6 @@ public class VOs {
         private String slug;
         private Long parentId;
         private Integer sortOrder;
-        private Integer priority;
         private String description;
         private List<CategoryVO> children = new ArrayList<>();
     }

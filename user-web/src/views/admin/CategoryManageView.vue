@@ -13,8 +13,6 @@
         <template v-if="isEditing(cat)">
           <el-input v-model="editing.name" size="small" placeholder="分类名称" class="row-input" />
           <el-input v-model="editing.slug" size="small" placeholder="slug" class="row-input" />
-          <span class="pri-label">优先级</span>
-          <el-input-number v-model="editing.priority" size="small" :min="0" controls-position="right" :value-on-clear="0" class="pri-input" />
           <el-button size="small" type="primary" :loading="saving" @click="save">保存</el-button>
           <el-button size="small" @click="cancel">取消</el-button>
           <el-input v-model="editing.description" size="small" placeholder="描述（选填，会显示在首页分类卡片）" class="desc-input" />
@@ -23,7 +21,7 @@
           <span class="cat-name">{{ cat.name }}</span>
           <span class="cat-slug">
             <span class="slug-text">
-              {{ cat.slug }}<span v-if="cat.priority" class="pri-badge">P{{ cat.priority }}</span>
+              {{ cat.slug }}
             </span>
             <span v-if="cat.description" class="cat-desc">{{ cat.description }}</span>
           </span>
@@ -39,8 +37,6 @@
       <div v-if="isAddingChild(cat.id)" class="cat-row cat-form">
         <el-input v-model="editing.name" size="small" placeholder="子集名称" class="row-input" />
         <el-input v-model="editing.slug" size="small" placeholder="slug" class="row-input" />
-        <span class="pri-label">优先级</span>
-        <el-input-number v-model="editing.priority" size="small" :min="0" controls-position="right" :value-on-clear="0" class="pri-input" />
         <el-button size="small" type="primary" :loading="saving" @click="save">保存</el-button>
         <el-button size="small" @click="cancel">取消</el-button>
         <el-input v-model="editing.description" size="small" placeholder="描述（选填）" class="desc-input" />
@@ -51,8 +47,6 @@
         <template v-if="isEditing(sub)">
             <el-input v-model="editing.name" size="small" placeholder="分类名称" class="row-input" />
             <el-input v-model="editing.slug" size="small" placeholder="slug" class="row-input" />
-            <span class="pri-label">优先级</span>
-            <el-input-number v-model="editing.priority" size="small" :min="0" controls-position="right" :value-on-clear="0" class="pri-input" />
             <el-button size="small" type="primary" :loading="saving" @click="save">保存</el-button>
             <el-button size="small" @click="cancel">取消</el-button>
             <el-input v-model="editing.description" size="small" placeholder="描述（选填）" class="desc-input" />
@@ -61,7 +55,7 @@
             <span class="cat-name">{{ sub.name }}</span>
             <span class="cat-slug">
               <span class="slug-text">
-                {{ sub.slug }}<span v-if="sub.priority" class="pri-badge">P{{ sub.priority }}</span>
+                {{ sub.slug }}
               </span>
               <span v-if="sub.description" class="cat-desc">{{ sub.description }}</span>
             </span>
@@ -77,8 +71,6 @@
     <div v-if="isAddingChild(0)" class="cat-row cat-form">
       <el-input v-model="editing.name" size="small" placeholder="主题名称" class="row-input" />
       <el-input v-model="editing.slug" size="small" placeholder="slug" class="row-input" />
-      <span class="pri-label">优先级</span>
-      <el-input-number v-model="editing.priority" size="small" :min="0" controls-position="right" :value-on-clear="0" class="pri-input" />
       <el-button size="small" type="primary" :loading="saving" @click="save">保存</el-button>
       <el-button size="small" @click="cancel">取消</el-button>
       <el-input v-model="editing.description" size="small" placeholder="描述（选填，会显示在首页分类卡片）" class="desc-input" />
@@ -104,7 +96,6 @@ interface EditingState {
   name: string
   slug: string
   description: string
-  priority: number
 }
 
 const editing = ref<EditingState | null>(null)
@@ -122,11 +113,11 @@ function autoSlug(): string {
 }
 
 function startAddChild(parent: CategoryNode) {
-  editing.value = { mode: 'add', parentId: parent.id, target: null, name: '', slug: autoSlug(), description: '', priority: 0 }
+  editing.value = { mode: 'add', parentId: parent.id, target: null, name: '', slug: autoSlug(), description: '' }
 }
 
 function startAddTop() {
-  editing.value = { mode: 'add', parentId: 0, target: null, name: '', slug: autoSlug(), description: '', priority: 0 }
+  editing.value = { mode: 'add', parentId: 0, target: null, name: '', slug: autoSlug(), description: '' }
 }
 
 function startEdit(cat: CategoryNode) {
@@ -137,7 +128,6 @@ function startEdit(cat: CategoryNode) {
     name: cat.name,
     slug: cat.slug,
     description: cat.description || '',
-    priority: cat.priority ?? 0
   }
 }
 
@@ -166,7 +156,6 @@ async function save() {
         slug,
         parentId: t.parentId,
         sortOrder: t.sortOrder,
-        priority: Number(editing.value.priority) || 0,
         description: editing.value.description.trim()
       })
     } else {
@@ -175,7 +164,6 @@ async function save() {
         slug,
         parentId: editing.value.parentId,
         sortOrder: 0,
-        priority: Number(editing.value.priority) || 0,
         description: editing.value.description.trim()
       })
     }
@@ -296,25 +284,6 @@ onMounted(() => {
 
 .row-input {
   width: 200px;
-}
-
-.pri-label {
-  font-size: 12px;
-  color: var(--app-text-secondary);
-  white-space: nowrap;
-}
-
-.pri-input {
-  width: 130px;
-}
-
-.pri-badge {
-  margin-left: 6px;
-  font-size: 11px;
-  color: #a87f18;
-  background: var(--app-accent-soft);
-  border-radius: 4px;
-  padding: 1px 5px;
 }
 
 .desc-input {

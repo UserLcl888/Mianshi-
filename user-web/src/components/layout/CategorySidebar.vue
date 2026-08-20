@@ -10,8 +10,15 @@
 
       <!-- 有子分类：按子分类分组显示 -->
       <template v-else-if="subCategories.length">
-        <div v-for="g in grouped" :key="g.sub.id" class="sub-group">
-          <div class="sub-header">
+        <div v-for="(g, gi) in grouped" :key="g.sub.id" class="sub-group">
+          <div
+            class="sub-header"
+            :class="{ 'drag-item': isAdmin }"
+            :draggable="isAdmin"
+            @dragstart="onDragStart($event, 'sub', gi)"
+            @dragover="onDragOver($event)"
+            @drop="onDrop($event, 'sub', gi)"
+          >
             <router-link
               :to="`/category/${g.sub.slug}`"
               class="sub-title"
@@ -31,11 +38,15 @@
           </div>
           <nav v-if="isExpanded(g.sub.id)" class="question-list sub-list">
             <router-link
-              v-for="a in g.items"
+              v-for="(a, ai) in g.items"
               :key="a.id"
               :to="`/article/${a.slug}`"
               class="question-item"
               :class="{ active: a.slug === activeArticleSlug }"
+              :draggable="isAdmin"
+              @dragstart="onDragStart($event, `article-${g.sub.id}`, ai)"
+              @dragover="onDragOver($event)"
+              @drop="onDrop($event, `article-${g.sub.id}`, ai)"
             >
               {{ a.title }}
             </router-link>
@@ -46,11 +57,15 @@
       <!-- 无子分类：直接平铺题目 -->
       <nav v-else class="question-list">
         <router-link
-          v-for="a in articles"
+          v-for="(a, i) in articles"
           :key="a.id"
           :to="`/article/${a.slug}`"
           class="question-item"
           :class="{ active: a.slug === activeArticleSlug }"
+          :draggable="isAdmin"
+          @dragstart="onDragStart($event, 'article', i)"
+          @dragover="onDragOver($event)"
+          @drop="onDrop($event, 'article', i)"
         >
           {{ a.title }}
         </router-link>
@@ -60,14 +75,20 @@
 
     <!-- 未进入具体分类（兜底）：显示分类导航 -->
     <template v-else>
-      <div class="sidebar-title">分类导航</div>
+      <div class="sidebar-title category-active">
+        <span>分类导航</span>
+      </div>
       <nav class="category-list">
         <router-link
-          v-for="cat in categories"
+          v-for="(cat, i) in categories"
           :key="cat.id"
           :to="`/category/${cat.slug}`"
           class="category-item"
           :class="{ active: cat.slug === activeCategorySlug }"
+          :draggable="isAdmin"
+          @dragstart="onDragStart($event, 'cat', i)"
+          @dragover="onDragOver($event)"
+          @drop="onDrop($event, 'cat', i)"
         >
           <span class="category-name">{{ cat.name }}</span>
           <el-tag v-if="countByCategory(cat)" size="small" type="warning" effect="plain">
@@ -81,8 +102,11 @@
 
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
+import { ElMessage } from 'element-plus'
 import { ArrowDown } from '@element-plus/icons-vue'
-import { getArticles } from '@/api/article'
+import { getArticles, reorderArticlesApi } from '@/api/article'
+import { reorderCategoriesApi } from '@/api/category'
+import { useAuthStore } from '@/stores/auth'
 import { useCategoryStore } from '@/stores/category'
 import type { ArticleListItem, CategoryNode } from '@/types'
 
@@ -92,11 +116,16 @@ const props = defineProps<{
 }>()
 
 const categoryStore = useCategoryStore()
+const auth = useAuthStore()
+const isAdmin = computed(() => auth.userInfo?.role === 'ADMIN')
 const categories = computed(() => categoryStore.tree)
 const articles = ref<ArticleListItem[]>([])
 const articleLoading = ref(false)
 const categoryCounts = ref<Record<number, number>>({})
 const expandedGroups = ref<Set<number>>(new Set())
+
+/** 自定义拖拽数据类型：避免浏览器对 <a> 链接拖拽时覆盖 text/plain 导致数据丢失。 */
+const DRAG_MIME = 'text/x-reorder'
 
 const activeCategory = computed(() => findCategory(props.activeCategorySlug || '', categories.value))
 const activeCategoryName = computed(() => activeCategory.value?.name || '')
@@ -145,6 +174,98 @@ function findCategory(slug: string, nodes: CategoryNode[]): CategoryNode | null 
 
 function countByCategory(cat: CategoryNode): number {
   return categoryCounts.value[cat.id] ?? 0
+}
+
+function moveItem<T>(arr: T[], from: number, to: number): T[] {
+  const next = [...arr]
+  const [moved] = next.splice(from, 1)
+  const insertAt = from < to ? to - 1 : to
+  next.splice(Math.max(0, insertAt), 0, moved)
+  return next
+}
+
+function onDragStart(e: DragEvent, key: string, index: number) {
+  if (!isAdmin.value) return
+  e.dataTransfer?.setData(DRAG_MIME, JSON.stringify({ key, index }))
+  if (e.dataTransfer) e.dataTransfer.effectAllowed = 'move'
+}
+
+function onDragOver(e: DragEvent) {
+  if (!isAdmin.value) return
+  e.preventDefault()
+  if (e.dataTransfer) e.dataTransfer.dropEffect = 'move'
+}
+
+async function onDrop(e: DragEvent, key: string, index: number) {
+  if (!isAdmin.value) return
+  e.preventDefault()
+  let src: { key: string; index: number } | null = null
+  try {
+    const raw = e.dataTransfer?.getData(DRAG_MIME)
+    src = raw ? JSON.parse(raw) : null
+  } catch {
+    src = null
+  }
+  if (!src || src.key !== key || src.index === index) return
+
+  try {
+    if (key === 'cat') {
+      const ordered = moveItem(categories.value, src.index, index)
+      categoryStore.tree = ordered
+      await reorderCategoriesApi(ordered.map((c, i) => ({ id: c.id, parentId: 0, sortOrder: i })))
+      await categoryStore.fetchTree(true)
+    } else if (key === 'sub') {
+      const parentId = activeCategory.value?.id ?? 0
+      const ordered = moveItem(subCategories.value, src.index, index)
+      applySubCategoryOrder(ordered)
+      await reorderCategoriesApi(ordered.map((c, i) => ({ id: c.id, parentId, sortOrder: i })))
+      await categoryStore.fetchTree(true)
+    } else if (key === 'article') {
+      const ordered = moveItem(articles.value, src.index, index)
+      articles.value = ordered
+      await reorderArticlesApi(ordered.map((a, i) => ({ id: a.id, sortOrder: i })))
+      await loadArticles(activeCategorySlug.value || '')
+    } else if (key.startsWith('article-')) {
+      const subId = Number(key.slice('article-'.length))
+      const items = articles.value.filter((a) => a.categoryId === subId)
+      const ordered = moveItem(items, src.index, index)
+      applySubArticleOrder(subId, ordered)
+      await reorderArticlesApi(ordered.map((a, i) => ({ id: a.id, sortOrder: i })))
+      await loadArticles(activeCategorySlug.value || '')
+    } else {
+      return
+    }
+    ElMessage.success('顺序已保存')
+  } catch {
+    // 保存失败时回滚为服务端真实顺序
+    try {
+      if (key === 'cat' || key === 'sub') {
+        await categoryStore.fetchTree(true)
+      } else {
+        await loadArticles(activeCategorySlug.value || '')
+      }
+    } catch {
+      // 忽略回滚异常
+    }
+  }
+}
+
+/** 本地立即调整当前分类的子分类顺序（随后 fetchTree 会以服务端为准校正）。 */
+function applySubCategoryOrder(ordered: CategoryNode[]) {
+  const target = findCategory(props.activeCategorySlug || '', categoryStore.tree)
+  if (target) {
+    target.children = ordered
+  }
+}
+
+/** 本地立即调整某分组内文章顺序，其余文章保持原位。 */
+function applySubArticleOrder(subId: number, ordered: ArticleListItem[]) {
+  const idSet = new Set(ordered.map((a) => a.id))
+  const rest = articles.value.filter((a) => !idSet.has(a.id))
+  const firstIdx = articles.value.findIndex((a) => a.categoryId === subId)
+  const result = [...rest]
+  result.splice(Math.max(0, firstIdx), 0, ...ordered)
+  articles.value = result
 }
 
 async function loadArticles(slug: string) {
@@ -203,6 +324,10 @@ watch(
   padding: 4px 8px 10px;
   border-bottom: 1px solid var(--app-border);
   margin-bottom: 8px;
+}
+
+.drag-item {
+  cursor: grab;
 }
 
 .category-active {

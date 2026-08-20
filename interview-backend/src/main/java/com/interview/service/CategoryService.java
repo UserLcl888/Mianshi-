@@ -22,6 +22,7 @@ import java.time.Duration;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Deque;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -48,8 +49,7 @@ public class CategoryService {
         }
         List<Category> all = categoryMapper.selectList(
                 new LambdaQueryWrapper<Category>()
-                        .orderByDesc(Category::getPriority)
-                        .orderByAsc(Category::getName)
+                        .orderByAsc(Category::getSortOrder)
                         .orderByAsc(Category::getId));
         List<VOs.CategoryVO> tree = buildTree(all, 0L);
         try {
@@ -93,7 +93,6 @@ public class CategoryService {
                 vo.setSlug(c.getSlug());
                 vo.setParentId(c.getParentId());
                 vo.setSortOrder(c.getSortOrder());
-                vo.setPriority(c.getPriority());
                 vo.setDescription(c.getDescription());
                 vo.setChildren(buildTree(all, c.getId()));
                 result.add(vo);
@@ -123,7 +122,6 @@ public class CategoryService {
         category.setSlug(dto.getSlug());
         category.setParentId(dto.getParentId() == null ? 0L : dto.getParentId());
         category.setSortOrder(dto.getSortOrder() == null ? 0 : dto.getSortOrder());
-        category.setPriority(dto.getPriority() == null ? 0 : dto.getPriority());
         category.setDescription(dto.getDescription() == null ? "" : dto.getDescription());
         categoryMapper.insert(category);
         clearCache();
@@ -141,13 +139,62 @@ public class CategoryService {
         category.setName(dto.getName());
         category.setSlug(dto.getSlug());
         category.setSortOrder(dto.getSortOrder() == null ? 0 : dto.getSortOrder());
-        category.setPriority(dto.getPriority() == null ? 0 : dto.getPriority());
         category.setDescription(dto.getDescription() == null ? "" : dto.getDescription());
         categoryMapper.updateById(category);
         clearCache();
         contentCacheService.bump();
         adminLogService.write(AdminLogAction.CATEGORY_UPDATE, category.getId(), "编辑分类 " + category.getName());
         return toVO(category);
+    }
+
+    /**
+     * 批量调整分类顺序（支持同一父级内重排，也支持传入新 parentId 跨级移动）。
+     */
+    @org.springframework.transaction.annotation.Transactional
+    public void reorder(List<Requests.CategoryReorderItem> items) {
+        if (items == null || items.isEmpty()) {
+            return;
+        }
+        for (Requests.CategoryReorderItem item : items) {
+            if (item.getId() == null) {
+                continue;
+            }
+            Category category = categoryMapper.selectById(item.getId());
+            if (category == null) {
+                throw new BizException(ErrorCode.NOT_FOUND, "分类不存在：" + item.getId());
+            }
+            if (item.getParentId() != null && !item.getParentId().equals(category.getParentId())) {
+                validateNewParent(item.getId(), item.getParentId());
+                category.setParentId(item.getParentId());
+            }
+            category.setSortOrder(item.getSortOrder() == null ? 0 : item.getSortOrder());
+            categoryMapper.updateById(category);
+        }
+        clearCache();
+        contentCacheService.bump();
+    }
+
+    private void validateNewParent(Long categoryId, Long newParentId) {
+        if (categoryId.equals(newParentId)) {
+            throw new BizException(ErrorCode.PARAM_ERROR, "不能移动到自身下");
+        }
+        List<Category> all = categoryMapper.selectList(null);
+        Map<Long, List<Long>> children = new HashMap<>();
+        for (Category c : all) {
+            children.computeIfAbsent(c.getParentId(), k -> new ArrayList<>()).add(c.getId());
+        }
+        Deque<Long> stack = new ArrayDeque<>();
+        stack.push(categoryId);
+        while (!stack.isEmpty()) {
+            Long id = stack.pop();
+            if (id.equals(newParentId)) {
+                throw new BizException(ErrorCode.PARAM_ERROR, "不能移动到自己的子分类下");
+            }
+            List<Long> subs = children.get(id);
+            if (subs != null) {
+                subs.forEach(stack::push);
+            }
+        }
     }
 
     private VOs.CategoryVO toVO(Category category) {
@@ -157,7 +204,6 @@ public class CategoryService {
         vo.setSlug(category.getSlug());
         vo.setParentId(category.getParentId());
         vo.setSortOrder(category.getSortOrder());
-        vo.setPriority(category.getPriority());
         vo.setDescription(category.getDescription());
         return vo;
     }

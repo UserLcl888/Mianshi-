@@ -4,7 +4,6 @@ export interface CategoryNode {
   slug: string
   parentId: number
   sortOrder: number
-  priority?: number
   description?: string
   children: CategoryNode[]
 }

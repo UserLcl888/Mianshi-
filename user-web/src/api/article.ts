@@ -12,6 +12,11 @@ export interface ArticleSavePayload {
   contentMd?: string
 }
 
+export interface ArticleReorderItem {
+  id: number
+  sortOrder: number
+}
+
 export async function getArticles(params: ArticleQuery = {}): Promise<PageResult<ArticleListItem>> {
   return request.get('/articles', { params })
 }
@@ -33,4 +38,8 @@ export async function updateArticleApi(
   payload: ArticleSavePayload
 ): Promise<{ id: number; slug: string; title: string }> {
   return request.put(`/admin/articles/${id}`, payload)
+}
+
+export async function reorderArticlesApi(items: ArticleReorderItem[]): Promise<void> {
+  return request.put('/admin/articles/reorder', items)
 }

@@ -18,6 +18,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/api/admin/articles")
 @SaCheckRole("ADMIN")
@@ -43,6 +45,12 @@ public class AdminArticleController {
     @PutMapping("/{id}")
     public Result<VOs.ArticleVO> update(@PathVariable Long id, @Valid @RequestBody Requests.ArticleSaveDTO dto) {
         return Result.ok(articleService.update(id, dto));
+    }
+
+    @PutMapping("/reorder")
+    public Result<Void> reorder(@RequestBody List<Requests.ArticleReorderItem> items) {
+        articleService.reorder(items);
+        return Result.ok();
     }
 
     @DeleteMapping("/{id}")

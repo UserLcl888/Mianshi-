@@ -15,6 +15,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/api/admin/categories")
 @SaCheckRole("ADMIN")
@@ -31,6 +33,12 @@ public class AdminCategoryController {
     @PutMapping("/{id}")
     public Result<VOs.CategoryVO> update(@PathVariable Long id, @Valid @RequestBody Requests.CategorySaveDTO dto) {
         return Result.ok(categoryService.update(id, dto));
+    }
+
+    @PutMapping("/reorder")
+    public Result<Void> reorder(@RequestBody List<Requests.CategoryReorderItem> items) {
+        categoryService.reorder(items);
+        return Result.ok();
     }
 
     @DeleteMapping("/{id}")

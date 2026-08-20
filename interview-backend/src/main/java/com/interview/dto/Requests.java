@@ -121,7 +121,6 @@ public class Requests {
         private String slug;
         private Long parentId = 0L;
         private Integer sortOrder = 0;
-        private Integer priority = 0;
         private String description;
     }
 
@@ -129,5 +128,23 @@ public class Requests {
     public static class TagSaveDTO {
         @NotBlank(message = "请输入标签名")
         private String name;
+    }
+
+    @Data
+    public static class CategoryReorderItem {
+        @NotNull(message = "请传入分类ID")
+        private Long id;
+        /** 空 = 保持原父级；拖到其他父级时传入新 parentId。 */
+        private Long parentId;
+        @NotNull(message = "请传入排序值")
+        private Integer sortOrder;
+    }
+
+    @Data
+    public static class ArticleReorderItem {
+        @NotNull(message = "请传入题目ID")
+        private Long id;
+        @NotNull(message = "请传入排序值")
+        private Integer sortOrder;
     }
 }

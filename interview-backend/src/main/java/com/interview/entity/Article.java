@@ -19,6 +19,7 @@ public class Article {
     private Long categoryId;
     private String difficulty;
     private Integer status;
+    private Integer sortOrder;
     private String contentMd;
     private String contentHtml;
     private Long viewCount;

@@ -65,7 +65,7 @@ public class ArticleService {
             qw.in(Article::getCategoryId, categoryService.collectIds(categoryId));
         }
         trimLongTextColumns(qw);
-        qw.orderByAsc(Article::getId);
+        qw.orderByAsc(Article::getSortOrder).orderByAsc(Article::getId);
         Page<Article> result = articleMapper.selectPage(new Page<>(page, size), qw);
         PageResult<VOs.ArticleListItemVO> pageResult = toPageResult(result, page, size);
         writeListCache(cacheKey, pageResult);
@@ -329,6 +329,28 @@ public class ArticleService {
         tagService.replaceArticleTags(id, List.of());
         contentCacheService.bump();
         adminLogService.write(AdminLogAction.ARTICLE_DELETE, id, "删除题目");
+    }
+
+    /**
+     * 批量调整题目顺序（同一分类下生效，列表按 sort_order 升序展示）。
+     */
+    @Transactional
+    public void reorder(List<Requests.ArticleReorderItem> items) {
+        if (items == null || items.isEmpty()) {
+            return;
+        }
+        for (Requests.ArticleReorderItem item : items) {
+            if (item.getId() == null) {
+                continue;
+            }
+            Article article = articleMapper.selectById(item.getId());
+            if (article == null) {
+                throw new BizException(ErrorCode.NOT_FOUND, "题目不存在：" + item.getId());
+            }
+            article.setSortOrder(item.getSortOrder() == null ? 0 : item.getSortOrder());
+            articleMapper.updateById(article);
+        }
+        contentCacheService.bump();
     }
 
     private String listCacheKey(Long categoryId, String difficulty, long page, long size) {

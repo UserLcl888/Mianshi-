@@ -16,7 +16,6 @@ public class Category {
     private String slug;
     private Long parentId;
     private Integer sortOrder;
-    private Integer priority;
     private String description;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;

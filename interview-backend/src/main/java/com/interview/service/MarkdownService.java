@@ -35,6 +35,7 @@ public class MarkdownService {
                 .allowAttributes("id").onElements("h1", "h2", "h3", "h4", "h5", "h6")
                 .allowAttributes("class").matching(Pattern.compile("(language-[\\w-]+|hljs)")).onElements("code")
                 .allowAttributes("href").onElements("a")
+                .allowUrlProtocols("http", "https", "mailto")
                 .allowAttributes("src", "alt").onElements("img")
                 .allowElements("input")
                 .allowAttributes("type", "checked", "disabled").onElements("input")
