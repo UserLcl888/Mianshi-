@@ -3,12 +3,16 @@ package com.interview.service;
 import cn.dev33.satoken.stp.StpUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.interview.common.AccountValidator;
 import com.interview.common.BizException;
 import com.interview.common.ErrorCode;
 import com.interview.common.PageResult;
 import com.interview.dto.Requests;
 import com.interview.dto.VOs;
 import com.interview.entity.User;
+import com.interview.enums.AdminLogAction;
+import com.interview.enums.UserRole;
+import com.interview.enums.UserStatus;
 import com.interview.mapper.UserMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -16,14 +20,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
 import java.util.List;
-import java.util.regex.Pattern;
 
 @Service
 @RequiredArgsConstructor
 public class AdminUserService {
-
-    private static final Pattern EMAIL_PATTERN = Pattern.compile("^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$");
-    private static final Pattern PHONE_PATTERN = Pattern.compile("^1[3-9]\\d{9}$");
 
     private final UserMapper userMapper;
     private final BCryptPasswordEncoder passwordEncoder;
@@ -54,19 +54,19 @@ public class AdminUserService {
         String email = dto.getEmail() == null ? "" : dto.getEmail().trim();
         String phone = dto.getPhone() == null ? "" : dto.getPhone().trim();
         if (!StringUtils.hasText(email) && !StringUtils.hasText(phone)) {
-            throw new BizException(40000, "请填写邮箱或手机号");
+            throw new BizException(ErrorCode.PARAM_ERROR, "请填写邮箱或手机号");
         }
         if (StringUtils.hasText(email)) {
-            if (!EMAIL_PATTERN.matcher(email).matches()) {
-                throw new BizException(40000, "邮箱格式不正确");
+            if (!AccountValidator.isValidEmail(email)) {
+                throw new BizException(ErrorCode.PARAM_ERROR, "邮箱格式不正确");
             }
             if (userMapper.selectCount(new LambdaQueryWrapper<User>().eq(User::getEmail, email)) > 0) {
                 throw new BizException(ErrorCode.CONFLICT, "邮箱已被注册");
             }
         }
         if (StringUtils.hasText(phone)) {
-            if (!PHONE_PATTERN.matcher(phone).matches()) {
-                throw new BizException(40000, "手机号格式不正确");
+            if (!AccountValidator.isValidPhone(phone)) {
+                throw new BizException(ErrorCode.PARAM_ERROR, "手机号格式不正确");
             }
             if (userMapper.selectCount(new LambdaQueryWrapper<User>().eq(User::getPhone, phone)) > 0) {
                 throw new BizException(ErrorCode.CONFLICT, "手机号已被注册");
@@ -80,10 +80,10 @@ public class AdminUserService {
                 : defaultNickname(email, phone));
         user.setEmail(StringUtils.hasText(email) ? email : null);
         user.setPhone(StringUtils.hasText(phone) ? phone : null);
-        user.setRole(StringUtils.hasText(dto.getRole()) ? dto.getRole() : "USER");
-        user.setStatus(1);
+        user.setRole(StringUtils.hasText(dto.getRole()) ? dto.getRole() : UserRole.USER.getCode());
+        user.setStatus(UserStatus.NORMAL.getCode());
         userMapper.insert(user);
-        adminLogService.write("USER_CREATE", "USER", user.getId(), "创建用户 " + user.getNickname());
+        adminLogService.write(AdminLogAction.USER_CREATE, user.getId(), "创建用户 " + user.getNickname());
         return authService.toVO(user);
     }
 
@@ -103,19 +103,20 @@ public class AdminUserService {
             user.setRole(dto.getRole());
         }
         userMapper.updateById(user);
-        adminLogService.write("USER_UPDATE", "USER", id, "编辑用户 " + user.getNickname());
+        adminLogService.write(AdminLogAction.USER_UPDATE, id, "编辑用户 " + user.getNickname());
         return authService.toVO(user);
     }
 
     public void updateStatus(Long id, Integer status) {
         User user = getUser(id);
+        boolean disabled = UserStatus.fromCode(status) == UserStatus.DISABLED;
         user.setStatus(status);
         userMapper.updateById(user);
-        if (status == 0) {
+        if (disabled) {
             StpUtil.kickout(id);
         }
-        adminLogService.write(status == 0 ? "USER_DISABLE" : "USER_ENABLE", "USER", id,
-                status == 0 ? "禁用用户" : "启用用户");
+        adminLogService.write(disabled ? AdminLogAction.USER_DISABLE : AdminLogAction.USER_ENABLE,
+                id, disabled ? "禁用用户" : "启用用户");
     }
 
     public void resetPassword(Long id, String newPassword) {
@@ -124,16 +125,16 @@ public class AdminUserService {
         user.setRootPassword(newPassword);
         userMapper.updateById(user);
         StpUtil.kickout(id);
-        adminLogService.write("USER_RESET_PASSWORD", "USER", id, "重置用户密码");
+        adminLogService.write(AdminLogAction.USER_RESET_PASSWORD, id, "重置用户密码");
     }
 
     public void delete(Long id) {
         if (StpUtil.getLoginIdAsLong() == id) {
-            throw new BizException(40000, "不能删除当前登录账号");
+            throw new BizException(ErrorCode.PARAM_ERROR, "不能删除当前登录账号");
         }
         userMapper.deleteById(id);
         StpUtil.kickout(id);
-        adminLogService.write("USER_DELETE", "USER", id, "删除用户");
+        adminLogService.write(AdminLogAction.USER_DELETE, id, "删除用户");
     }
 
     private User getUser(Long id) {

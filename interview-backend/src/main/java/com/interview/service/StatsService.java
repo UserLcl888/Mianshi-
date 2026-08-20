@@ -1,6 +1,7 @@
 package com.interview.service;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.interview.dto.Rows;
 import com.interview.dto.VOs;
 import com.interview.entity.Article;
 import com.interview.entity.Category;
@@ -43,19 +44,19 @@ public class StatsService {
      */
     public List<VOs.TopArticleVO> topArticles(int limit) {
         int safeLimit = Math.min(Math.max(limit, 1), 50);
-        List<Map<String, Object>> rows = articleMapper.selectTopPublished(safeLimit);
+        List<Rows.TopArticleRow> rows = articleMapper.selectTopPublished(safeLimit);
         if (rows.isEmpty()) {
             return List.of();
         }
-        List<Long> ids = rows.stream().map(r -> ((Number) r.get("id")).longValue()).toList();
+        List<Long> ids = rows.stream().map(Rows.TopArticleRow::getId).toList();
         Map<Long, Long> increments = viewCountService.countersOf(ids);
         return rows.stream().map(r -> {
             VOs.TopArticleVO vo = new VOs.TopArticleVO();
-            vo.setId(((Number) r.get("id")).longValue());
-            vo.setTitle(String.valueOf(r.get("title")));
-            long base = ((Number) r.get("viewCount")).longValue();
+            vo.setId(r.getId());
+            vo.setTitle(r.getTitle());
+            long base = r.getViewCount() == null ? 0L : r.getViewCount();
             vo.setViewCount(base + increments.getOrDefault(vo.getId(), 0L));
-            vo.setCategoryName(String.valueOf(r.get("categoryName")));
+            vo.setCategoryName(r.getCategoryName());
             return vo;
         }).toList();
     }
@@ -69,10 +70,9 @@ public class StatsService {
                 new LambdaQueryWrapper<Category>().orderByAsc(Category::getSortOrder));
         Map<Long, Integer> countByCat = new HashMap<>();
         Map<Long, Long> viewsByCat = new HashMap<>();
-        for (Map<String, Object> row : articleMapper.selectCategoryAgg()) {
-            Long categoryId = ((Number) row.get("categoryId")).longValue();
-            countByCat.put(categoryId, ((Number) row.get("articleCount")).intValue());
-            viewsByCat.put(categoryId, ((Number) row.get("viewCount")).longValue());
+        for (Rows.CategoryAggRow row : articleMapper.selectCategoryAgg()) {
+            countByCat.put(row.getCategoryId(), row.getArticleCount());
+            viewsByCat.put(row.getCategoryId(), row.getViewCount() == null ? 0L : row.getViewCount());
         }
 
         Map<Long, List<Long>> children = new HashMap<>();

@@ -1,5 +1,6 @@
 package com.interview.service;
 
+import com.interview.common.RedisKeys;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
@@ -12,12 +13,10 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class ContentCacheService {
 
-    private static final String VERSION_KEY = "cache:content:version";
-
     private final StringRedisTemplate redis;
 
     public long version() {
-        String value = redis.opsForValue().get(VERSION_KEY);
+        String value = redis.opsForValue().get(RedisKeys.CACHE_CONTENT_VERSION);
         if (value == null) {
             return 0;
         }
@@ -29,6 +28,6 @@ public class ContentCacheService {
     }
 
     public void bump() {
-        redis.opsForValue().increment(VERSION_KEY);
+        redis.opsForValue().increment(RedisKeys.CACHE_CONTENT_VERSION);
     }
 }

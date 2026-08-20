@@ -6,10 +6,12 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.interview.common.BizException;
 import com.interview.common.ErrorCode;
+import com.interview.common.RedisKeys;
 import com.interview.dto.Requests;
 import com.interview.dto.VOs;
 import com.interview.entity.Article;
 import com.interview.entity.Category;
+import com.interview.enums.AdminLogAction;
 import com.interview.mapper.ArticleMapper;
 import com.interview.mapper.CategoryMapper;
 import lombok.RequiredArgsConstructor;
@@ -28,8 +30,6 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class CategoryService {
 
-    private static final String CACHE_KEY = "cache:category:tree";
-
     private final CategoryMapper categoryMapper;
     private final ArticleMapper articleMapper;
     private final StringRedisTemplate redis;
@@ -38,7 +38,7 @@ public class CategoryService {
     private final AdminLogService adminLogService;
 
     public List<VOs.CategoryVO> tree() {
-        String cached = redis.opsForValue().get(CACHE_KEY);
+        String cached = redis.opsForValue().get(RedisKeys.CACHE_CATEGORY_TREE);
         if (cached != null) {
             try {
                 return objectMapper.readValue(cached, new TypeReference<List<VOs.CategoryVO>>() {
@@ -53,18 +53,15 @@ public class CategoryService {
                         .orderByAsc(Category::getId));
         List<VOs.CategoryVO> tree = buildTree(all, 0L);
         try {
-            redis.opsForValue().set(CACHE_KEY, objectMapper.writeValueAsString(tree), Duration.ofMinutes(30));
+            redis.opsForValue().set(RedisKeys.CACHE_CATEGORY_TREE, objectMapper.writeValueAsString(tree), Duration.ofMinutes(30));
         } catch (JsonProcessingException ignored) {
         }
         return tree;
     }
 
     public List<Long> collectIds(Long categoryId) {
-        List<Category> all = categoryMapper.selectList(null);
         Map<Long, List<Long>> children = new LinkedHashMap<>();
-        for (Category c : all) {
-            children.computeIfAbsent(c.getParentId(), k -> new ArrayList<>()).add(c.getId());
-        }
+        flattenChildren(tree(), children);
         List<Long> result = new ArrayList<>();
         Deque<Long> stack = new ArrayDeque<>();
         stack.push(categoryId);
@@ -77,6 +74,13 @@ public class CategoryService {
             }
         }
         return result;
+    }
+
+    private void flattenChildren(List<VOs.CategoryVO> nodes, Map<Long, List<Long>> children) {
+        for (VOs.CategoryVO node : nodes) {
+            children.computeIfAbsent(node.getParentId(), k -> new ArrayList<>()).add(node.getId());
+            flattenChildren(node.getChildren(), children);
+        }
     }
 
     private List<VOs.CategoryVO> buildTree(List<Category> all, Long parentId) {
@@ -99,7 +103,7 @@ public class CategoryService {
     }
 
     public void clearCache() {
-        redis.delete(CACHE_KEY);
+        redis.delete(RedisKeys.CACHE_CATEGORY_TREE);
     }
 
     public Category getById(Long id) {
@@ -124,7 +128,7 @@ public class CategoryService {
         categoryMapper.insert(category);
         clearCache();
         contentCacheService.bump();
-        adminLogService.write("CATEGORY_CREATE", "CATEGORY", category.getId(), "新增分类 " + category.getName());
+        adminLogService.write(AdminLogAction.CATEGORY_CREATE, category.getId(), "新增分类 " + category.getName());
         return toVO(category);
     }
 
@@ -142,7 +146,7 @@ public class CategoryService {
         categoryMapper.updateById(category);
         clearCache();
         contentCacheService.bump();
-        adminLogService.write("CATEGORY_UPDATE", "CATEGORY", category.getId(), "编辑分类 " + category.getName());
+        adminLogService.write(AdminLogAction.CATEGORY_UPDATE, category.getId(), "编辑分类 " + category.getName());
         return toVO(category);
     }
 
@@ -168,6 +172,6 @@ public class CategoryService {
         categoryMapper.deleteById(id);
         clearCache();
         contentCacheService.bump();
-        adminLogService.write("CATEGORY_DELETE", "CATEGORY", id, "删除分类");
+        adminLogService.write(AdminLogAction.CATEGORY_DELETE, id, "删除分类");
     }
 }

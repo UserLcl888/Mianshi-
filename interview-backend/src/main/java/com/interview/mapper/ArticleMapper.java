@@ -1,6 +1,7 @@
 package com.interview.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import com.interview.dto.Rows;
 import com.interview.entity.Article;
 import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.Select;
@@ -8,7 +9,6 @@ import org.apache.ibatis.annotations.Update;
 
 import java.util.Collection;
 import java.util.List;
-import java.util.Map;
 
 public interface ArticleMapper extends BaseMapper<Article> {
 
@@ -19,7 +19,7 @@ public interface ArticleMapper extends BaseMapper<Article> {
             "SELECT id, view_count AS viewCount FROM article WHERE id IN " +
             "<foreach collection='ids' item='id' open='(' separator=',' close=')'>#{id}</foreach>" +
             "</script>")
-    List<Map<String, Object>> selectViewCounts(@Param("ids") Collection<Long> ids);
+    List<Rows.ViewCountRow> selectViewCounts(@Param("ids") Collection<Long> ids);
 
     /**
      * 已发布题目浏览量 Top N，一次 JOIN 取分类名，避免逐行查分类。
@@ -29,14 +29,14 @@ public interface ArticleMapper extends BaseMapper<Article> {
             "WHERE a.status = 1 " +
             "ORDER BY a.view_count DESC, a.id DESC " +
             "LIMIT #{limit}")
-    List<Map<String, Object>> selectTopPublished(@Param("limit") int limit);
+    List<Rows.TopArticleRow> selectTopPublished(@Param("limit") int limit);
 
     /**
      * 首页站点统计：已发布题目数 + 浏览量总和，单条 SQL 聚合。
      */
     @Select("SELECT COUNT(*) AS articleCount, COALESCE(SUM(view_count), 0) AS viewCount " +
             "FROM article WHERE status = 1")
-    Map<String, Object> selectPublishedStats();
+    Rows.PublishedStatsRow selectPublishedStats();
 
     /**
      * 各分类题目数/浏览量聚合（含草稿），供管理端分类统计使用。
@@ -44,7 +44,7 @@ public interface ArticleMapper extends BaseMapper<Article> {
     @Select("SELECT category_id AS categoryId, COUNT(*) AS articleCount, " +
             "COALESCE(SUM(view_count), 0) AS viewCount " +
             "FROM article GROUP BY category_id")
-    List<Map<String, Object>> selectCategoryAgg();
+    List<Rows.CategoryAggRow> selectCategoryAgg();
 
     /**
      * 浏览量累加落库（定时任务批量调用）。

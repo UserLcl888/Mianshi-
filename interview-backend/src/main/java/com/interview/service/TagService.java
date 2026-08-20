@@ -3,9 +3,11 @@ package com.interview.service;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.interview.common.BizException;
 import com.interview.common.ErrorCode;
+import com.interview.dto.Rows;
 import com.interview.dto.VOs;
 import com.interview.entity.ArticleTag;
 import com.interview.entity.Tag;
+import com.interview.enums.AdminLogAction;
 import com.interview.mapper.ArticleTagMapper;
 import com.interview.mapper.TagMapper;
 import lombok.RequiredArgsConstructor;
@@ -40,7 +42,7 @@ public class TagService {
         tagMapper.insert(tag);
         contentCacheService.bump();
         Tag saved = tagMapper.selectById(tag.getId());
-        adminLogService.write("TAG_CREATE", "TAG", saved.getId(), "新增标签 " + saved.getName());
+        adminLogService.write(AdminLogAction.TAG_CREATE, saved.getId(), "新增标签 " + saved.getName());
         return toVO(saved);
     }
 
@@ -58,7 +60,7 @@ public class TagService {
         tag.setName(trimmed);
         tagMapper.updateById(tag);
         contentCacheService.bump();
-        adminLogService.write("TAG_UPDATE", "TAG", tag.getId(), "编辑标签 " + tag.getName());
+        adminLogService.write(AdminLogAction.TAG_UPDATE, tag.getId(), "编辑标签 " + tag.getName());
         return toVO(tag);
     }
 
@@ -66,7 +68,7 @@ public class TagService {
         articleTagMapper.deleteByTagId(id);
         tagMapper.deleteById(id);
         contentCacheService.bump();
-        adminLogService.write("TAG_DELETE", "TAG", id, "删除标签");
+        adminLogService.write(AdminLogAction.TAG_DELETE, id, "删除标签");
     }
 
     public List<String> namesByArticleId(Long articleId) {
@@ -82,9 +84,7 @@ public class TagService {
             return result;
         }
         articleTagMapper.selectTagsByArticleIds(articleIds).forEach(row -> {
-            Long articleId = ((Number) row.get("articleId")).longValue();
-            String tagName = String.valueOf(row.get("tagName"));
-            result.computeIfAbsent(articleId, k -> new ArrayList<>()).add(tagName);
+            result.computeIfAbsent(row.getArticleId(), k -> new ArrayList<>()).add(row.getTagName());
         });
         return result;
     }

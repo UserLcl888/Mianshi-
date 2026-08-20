@@ -1,5 +1,6 @@
 package com.interview.service;
 
+import com.interview.common.RedisKeys;
 import com.interview.mapper.ArticleMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -28,8 +29,6 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class ViewCountService {
 
-    private static final String COUNTER_KEY = "view:counter";
-
     /** 取字段并删除的 Lua 脚本：GET + HDEL 原子执行；之后的 INCR 会从 1 重新累计，不会丢失。 */
     private static final String TAKE_SCRIPT =
             "local v = redis.call('HGET', KEYS[1], ARGV[1]) " +
@@ -43,7 +42,7 @@ public class ViewCountService {
      * 浏览 +1，返回该题目 Redis 中未落库的增量。
      */
     public long increment(Long articleId) {
-        Long value = redis.opsForHash().increment(COUNTER_KEY, String.valueOf(articleId), 1);
+        Long value = redis.opsForHash().increment(RedisKeys.VIEW_COUNTER, String.valueOf(articleId), 1);
         return value == null ? 0 : value;
     }
 
@@ -55,7 +54,7 @@ public class ViewCountService {
             return Collections.emptyMap();
         }
         List<Object> fields = articleIds.stream().map(id -> (Object) String.valueOf(id)).toList();
-        List<Object> values = redis.opsForHash().multiGet(COUNTER_KEY, fields);
+        List<Object> values = redis.opsForHash().multiGet(RedisKeys.VIEW_COUNTER, fields);
         Map<Long, Long> result = new HashMap<>();
         int i = 0;
         for (Long id : articleIds) {
@@ -75,7 +74,7 @@ public class ViewCountService {
      * 单题目未落库增量。
      */
     public long counterOf(Long articleId) {
-        Object value = redis.opsForHash().get(COUNTER_KEY, String.valueOf(articleId));
+        Object value = redis.opsForHash().get(RedisKeys.VIEW_COUNTER, String.valueOf(articleId));
         if (value == null || !StringUtils.hasText(value.toString())) {
             return 0;
         }
@@ -90,7 +89,7 @@ public class ViewCountService {
      * 全部未落库增量总和（首页总浏览量叠加用）。
      */
     public long totalUnflushed() {
-        Map<Object, Object> entries = redis.opsForHash().entries(COUNTER_KEY);
+        Map<Object, Object> entries = redis.opsForHash().entries(RedisKeys.VIEW_COUNTER);
         long total = 0;
         for (Object value : entries.values()) {
             if (value == null) {
@@ -110,7 +109,7 @@ public class ViewCountService {
      */
     @Scheduled(fixedDelayString = "${app.view.flush-interval-ms:60000}")
     public void flushToDb() {
-        Map<Object, Object> entries = redis.opsForHash().entries(COUNTER_KEY);
+        Map<Object, Object> entries = redis.opsForHash().entries(RedisKeys.VIEW_COUNTER);
         if (entries.isEmpty()) {
             return;
         }
@@ -149,7 +148,7 @@ public class ViewCountService {
      */
     private Long takeCounter(Long articleId) {
         try {
-            byte[] key = keySerializer().serialize(COUNTER_KEY);
+            byte[] key = keySerializer().serialize(RedisKeys.VIEW_COUNTER);
             byte[] field = keySerializer().serialize(String.valueOf(articleId));
             Object result = redis.execute((RedisCallback<Object>) connection ->
                     connection.eval(TAKE_SCRIPT.getBytes(), ReturnType.INTEGER, 1, key, field));

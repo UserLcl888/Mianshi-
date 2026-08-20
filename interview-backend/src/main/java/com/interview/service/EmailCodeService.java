@@ -1,9 +1,12 @@
 package com.interview.service;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.interview.common.AccountValidator;
 import com.interview.common.BizException;
 import com.interview.common.ErrorCode;
+import com.interview.common.RedisKeys;
 import com.interview.entity.User;
+import com.interview.enums.CodeScene;
 import com.interview.mapper.UserMapper;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
@@ -18,17 +21,13 @@ import org.springframework.util.StringUtils;
 import java.security.SecureRandom;
 import java.time.Duration;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.TimeUnit;
-import java.util.regex.Pattern;
 
 @Service
 @RequiredArgsConstructor
 public class EmailCodeService {
 
     private static final Logger log = LoggerFactory.getLogger(EmailCodeService.class);
-    private static final Pattern EMAIL_PATTERN = Pattern.compile("^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$");
-    private static final Set<String> SCENES = Set.of("login", "reset");
     private static final SecureRandom RANDOM = new SecureRandom();
 
     private final StringRedisTemplate redis;
@@ -61,36 +60,37 @@ public class EmailCodeService {
     public Map<String, String> send(String email, String scene) {
         String mail = email == null ? "" : email.trim();
         String sc = scene == null ? "" : scene.trim();
-        if (!EMAIL_PATTERN.matcher(mail).matches()) {
-            throw new BizException(40000, "邮箱格式不正确");
+        if (!AccountValidator.isValidEmail(mail)) {
+            throw new BizException(ErrorCode.PARAM_ERROR, "邮箱格式不正确");
         }
-        if (!SCENES.contains(sc)) {
-            throw new BizException(40000, "场景不合法");
+        CodeScene codeScene = CodeScene.fromValue(sc);
+        if (codeScene == null) {
+            throw new BizException(ErrorCode.PARAM_ERROR, "场景不合法");
         }
         if (userMapper.selectCount(new LambdaQueryWrapper<User>().eq(User::getEmail, mail)) == 0) {
             throw new BizException(ErrorCode.NOT_FOUND, "该邮箱未注册，请先注册");
         }
 
-        String cooldownKey = codeKey(mail, sc) + ":cooldown";
+        String cooldownKey = RedisKeys.emailCodeCooldown(mail, codeScene.getValue());
         if (Boolean.TRUE.equals(redis.hasKey(cooldownKey))) {
             Long remain = redis.getExpire(cooldownKey, TimeUnit.SECONDS);
-            throw new BizException(40000, "发送太频繁，请 " + (remain == null ? resendSeconds : remain) + " 秒后再试");
+            throw new BizException(ErrorCode.PARAM_ERROR, "发送太频繁，请 " + (remain == null ? resendSeconds : remain) + " 秒后再试");
         }
 
-        String dailyKey = "rate:code:email:" + mail + ":day";
+        String dailyKey = RedisKeys.emailDailyRate(mail);
         Long daily = redis.opsForValue().increment(dailyKey);
         if (daily != null && daily == 1) {
             redis.expire(dailyKey, Duration.ofHours(24));
         }
         if (daily != null && daily > dailyLimit) {
-            throw new BizException(40000, "该邮箱今日发送次数已达上限");
+            throw new BizException(ErrorCode.PARAM_ERROR, "该邮箱今日发送次数已达上限");
         }
 
         String code = String.valueOf(RANDOM.nextInt(900000) + 100000);
-        redis.opsForValue().set(codeKey(mail, sc), code, Duration.ofMinutes(ttlMinutes));
+        redis.opsForValue().set(RedisKeys.emailCode(mail, codeScene.getValue()), code, Duration.ofMinutes(ttlMinutes));
         redis.opsForValue().set(cooldownKey, "1", Duration.ofSeconds(resendSeconds));
         // 重发即重置错误计数，避免旧 tries key 残留
-        redis.delete(codeKey(mail, sc) + ":tries");
+        redis.delete(RedisKeys.emailCodeTries(mail, codeScene.getValue()));
 
         if (mock) {
             log.info("[MOCK EMAIL] 收件人={}, 场景={}, 验证码={}", mail, sc, code);
@@ -111,36 +111,33 @@ public class EmailCodeService {
     public void verify(String email, String scene, String code) {
         String mail = email == null ? "" : email.trim();
         String sc = scene == null ? "" : scene.trim();
-        if (!EMAIL_PATTERN.matcher(mail).matches()) {
-            throw new BizException(40000, "邮箱格式不正确");
+        if (!AccountValidator.isValidEmail(mail)) {
+            throw new BizException(ErrorCode.PARAM_ERROR, "邮箱格式不正确");
         }
-        if (!SCENES.contains(sc)) {
-            throw new BizException(40000, "场景不合法");
+        CodeScene codeScene = CodeScene.fromValue(sc);
+        if (codeScene == null) {
+            throw new BizException(ErrorCode.PARAM_ERROR, "场景不合法");
         }
         if (!StringUtils.hasText(code)) {
-            throw new BizException(40000, "请输入验证码");
+            throw new BizException(ErrorCode.PARAM_ERROR, "请输入验证码");
         }
-        String key = codeKey(mail, sc);
-        String triesKey = key + ":tries";
+        String key = RedisKeys.emailCode(mail, codeScene.getValue());
+        String triesKey = RedisKeys.emailCodeTries(mail, codeScene.getValue());
         String saved = redis.opsForValue().get(key);
         if (saved == null) {
-            throw new BizException(40000, "验证码不存在或已过期，请重新获取");
+            throw new BizException(ErrorCode.PARAM_ERROR, "验证码不存在或已过期，请重新获取");
         }
         Long tries = redis.opsForValue().increment(triesKey);
         redis.expire(triesKey, Duration.ofMinutes(ttlMinutes));
         if (tries != null && tries > maxTries) {
             redis.delete(key);
             redis.delete(triesKey);
-            throw new BizException(40000, "验证码错误次数过多，请重新获取");
+            throw new BizException(ErrorCode.PARAM_ERROR, "验证码错误次数过多，请重新获取");
         }
         if (!saved.equals(code.trim())) {
-            throw new BizException(40000, "验证码错误");
+            throw new BizException(ErrorCode.PARAM_ERROR, "验证码错误");
         }
         redis.delete(key);
         redis.delete(triesKey);
-    }
-
-    private String codeKey(String email, String scene) {
-        return "code:email:" + email + ":" + scene;
     }
 }

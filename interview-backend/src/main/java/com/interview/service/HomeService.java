@@ -4,6 +4,8 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.interview.common.RedisKeys;
+import com.interview.dto.Rows;
 import com.interview.entity.DailyQuote;
 import com.interview.mapper.ArticleMapper;
 import com.interview.mapper.ArticleTagMapper;
@@ -58,7 +60,7 @@ public class HomeService {
      * 首页公开数据：站点统计 + 热门文档 + 热门标签。
      */
     public Map<String, Object> overview() {
-        String cacheKey = "cache:home:overview:v" + contentCacheService.version();
+        String cacheKey = RedisKeys.homeOverviewKey(contentCacheService.version());
         String cached = redis.opsForValue().get(cacheKey);
         Map<String, Object> data = null;
         if (cached != null) {
@@ -83,12 +85,25 @@ public class HomeService {
      * 全量聚合（缓存 miss 时执行）：统计 1 条 SQL、热门文档 1 条 JOIN、热门标签 1 条 JOIN。
      */
     private Map<String, Object> buildOverview() {
-        Map<String, Object> stats = articleMapper.selectPublishedStats();
-        long articleCount = ((Number) stats.get("articleCount")).longValue();
-        long viewCount = ((Number) stats.get("viewCount")).longValue();
+        Rows.PublishedStatsRow stats = articleMapper.selectPublishedStats();
+        long articleCount = stats.getArticleCount() == null ? 0L : stats.getArticleCount();
+        long viewCount = stats.getViewCount() == null ? 0L : stats.getViewCount();
 
-        List<Map<String, Object>> hotArticles = articleMapper.selectTopPublished(8);
-        List<Map<String, Object>> hotTags = articleTagMapper.selectHotTags(15);
+        List<Map<String, Object>> hotArticles = articleMapper.selectTopPublished(8).stream().map(r -> {
+            Map<String, Object> m = new LinkedHashMap<>();
+            m.put("id", r.getId());
+            m.put("slug", r.getSlug());
+            m.put("title", r.getTitle());
+            m.put("categoryName", r.getCategoryName());
+            m.put("viewCount", r.getViewCount() == null ? 0L : r.getViewCount());
+            return m;
+        }).toList();
+        List<Map<String, Object>> hotTags = articleTagMapper.selectHotTags(15).stream().map(r -> {
+            Map<String, Object> m = new LinkedHashMap<>();
+            m.put("name", r.getName());
+            m.put("count", r.getCount() == null ? 0L : r.getCount());
+            return m;
+        }).toList();
 
         Map<String, Object> data = new LinkedHashMap<>();
         data.put("articleCount", articleCount);
@@ -104,8 +119,8 @@ public class HomeService {
      */
     @SuppressWarnings("unchecked")
     private void enrichViewCounts(Map<String, Object> data) {
-        Map<String, Object> stats = articleMapper.selectPublishedStats();
-        long baseTotal = ((Number) stats.get("viewCount")).longValue();
+        Rows.PublishedStatsRow stats = articleMapper.selectPublishedStats();
+        long baseTotal = stats.getViewCount() == null ? 0L : stats.getViewCount();
         data.put("viewCount", baseTotal + viewCountService.totalUnflushed());
 
         List<Map<String, Object>> hotArticles = (List<Map<String, Object>>) data.get("hotArticles");
@@ -116,8 +131,8 @@ public class HomeService {
                 .map(m -> ((Number) m.get("id")).longValue())
                 .toList();
         Map<Long, Long> dbCounts = articleMapper.selectViewCounts(ids).stream().collect(Collectors.toMap(
-                row -> ((Number) row.get("id")).longValue(),
-                row -> ((Number) row.get("viewCount")).longValue()));
+                Rows.ViewCountRow::getId,
+                row -> row.getViewCount() == null ? 0L : row.getViewCount()));
         Map<Long, Long> increments = viewCountService.countersOf(ids);
         for (Map<String, Object> item : hotArticles) {
             Long id = ((Number) item.get("id")).longValue();

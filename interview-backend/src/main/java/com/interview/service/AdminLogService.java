@@ -6,6 +6,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.interview.common.PageResult;
 import com.interview.dto.VOs;
 import com.interview.entity.AdminLog;
+import com.interview.enums.AdminLogAction;
 import com.interview.mapper.AdminLogMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -16,11 +17,11 @@ public class AdminLogService {
 
     private final AdminLogMapper adminLogMapper;
 
-    public void write(String action, String targetType, Long targetId, String detail) {
+    public void write(AdminLogAction action, Long targetId, String detail) {
         AdminLog log = new AdminLog();
         log.setAdminId(StpUtil.getLoginIdAsLong());
-        log.setAction(action);
-        log.setTargetType(targetType);
+        log.setAction(action.name());
+        log.setTargetType(action.getTargetType().name());
         log.setTargetId(targetId);
         log.setDetail(detail == null ? "" : detail);
         adminLogMapper.insert(log);

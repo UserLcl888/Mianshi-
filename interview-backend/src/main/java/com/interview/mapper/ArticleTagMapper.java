@@ -1,6 +1,7 @@
 package com.interview.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import com.interview.dto.Rows;
 import com.interview.entity.ArticleTag;
 import org.apache.ibatis.annotations.Delete;
 import org.apache.ibatis.annotations.Insert;
@@ -9,7 +10,6 @@ import org.apache.ibatis.annotations.Select;
 
 import java.util.Collection;
 import java.util.List;
-import java.util.Map;
 
 public interface ArticleTagMapper extends BaseMapper<ArticleTag> {
 
@@ -35,7 +35,7 @@ public interface ArticleTagMapper extends BaseMapper<ArticleTag> {
             "<foreach collection='articleIds' item='id' open='(' separator=',' close=')'>#{id}</foreach> " +
             "ORDER BY at.article_id, t.id" +
             "</script>")
-    List<Map<String, Object>> selectTagsByArticleIds(@Param("articleIds") Collection<Long> articleIds);
+    List<Rows.TagNameRow> selectTagsByArticleIds(@Param("articleIds") Collection<Long> articleIds);
 
     /**
      * 批量插入题目-标签关联（INSERT IGNORE 去重）。
@@ -56,5 +56,5 @@ public interface ArticleTagMapper extends BaseMapper<ArticleTag> {
             "GROUP BY t.id, t.name " +
             "ORDER BY count DESC, t.id ASC " +
             "LIMIT #{limit}")
-    List<Map<String, Object>> selectHotTags(@Param("limit") int limit);
+    List<Rows.HotTagRow> selectHotTags(@Param("limit") int limit);
 }

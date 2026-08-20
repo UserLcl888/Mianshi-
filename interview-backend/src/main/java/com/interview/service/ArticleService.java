@@ -9,10 +9,14 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.interview.common.BizException;
 import com.interview.common.ErrorCode;
 import com.interview.common.PageResult;
+import com.interview.common.RedisKeys;
 import com.interview.dto.Requests;
+import com.interview.dto.Rows;
 import com.interview.dto.VOs;
 import com.interview.entity.Article;
 import com.interview.entity.Category;
+import com.interview.enums.AdminLogAction;
+import com.interview.enums.Difficulty;
 import com.interview.mapper.ArticleMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.StringRedisTemplate;
@@ -44,7 +48,7 @@ public class ArticleService {
     private final AdminLogService adminLogService;
 
     public PageResult<VOs.ArticleListItemVO> list(Long categoryId, String difficulty, long page, long size) {
-        String difficultyNorm = StringUtils.hasText(difficulty) ? normalizeDifficulty(difficulty) : null;
+        String difficultyNorm = StringUtils.hasText(difficulty) ? Difficulty.normalize(difficulty).getCode() : null;
         String cacheKey = listCacheKey(categoryId, difficultyNorm, page, size);
         PageResult<VOs.ArticleListItemVO> cached = readListCache(cacheKey);
         if (cached != null) {
@@ -75,7 +79,7 @@ public class ArticleService {
     public PageResult<VOs.ArticleListItemVO> adminList(Long categoryId, String difficulty, long page, long size) {
         LambdaQueryWrapper<Article> qw = new LambdaQueryWrapper<>();
         if (StringUtils.hasText(difficulty)) {
-            qw.eq(Article::getDifficulty, normalizeDifficulty(difficulty));
+            qw.eq(Article::getDifficulty, Difficulty.normalize(difficulty).getCode());
         }
         if (categoryId != null) {
             qw.in(Article::getCategoryId, categoryService.collectIds(categoryId));
@@ -129,12 +133,14 @@ public class ArticleService {
      * 并发下不再依赖 +1 的近似值。
      */
     public Long recordView(Long articleId) {
-        Article article = articleMapper.selectById(articleId);
+        Article article = articleMapper.selectOne(new LambdaQueryWrapper<Article>()
+                .select(Article::getId, Article::getStatus)
+                .eq(Article::getId, articleId));
         if (article == null || article.getStatus() == null || article.getStatus() != 1) {
             throw new BizException(ErrorCode.NOT_FOUND, "题目不存在或已下架");
         }
         Long userId = StpUtil.getLoginIdAsLong();
-        String dedupKey = "view:user:" + userId + ":article:" + articleId;
+        String dedupKey = RedisKeys.viewDedup(userId, articleId);
         Boolean first = redis.opsForValue().setIfAbsent(dedupKey, "1", Duration.ofHours(24));
         if (Boolean.TRUE.equals(first)) {
             viewCountService.increment(articleId);
@@ -233,8 +239,8 @@ public class ArticleService {
             return Map.of();
         }
         return articleMapper.selectViewCounts(ids).stream().collect(Collectors.toMap(
-                row -> ((Number) row.get("id")).longValue(),
-                row -> ((Number) row.get("viewCount")).longValue()));
+                Rows.ViewCountRow::getId,
+                Rows.ViewCountRow::getViewCount));
     }
 
     @Transactional
@@ -252,7 +258,7 @@ public class ArticleService {
         categoryService.clearCache();
         contentCacheService.bump();
         Article saved = articleMapper.selectById(article.getId());
-        adminLogService.write("ARTICLE_CREATE", "ARTICLE", saved.getId(), "新增题目：" + saved.getTitle());
+        adminLogService.write(AdminLogAction.ARTICLE_CREATE, saved.getId(), "新增题目：" + saved.getTitle());
         return toVO(saved);
     }
 
@@ -277,7 +283,7 @@ public class ArticleService {
         tagService.replaceArticleTags(article.getId(), dto.getTags());
         categoryService.clearCache();
         contentCacheService.bump();
-        adminLogService.write("ARTICLE_UPDATE", "ARTICLE", article.getId(), "编辑题目：" + article.getTitle());
+        adminLogService.write(AdminLogAction.ARTICLE_UPDATE, article.getId(), "编辑题目：" + article.getTitle());
         return toVO(article);
     }
 
@@ -311,22 +317,10 @@ public class ArticleService {
         article.setSummary(dto.getSummary() == null ? "" : dto.getSummary());
         article.setDocUrl(dto.getDocUrl() == null ? "" : dto.getDocUrl().trim());
         article.setCategoryId(dto.getCategoryId());
-        article.setDifficulty(normalizeDifficulty(dto.getDifficulty()));
+        article.setDifficulty(Difficulty.normalize(dto.getDifficulty()).getCode());
         article.setStatus(1);
         article.setContentMd(dto.getContentMd() == null ? "" : dto.getContentMd());
         article.setContentHtml(markdownService.render(dto.getContentMd()));
-    }
-
-    private String normalizeDifficulty(String difficulty) {
-        if (!StringUtils.hasText(difficulty)) {
-            return "MEDIUM";
-        }
-        return switch (difficulty.trim().toUpperCase()) {
-            case "EASY", "简单" -> "EASY";
-            case "HARD", "困难" -> "HARD";
-            case "MEDIUM", "中等" -> "MEDIUM";
-            default -> "MEDIUM";
-        };
     }
 
     @Transactional
@@ -334,17 +328,15 @@ public class ArticleService {
         articleMapper.deleteById(id);
         tagService.replaceArticleTags(id, List.of());
         contentCacheService.bump();
-        adminLogService.write("ARTICLE_DELETE", "ARTICLE", id, "删除题目");
+        adminLogService.write(AdminLogAction.ARTICLE_DELETE, id, "删除题目");
     }
 
     private String listCacheKey(Long categoryId, String difficulty, long page, long size) {
-        return "cache:article:list:v" + contentCacheService.version()
-                + ":" + categoryId + ":" + (difficulty == null ? "" : difficulty)
-                + ":" + page + ":" + size;
+        return RedisKeys.articleListKey(contentCacheService.version(), categoryId, difficulty, page, size);
     }
 
     private String detailCacheKey(String slug) {
-        return "cache:article:detail:v" + contentCacheService.version() + ":" + slug;
+        return RedisKeys.articleDetailKey(contentCacheService.version(), slug);
     }
 
     private PageResult<VOs.ArticleListItemVO> readListCache(String cacheKey) {
