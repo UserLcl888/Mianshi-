@@ -1,34 +1,31 @@
 <template>
-  <div class="auth-page">
-    <div class="auth-card">
-      <h2 class="auth-title">注册</h2>
-      <el-tabs v-model="registerType" class="auth-tabs">
-        <el-tab-pane label="邮箱注册" name="email" />
-        <el-tab-pane label="手机号注册" name="phone" />
-      </el-tabs>
-      <el-form ref="formRef" :model="form" :rules="rules" label-position="top" @keyup.enter="submit">
-        <el-form-item :label="registerType === 'email' ? '邮箱' : '手机号'" prop="account">
-          <el-input
-            v-model="form.account"
-            :placeholder="registerType === 'email' ? '请输入邮箱' : '请输入 11 位手机号'"
-          />
-        </el-form-item>
-        <el-form-item label="昵称（可选，默认登录账号）" prop="nickname">
-          <el-input v-model="form.nickname" placeholder="不填则使用登录账号" />
-        </el-form-item>
-        <el-form-item label="密码" prop="password">
-          <el-input v-model="form.password" type="password" show-password placeholder="6~32 位" />
-        </el-form-item>
-        <el-form-item label="确认密码" prop="confirmPassword">
-          <el-input v-model="form.confirmPassword" type="password" show-password placeholder="再次输入密码" />
-        </el-form-item>
-        <el-button type="primary" class="submit-btn" :loading="loading" @click="submit">注册</el-button>
-      </el-form>
-      <div class="auth-switch">
-        已有账号？<router-link to="/login">去登录</router-link>
-      </div>
+  <AuthLayout>
+    <el-tabs v-model="registerType" class="auth-tabs">
+      <el-tab-pane label="邮箱注册" name="email" />
+      <el-tab-pane label="手机号注册" name="phone" />
+    </el-tabs>
+    <el-form ref="formRef" :model="form" :rules="rules" label-position="top" @keyup.enter="submit">
+      <el-form-item :label="registerType === 'email' ? '邮箱' : '手机号'" prop="account">
+        <el-input
+          v-model="form.account"
+          :placeholder="registerType === 'email' ? '请输入邮箱' : '请输入 11 位手机号'"
+        />
+      </el-form-item>
+      <el-form-item label="昵称（可选，默认登录账号）" prop="nickname">
+        <el-input v-model="form.nickname" placeholder="不填则使用登录账号" />
+      </el-form-item>
+      <el-form-item label="密码" prop="password">
+        <el-input v-model="form.password" type="password" show-password placeholder="6~32 位" />
+      </el-form-item>
+      <el-form-item label="确认密码" prop="confirmPassword">
+        <el-input v-model="form.confirmPassword" type="password" show-password placeholder="再次输入密码" />
+      </el-form-item>
+      <el-button type="primary" class="submit-btn" :loading="loading" @click="submit">注册</el-button>
+    </el-form>
+    <div class="auth-switch">
+      已有账号？<router-link to="/login">去登录</router-link>
     </div>
-  </div>
+  </AuthLayout>
 </template>
 
 <script setup lang="ts">
@@ -36,6 +33,7 @@ import { computed, reactive, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage, type FormInstance, type FormRules } from 'element-plus'
 import { useAuthStore } from '@/stores/auth'
+import AuthLayout from '@/components/auth/AuthLayout.vue'
 
 const router = useRouter()
 const auth = useAuthStore()
@@ -94,31 +92,8 @@ async function submit() {
 </script>
 
 <style scoped>
-.auth-page {
-  min-height: 100vh;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: var(--app-bg);
-}
-
-.auth-card {
-  width: 380px;
-  background: var(--app-card);
-  border: 1px solid var(--app-border);
-  border-radius: 12px;
-  padding: 32px;
-  box-shadow: 0 8px 30px rgba(217, 167, 22, 0.12);
-}
-
-.auth-title {
-  text-align: center;
-  color: #6b5208;
-  margin: 0 0 16px;
-}
-
 .auth-tabs {
-  margin-bottom: 14px;
+  margin-bottom: 10px;
 }
 
 .submit-btn {

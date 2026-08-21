@@ -2,8 +2,8 @@
   <header class="app-header">
     <div class="header-inner">
       <router-link to="/" class="brand">
-        <img src="/favicon.svg" alt="logo" class="brand-logo" />
-        <span class="brand-name">面试题知识库</span>
+        <img src="/logo.png" alt="logo" class="brand-logo" />
+        <span class="brand-name">知识分享平台</span>
       </router-link>
 
       <nav class="nav">
@@ -135,8 +135,11 @@ async function onCommand(command: string) {
 }
 
 .brand-logo {
-  width: 30px;
-  height: 30px;
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  object-fit: cover;
+  border: 1px solid var(--app-border);
 }
 
 .brand-name {

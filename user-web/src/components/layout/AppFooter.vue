@@ -1,6 +1,6 @@
 <template>
   <footer class="app-footer">
-    <span>面试题知识库 · 仅供学习交流使用</span>
+  <span>知识分享平台 · 仅供学习交流使用</span>
   </footer>
 </template>
 

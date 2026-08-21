@@ -1,30 +1,27 @@
 <template>
-  <div class="auth-page">
-    <div class="auth-card">
-      <h2 class="auth-title">找回密码</h2>
-      <el-form ref="formRef" :model="form" :rules="rules" label-position="top" @keyup.enter="submit">
-        <el-form-item label="邮箱" prop="email">
-          <el-input v-model="form.email" placeholder="请输入注册邮箱" />
-        </el-form-item>
-        <el-form-item label="验证码" prop="code">
-          <div class="code-row">
-            <el-input v-model="form.code" placeholder="6 位验证码" class="code-input" maxlength="6" />
-            <VerifyCodeButton :email="form.email" scene="reset" :sendable="emailValid" />
-          </div>
-        </el-form-item>
-        <el-form-item label="新密码" prop="newPassword">
-          <el-input v-model="form.newPassword" type="password" show-password placeholder="6~32 位" />
-        </el-form-item>
-        <el-form-item label="确认密码" prop="confirmPassword">
-          <el-input v-model="form.confirmPassword" type="password" show-password placeholder="再次输入新密码" />
-        </el-form-item>
-        <el-button type="primary" class="submit-btn" :loading="loading" @click="submit">重置密码</el-button>
-      </el-form>
-      <div class="auth-switch">
-        想起密码了？<router-link to="/login">去登录</router-link>
-      </div>
+  <AuthLayout>
+    <el-form ref="formRef" :model="form" :rules="rules" label-position="top" @keyup.enter="submit">
+      <el-form-item label="邮箱" prop="email">
+        <el-input v-model="form.email" placeholder="请输入注册邮箱" />
+      </el-form-item>
+      <el-form-item label="验证码" prop="code">
+        <div class="code-row">
+          <el-input v-model="form.code" placeholder="6 位验证码" class="code-input" maxlength="6" />
+          <VerifyCodeButton :email="form.email" scene="reset" :sendable="emailValid" />
+        </div>
+      </el-form-item>
+      <el-form-item label="新密码" prop="newPassword">
+        <el-input v-model="form.newPassword" type="password" show-password placeholder="6~32 位" />
+      </el-form-item>
+      <el-form-item label="确认密码" prop="confirmPassword">
+        <el-input v-model="form.confirmPassword" type="password" show-password placeholder="再次输入新密码" />
+      </el-form-item>
+      <el-button type="primary" class="submit-btn" :loading="loading" @click="submit">重置密码</el-button>
+    </el-form>
+    <div class="auth-switch">
+      想起密码了？<router-link to="/login">去登录</router-link>
     </div>
-  </div>
+  </AuthLayout>
 </template>
 
 <script setup lang="ts">
@@ -32,6 +29,7 @@ import { computed, reactive, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage, type FormInstance, type FormRules } from 'element-plus'
 import { resetPasswordByCodeApi } from '@/api/auth'
+import AuthLayout from '@/components/auth/AuthLayout.vue'
 import VerifyCodeButton from '@/components/common/VerifyCodeButton.vue'
 
 const router = useRouter()
@@ -83,29 +81,6 @@ async function submit() {
 </script>
 
 <style scoped>
-.auth-page {
-  min-height: 100vh;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: var(--app-bg);
-}
-
-.auth-card {
-  width: 380px;
-  background: var(--app-card);
-  border: 1px solid var(--app-border);
-  border-radius: 12px;
-  padding: 32px;
-  box-shadow: 0 8px 30px rgba(217, 167, 22, 0.12);
-}
-
-.auth-title {
-  text-align: center;
-  color: #6b5208;
-  margin: 0 0 24px;
-}
-
 .code-row {
   display: flex;
   gap: 8px;

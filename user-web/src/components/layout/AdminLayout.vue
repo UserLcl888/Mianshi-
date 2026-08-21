@@ -2,7 +2,7 @@
   <div class="admin-layout">
     <aside class="admin-side">
       <div class="admin-brand">
-        <div class="brand-main">面试题知识库</div>
+    <div class="brand-main">知识分享平台</div>
         <div class="brand-sub">管理后台</div>
       </div>
       <nav class="admin-nav">

@@ -1,50 +1,47 @@
 <template>
-  <div class="auth-page">
-    <div class="auth-card">
-      <h2 class="auth-title">登录</h2>
-      <el-tabs v-model="loginType" class="auth-tabs">
-        <el-tab-pane label="邮箱登录" name="email" />
-        <el-tab-pane label="手机号登录" name="phone" />
-      </el-tabs>
-      <el-form ref="formRef" :model="form" :rules="rules" label-position="top" @keyup.enter="submit">
-        <div v-if="loginType === 'email'" class="mode-switch">
-          <el-radio-group v-model="emailMode" size="small">
-            <el-radio-button value="password">密码登录</el-radio-button>
-            <el-radio-button value="code">验证码登录</el-radio-button>
-          </el-radio-group>
-        </div>
+  <AuthLayout>
+    <el-tabs v-model="loginType" class="auth-tabs">
+      <el-tab-pane label="邮箱登录" name="email" />
+      <el-tab-pane label="手机号登录" name="phone" />
+    </el-tabs>
+    <el-form ref="formRef" :model="form" :rules="rules" label-position="top" @keyup.enter="submit">
+      <div v-if="loginType === 'email'" class="mode-switch">
+        <el-radio-group v-model="emailMode" size="small">
+          <el-radio-button value="password">密码登录</el-radio-button>
+          <el-radio-button value="code">验证码登录</el-radio-button>
+        </el-radio-group>
+      </div>
 
-        <el-form-item :label="loginType === 'email' ? '邮箱' : '手机号'" prop="account">
-          <el-input v-model="form.account" :placeholder="loginType === 'email' ? '请输入邮箱' : '请输入手机号'" />
+      <el-form-item :label="loginType === 'email' ? '邮箱' : '手机号'" prop="account">
+        <el-input v-model="form.account" :placeholder="loginType === 'email' ? '请输入邮箱' : '请输入手机号'" />
+      </el-form-item>
+
+      <template v-if="loginType === 'email' && emailMode === 'code'">
+        <el-form-item label="验证码" prop="code">
+          <div class="code-row">
+            <el-input v-model="form.code" placeholder="6 位验证码" class="code-input" maxlength="6" />
+            <VerifyCodeButton :email="form.account" scene="login" :sendable="emailValid" />
+          </div>
         </el-form-item>
+      </template>
+      <template v-else>
+        <el-form-item label="密码" prop="password">
+          <el-input v-model="form.password" type="password" show-password placeholder="请输入密码" />
+        </el-form-item>
+      </template>
 
-        <template v-if="loginType === 'email' && emailMode === 'code'">
-          <el-form-item label="验证码" prop="code">
-            <div class="code-row">
-              <el-input v-model="form.code" placeholder="6 位验证码" class="code-input" maxlength="6" />
-              <VerifyCodeButton :email="form.account" scene="login" :sendable="emailValid" />
-            </div>
-          </el-form-item>
-        </template>
-        <template v-else>
-          <el-form-item label="密码" prop="password">
-            <el-input v-model="form.password" type="password" show-password placeholder="请输入密码" />
-          </el-form-item>
-        </template>
-
-        <el-button type="primary" class="submit-btn" :loading="loading" @click="submit">登录</el-button>
-      </el-form>
-      <div class="auth-links">
-        <router-link to="/forgot-password" class="forgot-link">忘记密码？</router-link>
-        <span class="auth-switch">
-          还没有账号？<router-link to="/register">去注册</router-link>
-        </span>
-      </div>
-      <div class="admin-hint">
-        测试账号：2090323327@qq.com / 123456（管理员）· 2090323328@qq.com / 123456（普通用户）
-      </div>
+      <el-button type="primary" class="submit-btn" :loading="loading" @click="submit">登录</el-button>
+    </el-form>
+    <div class="auth-links">
+      <router-link to="/forgot-password" class="forgot-link">忘记密码？</router-link>
+      <span class="auth-switch">
+        还没有账号？<router-link to="/register">去注册</router-link>
+      </span>
     </div>
-  </div>
+    <div class="admin-hint">
+      测试账号：2090323327@qq.com / 123456（管理员）· 2090323328@qq.com / 123456（普通用户）
+    </div>
+  </AuthLayout>
 </template>
 
 <script setup lang="ts">
@@ -52,6 +49,7 @@ import { computed, reactive, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage, type FormInstance, type FormRules } from 'element-plus'
 import { useAuthStore } from '@/stores/auth'
+import AuthLayout from '@/components/auth/AuthLayout.vue'
 import VerifyCodeButton from '@/components/common/VerifyCodeButton.vue'
 
 const router = useRouter()
@@ -139,31 +137,8 @@ async function submit() {
 </script>
 
 <style scoped>
-.auth-page {
-  min-height: 100vh;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: var(--app-bg);
-}
-
-.auth-card {
-  width: 380px;
-  background: var(--app-card);
-  border: 1px solid var(--app-border);
-  border-radius: 12px;
-  padding: 32px;
-  box-shadow: 0 8px 30px rgba(217, 167, 22, 0.12);
-}
-
-.auth-title {
-  text-align: center;
-  color: #6b5208;
-  margin: 0 0 16px;
-}
-
 .auth-tabs {
-  margin-bottom: 6px;
+  margin-bottom: 4px;
 }
 
 .mode-switch {

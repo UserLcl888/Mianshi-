@@ -44,7 +44,7 @@
           </router-link>
         </div>
 
-        <div class="home-footer">面试题知识库 · 仅供学习交流使用</div>
+    <div class="home-footer">知识分享平台 · 仅供学习交流使用</div>
       </main>
 
       <aside class="right-col">
