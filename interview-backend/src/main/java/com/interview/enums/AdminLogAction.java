@@ -18,7 +18,9 @@ public enum AdminLogAction {
     USER_DISABLE(AdminLogTargetType.USER),
     USER_ENABLE(AdminLogTargetType.USER),
     USER_RESET_PASSWORD(AdminLogTargetType.USER),
-    USER_DELETE(AdminLogTargetType.USER);
+    USER_DELETE(AdminLogTargetType.USER),
+    UPLOAD_REPLY(AdminLogTargetType.UPLOAD),
+    UPLOAD_DELETE(AdminLogTargetType.UPLOAD);
 
     private final AdminLogTargetType targetType;
 

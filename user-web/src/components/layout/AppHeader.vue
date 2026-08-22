@@ -35,6 +35,38 @@
 
       <div class="header-right">
         <template v-if="auth.isLoggedIn">
+          <el-popover v-model:visible="notifVisible" placement="bottom-end" :width="360" trigger="click" @show="loadNotifs">
+            <template #reference>
+              <span class="notif-bell">
+                <el-badge :value="unreadCount" :hidden="!unreadCount" :max="99">
+                  <el-icon :size="20"><Bell /></el-icon>
+                </el-badge>
+              </span>
+            </template>
+            <div class="notif-panel">
+              <div class="notif-header">
+                <span class="notif-title">通知</span>
+                <el-button v-if="unreadCount" size="small" text type="primary" @click="markAllRead">全部已读</el-button>
+              </div>
+              <div v-if="notifLoading" class="notif-empty">加载中…</div>
+              <div v-else-if="!notifList.length" class="notif-empty">暂无通知</div>
+              <div v-else class="notif-list">
+                <div
+                  v-for="n in notifList"
+                  :key="n.id"
+                  class="notif-item"
+                  :class="{ unread: !n.isRead }"
+                  @click="onNotifClick(n)"
+                >
+                  <span v-if="!n.isRead" class="notif-dot"></span>
+                  <div class="notif-content">
+                    <div class="notif-text">{{ n.content }}</div>
+                    <div class="notif-time">{{ formatDateTime(n.createdAt) }}</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </el-popover>
           <el-dropdown @command="onCommand">
             <span class="user-entry">
               <el-icon><User /></el-icon>
@@ -45,6 +77,7 @@
               <el-dropdown-menu>
                 <el-dropdown-item command="profile">个人中心</el-dropdown-item>
                 <el-dropdown-item command="password">修改密码</el-dropdown-item>
+                <el-dropdown-item v-if="!isAdmin" command="upload">内容上传</el-dropdown-item>
                 <el-dropdown-item v-if="isAdmin" command="admin-console">管理后台</el-dropdown-item>
                 <el-dropdown-item v-if="isAdmin" command="admin">添加内容</el-dropdown-item>
                 <el-dropdown-item divided command="logout">退出登录</el-dropdown-item>
@@ -61,12 +94,24 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
-import { ArrowDown, User } from '@element-plus/icons-vue'
+import { ArrowDown, Bell, User } from '@element-plus/icons-vue'
 import { useAuthStore } from '@/stores/auth'
 import { useCategoryStore } from '@/stores/category'
+import {
+  getAdminNotificationUnreadCountApi,
+  getAdminNotificationsApi,
+  getMyNotificationUnreadCountApi,
+  getMyNotificationsApi,
+  markAdminNotificationReadApi,
+  markAdminNotificationsAllReadApi,
+  markMyNotificationReadApi,
+  markMyNotificationsAllReadApi
+} from '@/api/notify'
+import { formatDateTime } from '@/utils/format'
+import type { NotificationItem } from '@/types'
 
 const router = useRouter()
 const route = useRoute()
@@ -76,6 +121,81 @@ const categories = computed(() => categoryStore.tree)
 const visibleCategories = computed(() => categories.value.slice(0, 13))
 const moreCategories = computed(() => categories.value.slice(13))
 const isAdmin = computed(() => auth.userInfo?.role === 'ADMIN')
+
+const notifVisible = ref(false)
+const notifList = ref<NotificationItem[]>([])
+const unreadCount = ref(0)
+const notifLoading = ref(false)
+let notifTimer: number | null = null
+
+async function loadNotifs() {
+  if (!auth.isLoggedIn) return
+  notifLoading.value = true
+  try {
+    if (isAdmin.value) {
+      const res = await getAdminNotificationsApi({ page: 1, size: 20 })
+      notifList.value = res.list
+      unreadCount.value = await getAdminNotificationUnreadCountApi()
+    } else {
+      const res = await getMyNotificationsApi({ page: 1, size: 20 })
+      notifList.value = res.list
+      unreadCount.value = await getMyNotificationUnreadCountApi()
+    }
+  } catch {
+    // 静默失败
+  } finally {
+    notifLoading.value = false
+  }
+}
+
+async function refreshUnread() {
+  if (!auth.isLoggedIn) return
+  try {
+    unreadCount.value = isAdmin.value
+      ? await getAdminNotificationUnreadCountApi()
+      : await getMyNotificationUnreadCountApi()
+  } catch {
+    // 静默失败
+  }
+}
+
+async function onNotifClick(n: NotificationItem) {
+  if (!n.isRead) {
+    try {
+      if (isAdmin.value) {
+        await markAdminNotificationReadApi(n.id)
+      } else {
+        await markMyNotificationReadApi(n.id)
+      }
+      n.isRead = 1
+      if (unreadCount.value > 0) unreadCount.value -= 1
+    } catch {
+      // 忽略
+    }
+  }
+  notifVisible.value = false
+  if (n.uploadId) {
+    router.push(isAdmin.value ? `/admin/uploads?upload=${n.uploadId}&reply=1` : `/profile/uploads?upload=${n.uploadId}`)
+  } else if (isAdmin.value) {
+    router.push('/admin/uploads')
+  } else {
+    router.push('/profile/uploads')
+  }
+}
+
+async function markAllRead() {
+  try {
+    if (isAdmin.value) {
+      await markAdminNotificationsAllReadApi()
+    } else {
+      await markMyNotificationsAllReadApi()
+    }
+    notifList.value.forEach((n) => (n.isRead = 1))
+    unreadCount.value = 0
+  } catch {
+    // 忽略
+  }
+}
 
 function isCategoryActive(slug: string): boolean {
   const current = String(route.params.slug || '')
@@ -88,6 +208,15 @@ function onCategoryCommand(slug: string) {
 
 onMounted(() => {
   categoryStore.fetchTree()
+  refreshUnread()
+  notifTimer = window.setInterval(refreshUnread, 10000)
+})
+
+onBeforeUnmount(() => {
+  if (notifTimer !== null) {
+    window.clearInterval(notifTimer)
+    notifTimer = null
+  }
 })
 
 async function onCommand(command: string) {
@@ -95,6 +224,8 @@ async function onCommand(command: string) {
     router.push('/profile')
   } else if (command === 'password') {
     router.push('/profile/password')
+  } else if (command === 'upload') {
+    router.push('/profile/uploads')
   } else if (command === 'admin-console') {
     router.push('/admin/dashboard')
   } else if (command === 'admin') {
@@ -211,6 +342,98 @@ async function onCommand(command: string) {
   cursor: pointer;
   color: #6b5b2f;
   outline: none;
+}
+
+.notif-bell {
+  display: inline-flex;
+  align-items: center;
+  cursor: pointer;
+  color: #6b5b2f;
+  outline: none;
+  padding: 4px;
+  border-radius: 6px;
+  transition: background 0.15s;
+}
+
+.notif-bell:hover {
+  background: var(--app-accent-soft);
+  color: #a87f18;
+}
+
+.notif-panel {
+  display: flex;
+  flex-direction: column;
+}
+
+.notif-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--app-border);
+  margin-bottom: 8px;
+}
+
+.notif-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #6b5208;
+}
+
+.notif-list {
+  max-height: 320px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.notif-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.notif-item:hover {
+  background: var(--app-accent-soft);
+}
+
+.notif-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #e6a23c;
+  margin-top: 6px;
+  flex-shrink: 0;
+}
+
+.notif-content {
+  min-width: 0;
+  flex: 1;
+}
+
+.notif-text {
+  font-size: 13px;
+  color: var(--app-text);
+  line-height: 1.5;
+  word-break: break-word;
+}
+
+.notif-time {
+  margin-top: 4px;
+  font-size: 11px;
+  color: var(--app-text-secondary);
+}
+
+.notif-empty {
+  padding: 26px 0;
+  text-align: center;
+  color: var(--app-text-secondary);
+  font-size: 13px;
 }
 
 .header-btn {

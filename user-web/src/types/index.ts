@@ -85,3 +85,33 @@ export interface ArticleQuery {
   page?: number
   size?: number
 }
+
+export interface UserUploadItem {
+  id: number
+  userId: number
+  title: string
+  categoryName: string
+  groupName: string
+  fileName: string
+  status: number
+  adminReply: string
+  repliedAt: string | null
+  createdAt: string
+  nickname?: string
+  email?: string
+  phone?: string
+}
+
+export interface UserUploadDetail extends UserUploadItem {
+  contentMd: string
+  contentHtml: string
+}
+
+export interface NotificationItem {
+  id: number
+  type: string
+  content: string
+  uploadId: number | null
+  isRead: number
+  createdAt: string
+}

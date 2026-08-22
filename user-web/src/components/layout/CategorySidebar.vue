@@ -10,6 +10,22 @@
 
       <!-- 有子分类：按子分类分组显示 -->
       <template v-else-if="subCategories.length">
+        <!-- 不属于任何子分组、直接属于当前分类的题目，直接平铺显示 -->
+        <nav v-if="directArticles.length" class="question-list direct-list">
+          <router-link
+            v-for="(a, ai) in directArticles"
+            :key="a.id"
+            :to="`/article/${a.slug}`"
+            class="question-item"
+            :class="{ active: a.slug === activeArticleSlug }"
+            :draggable="isAdmin"
+            @dragstart="onDragStart($event, 'article-direct', ai)"
+            @dragover="onDragOver($event)"
+            @drop="onDrop($event, 'article-direct', ai)"
+          >
+            {{ a.title }}
+          </router-link>
+        </nav>
         <div v-for="(g, gi) in grouped" :key="g.sub.id" class="sub-group">
           <div
             class="sub-header"
@@ -149,6 +165,11 @@ const grouped = computed(() => {
   }))
 })
 
+/** 直接属于当前分类本身、不在任何子分组下的题目 */
+const directArticles = computed(() =>
+  articles.value.filter((a) => a.categoryId === activeCategory.value?.id)
+)
+
 function isExpanded(id: number): boolean {
   return expandedGroups.value.has(id)
 }
@@ -225,11 +246,19 @@ async function onDrop(e: DragEvent, key: string, index: number) {
       articles.value = ordered
       await reorderArticlesApi(ordered.map((a, i) => ({ id: a.id, sortOrder: i })))
       await loadArticles(activeCategorySlug.value || '')
+    } else if (key === 'article-direct') {
+      const parentId = activeCategory.value?.id
+      if (parentId == null) return
+      const items = articles.value.filter((a) => a.categoryId === parentId)
+      const ordered = moveItem(items, src.index, index)
+      applyGroupArticleOrder((a) => a.categoryId === parentId, ordered)
+      await reorderArticlesApi(ordered.map((a, i) => ({ id: a.id, sortOrder: i })))
+      await loadArticles(activeCategorySlug.value || '')
     } else if (key.startsWith('article-')) {
       const subId = Number(key.slice('article-'.length))
       const items = articles.value.filter((a) => a.categoryId === subId)
       const ordered = moveItem(items, src.index, index)
-      applySubArticleOrder(subId, ordered)
+      applyGroupArticleOrder((a) => a.categoryId === subId, ordered)
       await reorderArticlesApi(ordered.map((a, i) => ({ id: a.id, sortOrder: i })))
       await loadArticles(activeCategorySlug.value || '')
     } else {
@@ -258,11 +287,11 @@ function applySubCategoryOrder(ordered: CategoryNode[]) {
   }
 }
 
-/** 本地立即调整某分组内文章顺序，其余文章保持原位。 */
-function applySubArticleOrder(subId: number, ordered: ArticleListItem[]) {
+/** 本地立即调整某个分组内文章顺序，其余文章保持原位。 */
+function applyGroupArticleOrder(predicate: (a: ArticleListItem) => boolean, ordered: ArticleListItem[]) {
   const idSet = new Set(ordered.map((a) => a.id))
   const rest = articles.value.filter((a) => !idSet.has(a.id))
-  const firstIdx = articles.value.findIndex((a) => a.categoryId === subId)
+  const firstIdx = articles.value.findIndex(predicate)
   const result = [...rest]
   result.splice(Math.max(0, firstIdx), 0, ...ordered)
   articles.value = result
@@ -371,6 +400,10 @@ watch(
 
 .sub-group {
   margin-bottom: 10px;
+}
+
+.direct-list {
+  margin-bottom: 8px;
 }
 
 .sub-header {

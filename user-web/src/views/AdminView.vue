@@ -111,10 +111,8 @@ import { computed, nextTick, onMounted, reactive, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage, type UploadFile, type UploadUserFile } from 'element-plus'
 import { UploadFilled } from '@element-plus/icons-vue'
-import hljs from 'highlight.js'
-import { marked } from 'marked'
-import DOMPurify from 'dompurify'
 import { unsavedState } from '@/utils/unsaved'
+import { highlightCodeBlocks, renderMarkdown } from '@/utils/markdown'
 import AppHeader from '@/components/layout/AppHeader.vue'
 import AppFooter from '@/components/layout/AppFooter.vue'
 import CategoryManageDialog from '@/components/admin/CategoryManageDialog.vue'
@@ -187,13 +185,11 @@ watch(isDirty, (v) => {
   unsavedState.dirty = v
 }, { immediate: true })
 
-const previewHtml = computed(() => DOMPurify.sanitize(marked.parse(form.content || '') as string))
+const previewHtml = computed(() => renderMarkdown(form.content || ''))
 
 function onPreviewOpen() {
   nextTick(() => {
-    previewBody.value?.querySelectorAll('pre code').forEach((block) => {
-      hljs.highlightElement(block as HTMLElement)
-    })
+    highlightCodeBlocks(previewBody.value)
   })
 }
 

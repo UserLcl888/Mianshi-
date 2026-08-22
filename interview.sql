@@ -22,6 +22,8 @@ DROP TABLE IF EXISTS `article_tag`;
 DROP TABLE IF EXISTS `tag`;
 DROP TABLE IF EXISTS `article`;
 DROP TABLE IF EXISTS `daily_quote`;
+DROP TABLE IF EXISTS `user_upload`;
+DROP TABLE IF EXISTS `user_notification`;
 DROP TABLE IF EXISTS `category`;
 DROP TABLE IF EXISTS `user`;
 
@@ -67,6 +69,39 @@ CREATE TABLE `daily_quote` (
   `updated_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='每日一句';
+
+CREATE TABLE `user_upload` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `user_id` bigint unsigned NOT NULL COMMENT '上传用户ID',
+  `title` varchar(200) NOT NULL COMMENT '标题',
+  `category_name` varchar(100) NOT NULL DEFAULT '' COMMENT '主题分类（用户选择或自定义）',
+  `group_name` varchar(100) NOT NULL DEFAULT '' COMMENT '分组（用户选择或自定义，可空）',
+  `file_name` varchar(255) NOT NULL DEFAULT '' COMMENT '原始md文件名',
+  `content_md` longtext NOT NULL COMMENT 'Markdown 原文',
+  `content_html` longtext NOT NULL COMMENT '渲染并消毒后的 HTML',
+  `status` tinyint NOT NULL DEFAULT '0' COMMENT '0待处理 1已回复',
+  `admin_reply` varchar(2000) NOT NULL DEFAULT '' COMMENT '管理员回复内容',
+  `replied_at` datetime DEFAULT NULL COMMENT '回复时间',
+  `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `idx_user` (`user_id`),
+  KEY `idx_status` (`status`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='用户上传内容（普通用户提交，管理员回复）';
+
+CREATE TABLE `user_notification` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `target_user_id` bigint unsigned DEFAULT NULL COMMENT '接收用户ID（普通用户通知）',
+  `target_role` varchar(20) NOT NULL DEFAULT '' COMMENT '接收角色，ADMIN=发给所有管理员',
+  `type` varchar(30) NOT NULL COMMENT 'UPLOAD_REPLY/NEW_UPLOAD',
+  `content` varchar(500) NOT NULL DEFAULT '' COMMENT '通知内容',
+  `upload_id` bigint unsigned DEFAULT NULL COMMENT '关联上传内容ID，点击跳转',
+  `is_read` tinyint NOT NULL DEFAULT '0' COMMENT '0未读 1已读',
+  `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `idx_target_user` (`target_user_id`,`is_read`),
+  KEY `idx_target_role` (`target_role`,`is_read`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='站内通知（管理员回复通知上传者、新上传通知管理员）';
 
 CREATE TABLE `article` (
   `id` bigint unsigned NOT NULL AUTO_INCREMENT,

@@ -147,4 +147,21 @@ public class Requests {
         @NotNull(message = "请传入排序值")
         private Integer sortOrder;
     }
+
+    @Data
+    public static class UserUploadSaveDTO {
+        @NotBlank(message = "请输入标题")
+        private String title;
+        @NotBlank(message = "请选择或填写主题分类")
+        private String categoryName;
+        private String groupName;
+    }
+
+    @Data
+    public static class AdminReplyDTO {
+        @NotBlank(message = "请输入回复内容")
+        @Size(max = 2000, message = "回复内容最长 2000 个字符")
+        private String content;
+    }
+
 }

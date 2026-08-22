@@ -14,6 +14,7 @@ const router = createRouter({
     { path: '/forgot-password', name: 'forgot-password', component: () => import('@/views/ForgotPasswordView.vue'), meta: { guestOnly: true } },
     { path: '/profile', name: 'profile', component: () => import('@/views/ProfileView.vue'), meta: { requiresAuth: true } },
     { path: '/profile/password', name: 'change-password', component: () => import('@/views/ChangePasswordView.vue'), meta: { requiresAuth: true } },
+    { path: '/profile/uploads', name: 'profile-uploads', component: () => import('@/views/ProfileUploadView.vue'), meta: { requiresAuth: true } },
     { path: '/admin', name: 'admin', component: () => import('@/views/AdminView.vue'), meta: { requiresAuth: true, requiresAdmin: true } },
     { path: '/admin/edit/:slug', name: 'admin-edit', component: () => import('@/views/AdminView.vue'), meta: { requiresAuth: true, requiresAdmin: true } },
     {
@@ -43,6 +44,12 @@ const router = createRouter({
       component: () => import('@/components/layout/AdminLayout.vue'),
       meta: { requiresAuth: true, requiresAdmin: true },
       children: [{ path: '', name: 'admin-articles', component: () => import('@/views/admin/ArticleManageView.vue') }]
+    },
+    {
+      path: '/admin/uploads',
+      component: () => import('@/components/layout/AdminLayout.vue'),
+      meta: { requiresAuth: true, requiresAdmin: true },
+      children: [{ path: '', name: 'admin-uploads', component: () => import('@/views/admin/UserUploadView.vue') }]
     },
     {
       path: '/admin/categories',

@@ -169,4 +169,59 @@ public class VOs {
         private Long viewCount;
         private Integer articleCount;
     }
+
+    @Data
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class UserUploadListItemVO {
+        private Long id;
+        private Long userId;
+        private String title;
+        private String categoryName;
+        private String groupName;
+        private String fileName;
+        private Integer status;
+        private String adminReply;
+        private LocalDateTime repliedAt;
+        private LocalDateTime createdAt;
+        private String nickname;
+        private String email;
+        private String phone;
+    }
+
+    @Data
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class UserUploadDetailVO {
+        private Long id;
+        private Long userId;
+        private String title;
+        private String categoryName;
+        private String groupName;
+        private String fileName;
+        private Integer status;
+        private String adminReply;
+        private LocalDateTime repliedAt;
+        private LocalDateTime createdAt;
+        private String contentMd;
+        private String contentHtml;
+        private String nickname;
+        private String email;
+        private String phone;
+    }
+
+    @Data
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class NotificationVO {
+        private Long id;
+        private String type;
+        private String content;
+        private Long uploadId;
+        private Integer isRead;
+        private LocalDateTime createdAt;
+    }
 }
