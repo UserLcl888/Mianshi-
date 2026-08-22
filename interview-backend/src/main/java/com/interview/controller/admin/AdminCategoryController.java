@@ -31,7 +31,7 @@ public class AdminCategoryController {
     }
 
     @PutMapping("/{id}")
-    public Result<VOs.CategoryVO> update(@PathVariable Long id, @Valid @RequestBody Requests.CategorySaveDTO dto) {
+    public Result<VOs.CategoryVO> update(@PathVariable("id") Long id, @Valid @RequestBody Requests.CategorySaveDTO dto) {
         return Result.ok(categoryService.update(id, dto));
     }
 
@@ -42,7 +42,7 @@ public class AdminCategoryController {
     }
 
     @DeleteMapping("/{id}")
-    public Result<Void> delete(@PathVariable Long id) {
+    public Result<Void> delete(@PathVariable("id") Long id) {
         categoryService.delete(id);
         return Result.ok();
     }

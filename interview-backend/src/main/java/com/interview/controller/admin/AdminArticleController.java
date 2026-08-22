@@ -30,10 +30,10 @@ public class AdminArticleController {
 
     @GetMapping
     public Result<PageResult<VOs.ArticleListItemVO>> list(
-            @RequestParam(required = false) Long categoryId,
-            @RequestParam(required = false) String difficulty,
-            @RequestParam(defaultValue = "1") long page,
-            @RequestParam(defaultValue = "10") long size) {
+            @RequestParam(value = "categoryId", required = false) Long categoryId,
+            @RequestParam(value = "difficulty", required = false) String difficulty,
+            @RequestParam(value = "page", defaultValue = "1") long page,
+            @RequestParam(value = "size", defaultValue = "10") long size) {
         return Result.ok(articleService.adminList(categoryId, difficulty, page, size));
     }
 
@@ -43,7 +43,7 @@ public class AdminArticleController {
     }
 
     @PutMapping("/{id}")
-    public Result<VOs.ArticleVO> update(@PathVariable Long id, @Valid @RequestBody Requests.ArticleSaveDTO dto) {
+    public Result<VOs.ArticleVO> update(@PathVariable("id") Long id, @Valid @RequestBody Requests.ArticleSaveDTO dto) {
         return Result.ok(articleService.update(id, dto));
     }
 
@@ -54,7 +54,7 @@ public class AdminArticleController {
     }
 
     @DeleteMapping("/{id}")
-    public Result<Void> delete(@PathVariable Long id) {
+    public Result<Void> delete(@PathVariable("id") Long id) {
         articleService.delete(id);
         return Result.ok();
     }

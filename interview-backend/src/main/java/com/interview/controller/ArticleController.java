@@ -21,20 +21,20 @@ public class ArticleController {
 
     @GetMapping
     public Result<PageResult<VOs.ArticleListItemVO>> list(
-            @RequestParam(required = false) Long categoryId,
-            @RequestParam(required = false) String difficulty,
-            @RequestParam(defaultValue = "1") long page,
-            @RequestParam(defaultValue = "10") long size) {
+            @RequestParam(value = "categoryId", required = false) Long categoryId,
+            @RequestParam(value = "difficulty", required = false) String difficulty,
+            @RequestParam(value = "page", defaultValue = "1") long page,
+            @RequestParam(value = "size", defaultValue = "10") long size) {
         return Result.ok(articleService.list(categoryId, difficulty, page, size));
     }
 
     @GetMapping("/{slug}")
-    public Result<VOs.DetailRespVO> detail(@PathVariable String slug) {
+    public Result<VOs.DetailRespVO> detail(@PathVariable("slug") String slug) {
         return Result.ok(articleService.detail(slug));
     }
 
     @PostMapping("/{id}/view")
-    public Result<Long> recordView(@PathVariable Long id) {
+    public Result<Long> recordView(@PathVariable("id") Long id) {
         return Result.ok(articleService.recordView(id));
     }
 }

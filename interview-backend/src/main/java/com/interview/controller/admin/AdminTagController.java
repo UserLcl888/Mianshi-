@@ -37,12 +37,12 @@ public class AdminTagController {
     }
 
     @PutMapping("/{id}")
-    public Result<VOs.TagVO> update(@PathVariable Long id, @Valid @RequestBody Requests.TagSaveDTO dto) {
+    public Result<VOs.TagVO> update(@PathVariable("id") Long id, @Valid @RequestBody Requests.TagSaveDTO dto) {
         return Result.ok(tagService.update(id, dto.getName()));
     }
 
     @DeleteMapping("/{id}")
-    public Result<Void> delete(@PathVariable Long id) {
+    public Result<Void> delete(@PathVariable("id") Long id) {
         tagService.delete(id);
         return Result.ok();
     }

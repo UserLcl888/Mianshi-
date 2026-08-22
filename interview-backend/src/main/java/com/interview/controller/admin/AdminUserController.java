@@ -28,15 +28,15 @@ public class AdminUserController {
 
     @GetMapping
     public Result<PageResult<VOs.UserVO>> list(
-            @RequestParam(required = false) String keyword,
-            @RequestParam(required = false) Integer status,
-            @RequestParam(defaultValue = "1") long page,
-            @RequestParam(defaultValue = "10") long size) {
+            @RequestParam(value = "keyword", required = false) String keyword,
+            @RequestParam(value = "status", required = false) Integer status,
+            @RequestParam(value = "page", defaultValue = "1") long page,
+            @RequestParam(value = "size", defaultValue = "10") long size) {
         return Result.ok(adminUserService.list(keyword, status, page, size));
     }
 
     @GetMapping("/{id}")
-    public Result<VOs.UserVO> get(@PathVariable Long id) {
+    public Result<VOs.UserVO> get(@PathVariable("id") Long id) {
         return Result.ok(adminUserService.get(id));
     }
 
@@ -46,24 +46,24 @@ public class AdminUserController {
     }
 
     @PutMapping("/{id}")
-    public Result<VOs.UserVO> update(@PathVariable Long id, @RequestBody Requests.UserUpdateDTO dto) {
+    public Result<VOs.UserVO> update(@PathVariable("id") Long id, @RequestBody Requests.UserUpdateDTO dto) {
         return Result.ok(adminUserService.update(id, dto));
     }
 
     @PutMapping("/{id}/status")
-    public Result<Void> updateStatus(@PathVariable Long id, @Valid @RequestBody Requests.StatusDTO dto) {
+    public Result<Void> updateStatus(@PathVariable("id") Long id, @Valid @RequestBody Requests.StatusDTO dto) {
         adminUserService.updateStatus(id, dto.getStatus());
         return Result.ok();
     }
 
     @PutMapping("/{id}/password")
-    public Result<Void> resetPassword(@PathVariable Long id, @Valid @RequestBody Requests.ResetPasswordDTO dto) {
+    public Result<Void> resetPassword(@PathVariable("id") Long id, @Valid @RequestBody Requests.ResetPasswordDTO dto) {
         adminUserService.resetPassword(id, dto.getNewPassword());
         return Result.ok();
     }
 
     @DeleteMapping("/{id}")
-    public Result<Void> delete(@PathVariable Long id) {
+    public Result<Void> delete(@PathVariable("id") Long id) {
         adminUserService.delete(id);
         return Result.ok();
     }
