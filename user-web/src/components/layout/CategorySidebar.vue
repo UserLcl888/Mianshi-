@@ -485,4 +485,5 @@ watch(
   color: var(--app-text-secondary);
   font-size: 13px;
 }
+
 </style>

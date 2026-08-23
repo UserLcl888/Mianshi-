@@ -34,6 +34,7 @@ public class GlobalExceptionHandler {
             case 40000 -> HttpStatus.BAD_REQUEST;
             case 40100 -> HttpStatus.UNAUTHORIZED;
             case 40300 -> HttpStatus.FORBIDDEN;
+            case 40301 -> HttpStatus.FORBIDDEN;
             case 40400 -> HttpStatus.NOT_FOUND;
             case 40900 -> HttpStatus.CONFLICT;
             case 50000 -> HttpStatus.INTERNAL_SERVER_ERROR;

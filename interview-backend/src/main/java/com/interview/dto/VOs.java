@@ -32,6 +32,7 @@ public class VOs {
         private Long parentId;
         private Integer sortOrder;
         private String description;
+        private String accessLevel;
         private List<CategoryVO> children = new ArrayList<>();
     }
 
@@ -222,5 +223,54 @@ public class VOs {
         private Long uploadId;
         private Integer isRead;
         private LocalDateTime createdAt;
+    }
+
+    @Data
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class AccessApplyVO {
+        private Long id;
+        private Long userId;
+        private String scope;
+        private Long categoryId;
+        private String categoryName;
+        private String categorySlug;
+        private String reason;
+        private Integer status;
+        private String adminReply;
+        private String reviewRemark;
+        private LocalDateTime createdAt;
+        private LocalDateTime reviewedAt;
+        private String nickname;
+        private String email;
+        private String phone;
+    }
+
+    @Data
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class LockedArticleVO {
+        private Long id;
+        private String name;
+        private String slug;
+    }
+
+    @Data
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class AccessStatusVO {
+        /** ARTICLE / CATEGORY */
+        private String type;
+        private Long id;
+        private String title;
+        /** NONE / PENDING / REJECTED / GRANTED */
+        private String status;
+        private String reviewRemark;
+        /** 受限分类ID（申请的归属分类） */
+        private Long categoryId;
+        private String categoryName;
     }
 }

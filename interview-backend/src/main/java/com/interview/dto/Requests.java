@@ -164,4 +164,20 @@ public class Requests {
         private String content;
     }
 
+    @Data
+    public static class AccessApplyDTO {
+        /** scope=CATEGORY 时必须传 */
+        private Long categoryId;
+        @NotBlank(message = "请选择申请范围")
+        private String scope;
+        @Size(max = 200, message = "申请理由最长 200 个字符")
+        private String reason;
+    }
+
+    @Data
+    public static class AccessReviewDTO {
+        @Size(max = 200, message = "审批备注最长 200 个字符")
+        private String remark;
+    }
+
 }

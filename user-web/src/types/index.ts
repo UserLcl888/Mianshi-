@@ -5,6 +5,7 @@ export interface CategoryNode {
   parentId: number
   sortOrder: number
   description?: string
+  accessLevel?: string
   children: CategoryNode[]
 }
 
@@ -114,4 +115,38 @@ export interface NotificationItem {
   uploadId: number | null
   isRead: number
   createdAt: string
+}
+
+export interface AccessApplyItem {
+  id: number
+  userId: number
+  scope: string
+  categoryId: number | null
+  categoryName: string
+  categorySlug: string | null
+  reason: string
+  status: number
+  adminReply: string
+  reviewRemark: string
+  createdAt: string
+  reviewedAt: string | null
+  nickname?: string
+  email?: string
+  phone?: string
+}
+
+export interface LockedCategoryItem {
+  id: number
+  name: string
+  slug: string
+}
+
+export interface AccessStatusItem {
+  type: 'ARTICLE' | 'CATEGORY'
+  id: number
+  title: string
+  status: 'NONE' | 'PENDING' | 'REJECTED' | 'GRANTED'
+  reviewRemark: string | null
+  categoryId: number | null
+  categoryName: string | null
 }

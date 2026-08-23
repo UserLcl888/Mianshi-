@@ -191,4 +191,5 @@ async function submit() {
   color: var(--app-text-secondary);
   font-size: 12px;
 }
+
 </style>

@@ -15,9 +15,11 @@ import com.interview.dto.Rows;
 import com.interview.dto.VOs;
 import com.interview.entity.Article;
 import com.interview.entity.Category;
+import com.interview.entity.User;
 import com.interview.enums.AdminLogAction;
 import com.interview.enums.Difficulty;
 import com.interview.mapper.ArticleMapper;
+import com.interview.mapper.UserMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
@@ -39,6 +41,8 @@ public class ArticleService {
 
     private final ArticleMapper articleMapper;
     private final CategoryService categoryService;
+    private final UserMapper userMapper;
+    private final AccessService accessService;
     private final TagService tagService;
     private final MarkdownService markdownService;
     private final StringRedisTemplate redis;
@@ -93,6 +97,16 @@ public class ArticleService {
     }
 
     public VOs.DetailRespVO detail(String slug) {
+        // 先查文章并做访问权限校验：受限内容不能命中缓存跳过校验（审批撤销后立即失效）
+        Article article = articleMapper.selectOne(new LambdaQueryWrapper<Article>()
+                .eq(Article::getSlug, slug).eq(Article::getStatus, 1));
+        if (article == null) {
+            throw new BizException(ErrorCode.NOT_FOUND, "题目不存在或已下架");
+        }
+        Category category = categoryService.getById(article.getCategoryId());
+        User viewer = StpUtil.isLogin() ? userMapper.selectById(StpUtil.getLoginIdAsLong()) : null;
+        accessService.checkArticleAccess(viewer, article, category);
+
         String cacheKey = detailCacheKey(slug);
         String cached = redis.opsForValue().get(cacheKey);
         if (cached != null) {
@@ -107,12 +121,6 @@ public class ArticleService {
             }
         }
 
-        Article article = articleMapper.selectOne(new LambdaQueryWrapper<Article>()
-                .eq(Article::getSlug, slug).eq(Article::getStatus, 1));
-        if (article == null) {
-            throw new BizException(ErrorCode.NOT_FOUND, "题目不存在或已下架");
-        }
-        Category category = categoryService.getById(article.getCategoryId());
         VOs.ArticleDetailVO detailVO = toDetail(article, category);
 
         VOs.DetailRespVO resp = new VOs.DetailRespVO();

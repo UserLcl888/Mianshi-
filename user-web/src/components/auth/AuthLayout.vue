@@ -46,7 +46,7 @@
         </div>
 
         <button class="guest-btn" type="button" @click="goHome">
-          <span>不登录仅能以游客身份浏览首页</span>
+          <span>公开内容免费浏览，精华分类（本人经验 / 文档链接）登录申请</span>
           <el-icon class="guest-arrow"><Right /></el-icon>
         </button>
       </aside>
@@ -275,7 +275,8 @@ function goHome() {
   border-radius: 8px;
   background: rgba(217, 167, 22, 0.1);
   color: #a87f18;
-  font-size: 13px;
+  font-size: 12px;
+  line-height: 1.5;
   cursor: pointer;
   transition: all 0.2s;
 }

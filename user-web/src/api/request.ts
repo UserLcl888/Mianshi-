@@ -35,8 +35,13 @@ request.interceptors.response.use(
       return Promise.reject(error)
     } else {
       const message = error.response?.data?.message || '网络错误，请稍后重试'
-      ElMessage.error(message)
-      return Promise.reject(new Error(message))
+      // 40301=受限内容未授权，页面自行渲染“需申请访问”，不弹通用错误
+      if (error.response?.data?.code !== 40301) {
+        ElMessage.error(message)
+      }
+      const err = new Error(message) as Error & { code?: number }
+      err.code = error.response?.data?.code
+      return Promise.reject(err)
     }
   }
 )

@@ -19,17 +19,40 @@ public class NotificationService {
 
     public static final String TYPE_UPLOAD_REPLY = "UPLOAD_REPLY";
     public static final String TYPE_NEW_UPLOAD = "NEW_UPLOAD";
+    public static final String TYPE_ACCESS_APPROVED = "ACCESS_APPROVED";
+    public static final String TYPE_ACCESS_REJECTED = "ACCESS_REJECTED";
+    public static final String TYPE_ACCESS_REPLY = "ACCESS_REPLY";
+    public static final String TYPE_ACCESS_APPLY = "ACCESS_APPLY";
     public static final String ROLE_ADMIN = "ADMIN";
 
     private final NotificationMapper notificationMapper;
 
+    /** 给指定用户发一条通知（uploadId 可空，用于跳转关联）。 */
+    public void notifyUser(Long userId, String type, String content, Long uploadId) {
+        Notification n = new Notification();
+        n.setTargetUserId(userId);
+        n.setType(type);
+        n.setContent(content);
+        n.setUploadId(uploadId);
+        n.setIsRead(0);
+        notificationMapper.insert(n);
+    }
+
     /** 管理员回复后，给上传者发通知。 */
     public void notifyUploadReplied(UserUpload upload, Long ownerUserId) {
+        notifyUser(ownerUserId, TYPE_UPLOAD_REPLY, "您上传的内容《" + upload.getTitle() + "》已收到管理员回复", upload.getId());
+    }
+
+    /** 用户提交访问申请后，通知所有管理员。 */
+    public void notifyAdminNewApply(String nickname, String scope, String categoryName) {
+        String content = "CATEGORY".equals(scope)
+                ? "用户 " + nickname + " 申请了分类《" + categoryName + "》的访问权限"
+                : "用户 " + nickname + " 申请了全部受限分类的访问权限";
         Notification n = new Notification();
-        n.setTargetUserId(ownerUserId);
-        n.setType(TYPE_UPLOAD_REPLY);
-        n.setContent("您上传的内容《" + upload.getTitle() + "》已收到管理员回复");
-        n.setUploadId(upload.getId());
+        n.setTargetRole(ROLE_ADMIN);
+        n.setType(TYPE_ACCESS_APPLY);
+        n.setContent(content);
+        n.setUploadId(null);
         n.setIsRead(0);
         notificationMapper.insert(n);
     }

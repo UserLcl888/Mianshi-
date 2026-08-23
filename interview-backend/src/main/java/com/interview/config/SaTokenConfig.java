@@ -29,7 +29,9 @@ public class SaTokenConfig {
                                 "/api/auth/login/code",
                                 "/api/auth/reset-password",
                                 "/api/home/**",
-                                "/api/categories/tree");
+                                "/api/categories/tree",
+                                "/api/articles",
+                                "/api/articles/**");
             }
         };
     }

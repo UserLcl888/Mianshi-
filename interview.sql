@@ -24,6 +24,7 @@ DROP TABLE IF EXISTS `article`;
 DROP TABLE IF EXISTS `daily_quote`;
 DROP TABLE IF EXISTS `user_upload`;
 DROP TABLE IF EXISTS `user_notification`;
+DROP TABLE IF EXISTS `access_apply`;
 DROP TABLE IF EXISTS `category`;
 DROP TABLE IF EXISTS `user`;
 
@@ -37,6 +38,7 @@ CREATE TABLE `user` (
   `phone` varchar(20) DEFAULT NULL COMMENT '手机号',
   `role` varchar(20) NOT NULL DEFAULT 'USER' COMMENT 'USER/ADMIN',
   `status` tinyint NOT NULL DEFAULT '1' COMMENT '1正常 0禁用',
+  `full_access` tinyint NOT NULL DEFAULT '0' COMMENT '1=老用户默认全权限，新注册默认0',
   `last_login_at` datetime DEFAULT NULL COMMENT '最后登录时间',
   `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -54,6 +56,7 @@ CREATE TABLE `category` (
   `parent_id` bigint unsigned NOT NULL DEFAULT '0' COMMENT '0=顶级分类',
   `sort_order` int NOT NULL DEFAULT '0' COMMENT '排序权重，越小越靠前',
   `description` varchar(255) NOT NULL DEFAULT '' COMMENT '分类描述',
+  `access_level` varchar(10) NOT NULL DEFAULT 'PUBLIC' COMMENT 'PUBLIC=公开 APPLY=需申请',
   `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
@@ -102,6 +105,22 @@ CREATE TABLE `user_notification` (
   KEY `idx_target_user` (`target_user_id`,`is_read`),
   KEY `idx_target_role` (`target_role`,`is_read`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='站内通知（管理员回复通知上传者、新上传通知管理员）';
+
+CREATE TABLE `access_apply` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `user_id` bigint unsigned NOT NULL COMMENT '申请人',
+  `scope` varchar(10) NOT NULL DEFAULT 'CATEGORY' COMMENT 'CATEGORY=单分类 ALL=全部分类',
+  `category_id` bigint unsigned DEFAULT NULL COMMENT 'scope=CATEGORY 时申请的分类ID',
+  `reason` varchar(200) NOT NULL DEFAULT '' COMMENT '申请理由（选填）',
+  `status` tinyint NOT NULL DEFAULT '0' COMMENT '0待审批 1已通过 2已拒绝',
+  `admin_reply` varchar(2000) NOT NULL DEFAULT '' COMMENT '管理员回复/意见',
+  `review_remark` varchar(200) NOT NULL DEFAULT '' COMMENT '审批备注（拒绝原因，选填）',
+  `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `reviewed_at` datetime DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `idx_user_status` (`user_id`,`status`),
+  KEY `idx_category` (`category_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='受限分类访问申请（单分类/全部分类）';
 
 CREATE TABLE `article` (
   `id` bigint unsigned NOT NULL AUTO_INCREMENT,
@@ -164,6 +183,9 @@ INSERT INTO `user` (`id`, `password_hash`, `rootpassword`, `nickname`, `avatar`,
 ('15', '$2a$10$ZOc4M62a5BiBoLf9FiW.Cekj5aZkr.JcpTPQL60dm9OZmIMei3Q..', '123456', '2090323329', '', '2090323329@qq.com', NULL, 'USER', '1', '2026-08-11 21:53:31', '2026-08-11 21:53:24', '2026-08-11 21:53:24'),
 ('16', '$2a$10$leLtGAImrCSZhUf6dp8zzOysPA04RbOjSeSH4HUBozhyjf2Mripb2', '222222', '2090323330', '', '2090323330@qq.com', NULL, 'USER', '1', '2026-08-13 14:56:57', '2026-08-13 14:56:51', '2026-08-13 14:56:51');
 
+-- 老用户默认拥有全部权限（新注册用户默认 0）
+UPDATE `user` SET `full_access` = 1;
+
 INSERT INTO `category` (`id`, `name`, `slug`, `parent_id`, `sort_order`, `description`, `created_at`, `updated_at`) VALUES
 ('1', '计算机网络', 'computer-network', '0', '14', 'TCP/IP、HTTP、HTTPS 等网络高频面试题', '2026-08-08 22:28:49', '2026-08-09 18:12:31'),
 ('2', '操作系统', 'operating-system', '0', '15', '进程、线程、内存管理、文件系统', '2026-08-08 22:28:49', '2026-08-09 18:12:31'),
@@ -197,6 +219,8 @@ INSERT INTO `category` (`id`, `name`, `slug`, `parent_id`, `sort_order`, `descri
 ('50', '运维', 'DevOps', '0', '7', '运维相关知识,主要记录的是CICD流程', '2026-08-18 15:52:04', '2026-08-18 15:52:04'),
 ('52', 'Git', 'git', '0', '0', 'git相关知识', '2026-08-20 22:23:28', '2026-08-20 22:23:28');
 
+-- 受限分类：本人经验、文档链接及其子分类需申请访问
+UPDATE `category` SET `access_level` = 'APPLY' WHERE `id` IN (42, 43);
 
 INSERT INTO `daily_quote` (`id`, `content`, `author`, `created_at`, `updated_at`) VALUES
 ('1', '代码改变世界，技术成就梦想。', '每日一句', '2026-08-16 20:28:10', '2026-08-16 20:28:10'),

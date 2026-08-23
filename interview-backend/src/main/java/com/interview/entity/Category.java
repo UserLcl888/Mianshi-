@@ -17,6 +17,8 @@ public class Category {
     private Long parentId;
     private Integer sortOrder;
     private String description;
+    /** PUBLIC=公开 APPLY=需申请 */
+    private String accessLevel;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 }

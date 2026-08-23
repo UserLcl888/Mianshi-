@@ -77,6 +77,7 @@
               <el-dropdown-menu>
                 <el-dropdown-item command="profile">个人中心</el-dropdown-item>
                 <el-dropdown-item command="password">修改密码</el-dropdown-item>
+                <el-dropdown-item v-if="!isAdmin" command="applies">我的申请</el-dropdown-item>
                 <el-dropdown-item v-if="!isAdmin" command="upload">内容上传</el-dropdown-item>
                 <el-dropdown-item v-if="isAdmin" command="admin-console">管理后台</el-dropdown-item>
                 <el-dropdown-item v-if="isAdmin" command="admin">添加内容</el-dropdown-item>
@@ -174,6 +175,10 @@ async function onNotifClick(n: NotificationItem) {
     }
   }
   notifVisible.value = false
+  if (n.type.startsWith('ACCESS_')) {
+    router.push(n.type === 'ACCESS_APPLY' && isAdmin.value ? '/admin/access' : '/profile/applies')
+    return
+  }
   if (n.uploadId) {
     router.push(isAdmin.value ? `/admin/uploads?upload=${n.uploadId}&reply=1` : `/profile/uploads?upload=${n.uploadId}`)
   } else if (isAdmin.value) {
@@ -224,6 +229,8 @@ async function onCommand(command: string) {
     router.push('/profile')
   } else if (command === 'password') {
     router.push('/profile/password')
+  } else if (command === 'applies') {
+    router.push('/profile/applies')
   } else if (command === 'upload') {
     router.push('/profile/uploads')
   } else if (command === 'admin-console') {

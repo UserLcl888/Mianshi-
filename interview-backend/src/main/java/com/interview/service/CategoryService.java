@@ -94,6 +94,7 @@ public class CategoryService {
                 vo.setParentId(c.getParentId());
                 vo.setSortOrder(c.getSortOrder());
                 vo.setDescription(c.getDescription());
+                vo.setAccessLevel(c.getAccessLevel());
                 vo.setChildren(buildTree(all, c.getId()));
                 result.add(vo);
             }
@@ -111,6 +112,23 @@ public class CategoryService {
             throw new BizException(ErrorCode.NOT_FOUND, "分类不存在");
         }
         return category;
+    }
+
+    public List<Category> listByIds(java.util.Collection<Long> ids) {
+        if (ids == null || ids.isEmpty()) {
+            return List.of();
+        }
+        return categoryMapper.selectBatchIds(ids);
+    }
+
+    public Category getBySlug(String slug) {
+        return categoryMapper.selectOne(new LambdaQueryWrapper<Category>()
+                .eq(Category::getSlug, slug));
+    }
+
+    public List<Category> listByLikeName(String name) {
+        return categoryMapper.selectList(new LambdaQueryWrapper<Category>()
+                .like(Category::getName, name));
     }
 
     public VOs.CategoryVO create(Requests.CategorySaveDTO dto) {
@@ -205,6 +223,7 @@ public class CategoryService {
         vo.setParentId(category.getParentId());
         vo.setSortOrder(category.getSortOrder());
         vo.setDescription(category.getDescription());
+        vo.setAccessLevel(category.getAccessLevel());
         return vo;
     }
 

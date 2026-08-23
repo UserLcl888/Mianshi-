@@ -54,6 +54,7 @@ const menu = [
   { path: '/admin/articles/create', label: '添加题目' },
   { path: '/admin/categories', label: '分类管理' },
   { path: '/admin/uploads', label: '用户上传' },
+  { path: '/admin/access', label: '访问申请' },
   { path: '/admin/users', label: '用户管理' },
   { path: '/admin/tags', label: '标签管理' },
   { path: '/admin/logs', label: '操作日志' }
@@ -66,6 +67,7 @@ const labelMap: Record<string, string> = {
   'admin-article-edit': '编辑题目',
   'admin-categories': '分类管理',
   'admin-uploads': '用户上传',
+  'admin-access': '访问申请',
   'admin-users': '用户管理',
   'admin-tags': '标签管理',
   'admin-logs': '操作日志',

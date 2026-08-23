@@ -22,6 +22,8 @@ public class User {
     private String phone;
     private String role;
     private Integer status;
+    /** 1=老用户默认全权限，0=新用户需申请 */
+    private Integer fullAccess;
     private LocalDateTime lastLoginAt;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;

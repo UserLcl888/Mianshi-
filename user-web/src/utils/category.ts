@@ -18,3 +18,19 @@ export function findCategory(slug: string, nodes: CategoryNode[]): CategoryNode 
   }
   return null
 }
+
+/** 分类是否受限：自身或任一祖先 accessLevel = APPLY */
+export function isRestrictedCategory(node: CategoryNode | null, tree: CategoryNode[]): boolean {
+  if (!node) return false
+  if (node.accessLevel === 'APPLY') return true
+  return isRestrictedCategory(findParent(node.parentId, tree), tree)
+}
+
+function findParent(id: number, nodes: CategoryNode[]): CategoryNode | null {
+  for (const n of nodes) {
+    if (n.id === id) return n
+    const found = findParent(id, n.children)
+    if (found) return found
+  }
+  return null
+}

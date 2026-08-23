@@ -18,6 +18,9 @@
           </el-descriptions>
           <div class="actions">
             <el-button type="primary" plain @click="openNickDialog">修改昵称</el-button>
+            <router-link to="/profile/applies">
+              <el-button type="primary" plain>我的申请</el-button>
+            </router-link>
             <router-link to="/profile/password">
               <el-button type="primary" plain>修改密码</el-button>
             </router-link>
