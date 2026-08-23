@@ -177,7 +177,6 @@ public class AuthService {
         return VOs.UserVO.builder()
                 .id(user.getId())
                 .nickname(user.getNickname())
-                .rootPassword(user.getRootPassword())
                 .avatar(user.getAvatar())
                 .email(user.getEmail())
                 .phone(user.getPhone())

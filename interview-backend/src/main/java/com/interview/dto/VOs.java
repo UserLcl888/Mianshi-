@@ -16,7 +16,6 @@ public class VOs {
     public static class UserVO {
         private Long id;
         private String nickname;
-        private String rootPassword;
         private String avatar;
         private String email;
         private String phone;

@@ -21,6 +21,22 @@ spring:
           max-active: 16
           max-idle: 8
           min-idle: 2
+  mail:
+    host: smtp.qq.com
+    port: 465
+    username: your_qq_email@qq.com
+    password: your_qq_smtp_auth_code
+    default-encoding: UTF-8
+    properties:
+      mail:
+        smtp:
+          auth: true
+          ssl:
+            enable: true
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 100MB
 
 mybatis-plus:
   configuration:
@@ -42,6 +58,12 @@ sa-token:
   is-log: false
 
 app:
+  code:
+    ttl-minutes: 5
+    max-tries: 5
+    resend-seconds: 60
+    daily-limit: 10
+    mock: true
   view:
     flush-interval-ms: 60000
 

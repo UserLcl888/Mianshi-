@@ -18,5 +18,6 @@ desktop.ini
 *.swp
 
 # 本地环境变量
+.env
 .env.local
 .env.*.local
