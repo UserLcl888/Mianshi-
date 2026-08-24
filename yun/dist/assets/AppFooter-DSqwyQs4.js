@@ -1,1 +1,0 @@
-import{_ as o,i as s,c as t,b as a}from"./index-gC4LSEXW.js";const r={},c={class:"app-footer"};function n(_,e){return s(),t("footer",c,[...e[0]||(e[0]=[a("span",null,"知识分享平台 · 仅供学习交流使用",-1)])])}const f=o(r,[["render",n],["__scopeId","data-v-eaa9867e"]]);export{f as A};

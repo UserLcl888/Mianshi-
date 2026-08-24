@@ -21,3 +21,9 @@ desktop.ini
 .env
 .env.local
 .env.*.local
+
+# 部署打包目录（不入库）
+yun/
+
+# 前端构建产物
+dist/

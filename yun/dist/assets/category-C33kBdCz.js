@@ -1,1 +1,0 @@
-function o(n,r,e=[]){for(const t of r){const f=[...e,t];if(t.slug===n)return f;const u=o(n,t.children,f);if(u)return u}return null}function c(n,r){return n?n.accessLevel==="APPLY"?!0:c(i(n.parentId,r),r):!1}function i(n,r){for(const e of r){if(e.id===n)return e;const t=i(n,e.children);if(t)return t}return null}export{o as g,c as i};
