@@ -86,14 +86,17 @@
         type="button"
         class="code-login-btn"
         :class="{ active: emailMode === 'code' }"
-        @click="toggleCodeMode"
+        @click="toggleEmailMode"
       >
-        <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-          <rect x="7" y="2.5" width="10" height="19" rx="2.5" />
-          <path d="M10.5 18.5h3" />
-          <path d="M12 6v2.5" />
-        </svg>
-        <span class="code-login-cn">验证码登录</span>
+        <el-icon :size="15">
+          <Lock v-if="emailMode === 'code'" />
+          <svg v-else viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="7" y="2.5" width="10" height="19" rx="2.5" />
+            <path d="M10.5 18.5h3" />
+            <path d="M12 6v2.5" />
+          </svg>
+        </el-icon>
+        <span class="code-login-cn">{{ emailMode === 'code' ? '密码登录' : '验证码登录' }}</span>
       </button>
     </template>
 
@@ -105,7 +108,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, reactive, ref, watch } from 'vue'
+import { computed, reactive, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage, type FormInstance, type FormRules } from 'element-plus'
 import { Iphone, Key, Lock, Message } from '@element-plus/icons-vue'
@@ -147,18 +150,12 @@ function switchType(type: 'email' | 'phone') {
   formRef.value?.clearValidate()
 }
 
-function toggleCodeMode() {
+function toggleEmailMode() {
   emailMode.value = emailMode.value === 'code' ? 'password' : 'code'
   form.password = ''
   form.code = ''
   formRef.value?.clearValidate()
 }
-
-watch(emailMode, () => {
-  form.password = ''
-  form.code = ''
-  formRef.value?.clearValidate()
-})
 
 const rules = computed<FormRules>(() => {
   const accountRule =
@@ -234,13 +231,13 @@ async function submit() {
   bottom: -1px;
   height: 2px;
   border-radius: 2px;
-  background: #f5a623;
+  background: var(--app-accent);
   transform: scaleX(0);
   transition: transform 0.2s ease;
 }
 
 .auth-tab.active {
-  color: #f5a623;
+  color: var(--app-accent);
   font-weight: 600;
 }
 
@@ -289,7 +286,7 @@ async function submit() {
 }
 
 .forgot-link:hover {
-  color: #f5a623;
+  color: var(--app-accent);
 }
 
 .code-row {
@@ -311,19 +308,19 @@ async function submit() {
   letter-spacing: 1px;
   border-radius: 12px;
   border: none;
-  background: linear-gradient(135deg, #ffb338 0%, #f7931e 100%);
-  box-shadow: 0 6px 20px rgba(245, 166, 35, 0.32);
+  background: linear-gradient(135deg, #f2a82e 0%, #e18b18 100%);
+  box-shadow: 0 6px 20px rgba(232, 154, 31, 0.32);
   transition: box-shadow 0.2s ease, transform 0.15s ease, filter 0.2s ease;
 }
 
 .submit-btn:hover {
-  background: linear-gradient(135deg, #ffc14f 0%, #ffa32e 100%);
-  box-shadow: 0 8px 26px rgba(245, 166, 35, 0.42);
+  background: linear-gradient(135deg, #f7b845 0%, #ea9624 100%);
+  box-shadow: 0 8px 26px rgba(232, 154, 31, 0.42);
   transform: translateY(-1px);
 }
 
 .submit-btn.is-loading {
-  background: linear-gradient(135deg, #f0a22c 0%, #e08a18 100%);
+  background: linear-gradient(135deg, #e39a26 0%, #d17f13 100%);
 }
 
 .btn-arrow {
@@ -372,6 +369,8 @@ async function submit() {
   padding: 12px 14px;
   border-radius: 11px;
   cursor: pointer;
+  font-size: 13.5px;
+  font-weight: 500;
   color: #c8d2e0;
   background: rgba(255, 255, 255, 0.055);
   border: 1px solid rgba(255, 255, 255, 0.12);
@@ -380,14 +379,14 @@ async function submit() {
 
 .code-login-btn:hover {
   background: rgba(255, 255, 255, 0.09);
-  border-color: rgba(245, 166, 35, 0.5);
-  color: #f5a623;
+  border-color: rgba(232, 154, 31, 0.5);
+  color: var(--app-accent);
 }
 
 .code-login-btn.active {
-  background: rgba(245, 166, 35, 0.14);
-  border-color: rgba(245, 166, 35, 0.55);
-  color: #f5a623;
+  background: rgba(232, 154, 31, 0.14);
+  border-color: rgba(232, 154, 31, 0.55);
+  color: var(--app-accent);
 }
 
 .code-login-cn {
@@ -403,13 +402,13 @@ async function submit() {
 }
 
 .auth-switch a {
-  color: #f5a623;
+  color: var(--app-accent);
   font-weight: 600;
   transition: color 0.2s;
 }
 
 .auth-switch a:hover {
-  color: #ffb338;
+  color: #f2a82e;
 }
 
 .auth-input :deep(.el-input__wrapper) {

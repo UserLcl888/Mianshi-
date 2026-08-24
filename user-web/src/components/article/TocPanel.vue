@@ -86,7 +86,7 @@ function scrollTo(id: string) {
 }
 
 .toc-item.active {
-  color: #f5a623;
+  color: var(--app-accent);
   font-weight: 600;
   background: var(--app-accent-soft);
 }

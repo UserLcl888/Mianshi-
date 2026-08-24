@@ -364,7 +364,7 @@ watch(
   align-items: center;
   justify-content: space-between;
   font-size: 15px;
-  color: #f0c674;
+  color: #e9b862;
 }
 
 .category-list,
@@ -394,7 +394,7 @@ watch(
 
 .category-item.active {
   background: var(--app-accent-soft);
-  color: #f5a623;
+  color: var(--app-accent);
   font-weight: 600;
 }
 
@@ -426,7 +426,7 @@ watch(
   border-radius: 6px;
   font-size: 13px;
   font-weight: 600;
-  color: #e8b64c;
+  color: #dfaa40;
   transition: all 0.15s;
 }
 
@@ -443,7 +443,7 @@ watch(
   border: none;
   background: transparent;
   cursor: pointer;
-  color: #e8b64c;
+  color: #dfaa40;
   display: flex;
   align-items: center;
   justify-content: center;

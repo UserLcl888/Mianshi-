@@ -188,13 +188,13 @@ async function submit() {
   bottom: -1px;
   height: 2px;
   border-radius: 2px;
-  background: #f5a623;
+  background: var(--app-accent);
   transform: scaleX(0);
   transition: transform 0.2s ease;
 }
 
 .auth-tab.active {
-  color: #f5a623;
+  color: var(--app-accent);
   font-weight: 600;
 }
 
@@ -238,14 +238,14 @@ async function submit() {
   letter-spacing: 1px;
   border-radius: 12px;
   border: none;
-  background: linear-gradient(135deg, #ffb338 0%, #f7931e 100%);
-  box-shadow: 0 6px 20px rgba(245, 166, 35, 0.32);
+  background: linear-gradient(135deg, #f2a82e 0%, #e18b18 100%);
+  box-shadow: 0 6px 20px rgba(232, 154, 31, 0.32);
   transition: box-shadow 0.2s ease, transform 0.15s ease, filter 0.2s ease;
 }
 
 .submit-btn:hover {
-  background: linear-gradient(135deg, #ffc14f 0%, #ffa32e 100%);
-  box-shadow: 0 8px 26px rgba(245, 166, 35, 0.42);
+  background: linear-gradient(135deg, #f7b845 0%, #ea9624 100%);
+  box-shadow: 0 8px 26px rgba(232, 154, 31, 0.42);
   transform: translateY(-1px);
 }
 
@@ -262,13 +262,13 @@ async function submit() {
 }
 
 .auth-switch a {
-  color: #f5a623;
+  color: var(--app-accent);
   font-weight: 600;
   transition: color 0.2s;
 }
 
 .auth-switch a:hover {
-  color: #ffb338;
+  color: #f2a82e;
 }
 
 .auth-input :deep(.el-input__wrapper) {

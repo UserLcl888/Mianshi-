@@ -370,7 +370,7 @@ onBeforeUnmount(() => {
 }
 
 .access-icon {
-  color: #f5a623;
+  color: var(--app-accent);
   margin-bottom: 14px;
 }
 

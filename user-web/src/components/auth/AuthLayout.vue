@@ -114,8 +114,8 @@ const features = [
   {
     name: '实用文档与工具',
     desc: '精选技术文档、开发工具与效率提升资源，助力学习与实践。',
-    bg: 'rgba(245, 166, 35, 0.16)',
-    color: '#ffc46b',
+    bg: 'rgba(232, 154, 31, 0.16)',
+    color: '#efb862',
     icon: '<svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a4.5 4.5 0 0 0-5.6 5.5L3 17.8 6.2 21l6-6.1a4.5 4.5 0 0 0 5.5-5.6l-3 3-2.8-2.8 2.8-3.2Z"/><path d="M19 3h2v2.5l-6.5 6.5"/></svg>'
   },
   {
@@ -256,7 +256,7 @@ const features = [
 }
 
 .slogan-accent {
-  background: linear-gradient(92deg, #ff9a44 0%, #ffb03a 48%, #f5a623 100%);
+  background: linear-gradient(92deg, #f2933e 0%, #efab36 48%, #e89a1f 100%);
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
@@ -293,7 +293,7 @@ const features = [
 
 .feature-card:hover {
   transform: translateY(-2px);
-  border-color: rgba(245, 166, 35, 0.45);
+  border-color: rgba(232, 154, 31, 0.45);
   background: rgba(31, 38, 56, 0.85);
 }
 
@@ -404,10 +404,10 @@ const features = [
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  color: #ffb338;
-  background: radial-gradient(circle, rgba(255, 179, 56, 0.28) 0%, rgba(245, 166, 35, 0.06) 68%, transparent 100%);
-  border: 1px solid rgba(255, 179, 56, 0.32);
-  box-shadow: 0 0 30px rgba(245, 166, 35, 0.28);
+  color: #f2a82e;
+  background: radial-gradient(circle, rgba(242, 168, 46, 0.28) 0%, rgba(232, 154, 31, 0.06) 68%, transparent 100%);
+  border: 1px solid rgba(242, 168, 46, 0.32);
+  box-shadow: 0 0 30px rgba(232, 154, 31, 0.28);
   margin-bottom: 14px;
 }
 

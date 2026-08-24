@@ -6,8 +6,8 @@
   --app-border: #2a3344;
   --app-text: #e8ecf3;
   --app-text-secondary: #98a3b5;
-  --app-accent: #f5a623;
-  --app-accent-soft: rgba(245, 166, 35, 0.12);
+  --app-accent: #e89a1f;
+  --app-accent-soft: rgba(232, 154, 31, 0.12);
   --app-header-bg: rgba(10, 14, 23, 0.88);
   --app-sidebar-bg: #10151f;
 
@@ -21,13 +21,13 @@
   --sidebar-offset: calc(var(--layout-pad-x) + var(--brand-width) + var(--header-gap) + var(--nav-item-half) - var(--sidebar-half));
 
   /* Element Plus 主色：橙金 */
-  --el-color-primary: #f5a623;
-  --el-color-primary-light-3: #f7b94e;
-  --el-color-primary-light-5: #f9cd79;
-  --el-color-primary-light-7: #fbe1a8;
-  --el-color-primary-light-8: #fcecd1;
-  --el-color-primary-light-9: #fdf6e8;
-  --el-color-primary-dark-2: #d98f14;
+  --el-color-primary: #e89a1f;
+  --el-color-primary-light-3: #efb862;
+  --el-color-primary-light-5: #f4cd8f;
+  --el-color-primary-light-7: #f8e1bc;
+  --el-color-primary-light-8: #faebd2;
+  --el-color-primary-light-9: #fdf5e9;
+  --el-color-primary-dark-2: #ba7b19;
 
   /* Element Plus 暗色基础变量 */
   --el-bg-color: #141a26;
@@ -211,7 +211,7 @@ a {
   margin: 28px 0 14px;
   padding-bottom: 8px;
   border-bottom: 2px solid var(--app-accent-soft);
-  color: #f0c674;
+  color: #e9b862;
 }
 
 .article-body h1 {
@@ -219,26 +219,26 @@ a {
   margin: 30px 0 16px;
   padding-bottom: 10px;
   border-bottom: 2px solid var(--app-accent);
-  color: #f0c674;
+  color: #e9b862;
 }
 
 .article-body h3 {
   font-size: 17px;
   margin: 22px 0 10px;
-  color: #e8b64c;
+  color: #dfaa40;
 }
 
 .article-body h4 {
   font-size: 15px;
   margin: 18px 0 8px;
-  color: #e8b64c;
+  color: #dfaa40;
 }
 
 .article-body h5,
 .article-body h6 {
   font-size: 14px;
   margin: 16px 0 6px;
-  color: #e8b64c;
+  color: #dfaa40;
 }
 
 .article-body p {
@@ -269,7 +269,7 @@ a {
   border-left: 4px solid var(--app-accent);
   background: var(--app-accent-soft);
   border-radius: 0 6px 6px 0;
-  color: #f0c674;
+  color: #e9b862;
 }
 
 .article-body a {

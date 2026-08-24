@@ -109,7 +109,7 @@ async function saveNickname() {
 
 .section-title {
   margin: 0 0 16px;
-  color: #f0c674;
+  color: #e9b862;
 }
 
 .profile-card {

@@ -283,7 +283,7 @@ async function onCommand(command: string) {
 .brand-name {
   font-size: 18px;
   font-weight: 700;
-  color: #f0c674;
+  color: #e9b862;
   white-space: nowrap;
 }
 
@@ -305,12 +305,12 @@ async function onCommand(command: string) {
 
 .nav-item:hover {
   background: var(--app-accent-soft);
-  color: #f0c674;
+  color: #e9b862;
 }
 
 .nav-item.active {
   background: var(--app-accent-soft);
-  color: #f5a623;
+  color: var(--app-accent);
   font-weight: 600;
   box-shadow: inset 0 -2px 0 var(--app-accent);
 }
@@ -330,7 +330,7 @@ async function onCommand(command: string) {
 }
 
 .category-menu :deep(.el-dropdown-menu__item.menu-active) {
-  color: #f5a623;
+  color: var(--app-accent);
   font-weight: 600;
   background: var(--app-accent-soft);
 }
@@ -364,7 +364,7 @@ async function onCommand(command: string) {
 
 .notif-bell:hover {
   background: var(--app-accent-soft);
-  color: #f5a623;
+  color: var(--app-accent);
 }
 
 .notif-panel {
@@ -384,7 +384,7 @@ async function onCommand(command: string) {
 .notif-title {
   font-size: 14px;
   font-weight: 600;
-  color: #f0c674;
+  color: #e9b862;
 }
 
 .notif-list {
@@ -453,7 +453,7 @@ async function onCommand(command: string) {
 
 .header-btn:hover {
   border-color: var(--app-accent);
-  color: #f5a623;
+  color: var(--app-accent);
 }
 
 .header-btn.primary {

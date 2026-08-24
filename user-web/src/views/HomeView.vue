@@ -125,7 +125,7 @@ const banners = [
 
 const tagColors = [
   '#d9a716', '#4d9f6e', '#c05b8a', '#3f7fc1', '#b0771f',
-  '#e8b64c', '#1f8f8f', '#8a5fc0', '#c2572f', '#2f8f5b',
+  '#dfaa40', '#1f8f8f', '#8a5fc0', '#c2572f', '#2f8f5b',
   '#a06a1f', '#4d7fc1', '#8f6a2f', '#b8456e', '#5f7f2f'
 ]
 
@@ -237,7 +237,7 @@ onMounted(async () => {
 .side-title {
   font-size: 14px;
   font-weight: 600;
-  color: #f0c674;
+  color: #e9b862;
   padding-left: 8px;
   border-left: 3px solid var(--app-accent);
   margin-bottom: 10px;
@@ -329,9 +329,9 @@ onMounted(async () => {
   width: 34px;
   height: 3px;
   border-radius: 2px;
-  background: linear-gradient(90deg, #ffb338, #f5a623);
+  background: linear-gradient(90deg, #f2a82e, #e89a1f);
   margin-bottom: 14px;
-  box-shadow: 0 0 10px rgba(245, 166, 35, 0.5);
+  box-shadow: 0 0 10px rgba(232, 154, 31, 0.5);
 }
 
 .banner-desc {
@@ -351,7 +351,7 @@ onMounted(async () => {
 
 .banner-carousel :deep(.is-active .el-carousel__button) {
   width: 30px;
-  background: #f5a623;
+  background: var(--app-accent);
 }
 
 /* 分类卡片 */
@@ -431,7 +431,7 @@ onMounted(async () => {
 
 .hot-item:hover {
   background: var(--app-card-hover);
-  color: #f5a623;
+  color: var(--app-accent);
 }
 
 .hot-rank {
@@ -440,7 +440,7 @@ onMounted(async () => {
   height: 20px;
   border-radius: 6px;
   background: var(--app-accent-soft);
-  color: #f5a623;
+  color: var(--app-accent);
   font-size: 12px;
   font-weight: 700;
   display: flex;
@@ -508,7 +508,7 @@ onMounted(async () => {
 .stat-num {
   font-size: 24px;
   font-weight: 700;
-  color: #f0c674;
+  color: #e9b862;
 }
 
 .stat-label {
