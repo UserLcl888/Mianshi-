@@ -108,7 +108,7 @@ async function logout() {
 .brand-main {
   font-size: 16px;
   font-weight: 700;
-  color: #6b5208;
+  color: #f0c674;
   white-space: nowrap;
 }
 
@@ -127,18 +127,18 @@ async function logout() {
 .admin-nav-item {
   padding: 10px 14px;
   border-radius: 8px;
-  color: #6b5b2f;
+  color: #b8c0cf;
   transition: all 0.15s;
 }
 
 .admin-nav-item:hover {
   background: var(--app-accent-soft);
-  color: #6b5208;
+  color: #f0c674;
 }
 
 .admin-nav-item.active {
   background: var(--app-accent-soft);
-  color: #a87f18;
+  color: #f5a623;
   font-weight: 600;
 }
 

@@ -73,7 +73,7 @@ onMounted(load)
 
 .section-title {
   margin: 0;
-  color: #6b5208;
+  color: #f0c674;
 }
 
 .pager {

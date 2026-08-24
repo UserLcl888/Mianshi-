@@ -386,7 +386,7 @@ onBeforeUnmount(() => {
 
 .section-title {
   margin: 0 0 16px;
-  color: #6b5208;
+  color: #f0c674;
 }
 
 .filters {
@@ -454,7 +454,7 @@ onBeforeUnmount(() => {
 .box-title {
   font-size: 13px;
   font-weight: 600;
-  color: #6b5208;
+  color: #f0c674;
   margin-bottom: 8px;
 }
 
@@ -480,7 +480,7 @@ onBeforeUnmount(() => {
 .side-title {
   font-size: 14px;
   font-weight: 600;
-  color: #6b5208;
+  color: #f0c674;
   padding-bottom: 10px;
   border-bottom: 1px solid var(--app-border);
   margin-bottom: 12px;
@@ -525,7 +525,7 @@ onBeforeUnmount(() => {
 .chat-role {
   font-size: 12px;
   font-weight: 600;
-  color: #6b5208;
+  color: #f0c674;
   margin-bottom: 4px;
 }
 

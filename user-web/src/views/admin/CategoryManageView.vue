@@ -218,7 +218,7 @@ onMounted(() => {
 
 .section-title {
   margin: 0;
-  color: #6b5208;
+  color: #f0c674;
 }
 
 .empty-tip {

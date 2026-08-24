@@ -322,13 +322,13 @@ onBeforeUnmount(() => {
 }
 
 .access-icon {
-  color: #a87f18;
+  color: #f5a623;
   margin-bottom: 14px;
 }
 
 .access-title {
   font-size: 20px;
-  color: #4d4020;
+  color: #e8ecf3;
   margin: 0 0 10px;
 }
 

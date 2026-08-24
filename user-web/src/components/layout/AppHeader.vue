@@ -283,7 +283,7 @@ async function onCommand(command: string) {
 .brand-name {
   font-size: 18px;
   font-weight: 700;
-  color: #6b5208;
+  color: #f0c674;
   white-space: nowrap;
 }
 
@@ -298,19 +298,19 @@ async function onCommand(command: string) {
 .nav-item {
   padding: 6px 12px;
   border-radius: 6px;
-  color: #6b5b2f;
+  color: #b8c0cf;
   white-space: nowrap;
   transition: all 0.15s;
 }
 
 .nav-item:hover {
   background: var(--app-accent-soft);
-  color: #6b5208;
+  color: #f0c674;
 }
 
 .nav-item.active {
   background: var(--app-accent-soft);
-  color: #a87f18;
+  color: #f5a623;
   font-weight: 600;
   box-shadow: inset 0 -2px 0 var(--app-accent);
 }
@@ -330,7 +330,7 @@ async function onCommand(command: string) {
 }
 
 .category-menu :deep(.el-dropdown-menu__item.menu-active) {
-  color: #a87f18;
+  color: #f5a623;
   font-weight: 600;
   background: var(--app-accent-soft);
 }
@@ -347,7 +347,7 @@ async function onCommand(command: string) {
   align-items: center;
   gap: 4px;
   cursor: pointer;
-  color: #6b5b2f;
+  color: #b8c0cf;
   outline: none;
 }
 
@@ -355,7 +355,7 @@ async function onCommand(command: string) {
   display: inline-flex;
   align-items: center;
   cursor: pointer;
-  color: #6b5b2f;
+  color: #b8c0cf;
   outline: none;
   padding: 4px;
   border-radius: 6px;
@@ -364,7 +364,7 @@ async function onCommand(command: string) {
 
 .notif-bell:hover {
   background: var(--app-accent-soft);
-  color: #a87f18;
+  color: #f5a623;
 }
 
 .notif-panel {
@@ -384,7 +384,7 @@ async function onCommand(command: string) {
 .notif-title {
   font-size: 14px;
   font-weight: 600;
-  color: #6b5208;
+  color: #f0c674;
 }
 
 .notif-list {
@@ -447,19 +447,19 @@ async function onCommand(command: string) {
   padding: 6px 16px;
   border-radius: 6px;
   border: 1px solid var(--app-border);
-  color: #6b5b2f;
+  color: #b8c0cf;
   transition: all 0.15s;
 }
 
 .header-btn:hover {
   border-color: var(--app-accent);
-  color: #a87f18;
+  color: #f5a623;
 }
 
 .header-btn.primary {
   background: var(--app-accent);
   border-color: var(--app-accent);
-  color: #fffdf6;
+  color: #141a26;
 }
 
 .header-btn.primary:hover {

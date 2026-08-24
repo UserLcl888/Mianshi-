@@ -356,7 +356,7 @@ async function submit() {
 
 .section-title {
   margin: 0 0 18px;
-  color: #6b5208;
+  color: #f0c674;
 }
 
 .content-editor {

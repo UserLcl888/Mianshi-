@@ -75,7 +75,7 @@ function scrollTo(id: string) {
   display: block;
   padding: 6px 8px;
   font-size: 13px;
-  color: #6b5b2f;
+  color: #b8c0cf;
   border-radius: 5px;
   line-height: 1.5;
   transition: all 0.15s;
@@ -86,7 +86,7 @@ function scrollTo(id: string) {
 }
 
 .toc-item.active {
-  color: #a87f18;
+  color: #f5a623;
   font-weight: 600;
   background: var(--app-accent-soft);
 }

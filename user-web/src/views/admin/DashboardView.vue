@@ -110,12 +110,12 @@ function barOption(data: { name: string; value: number }[]): echarts.EChartsCore
       data: data.map((d) => d.name),
       axisLine: { lineStyle: { color: '#d9a716' } },
       axisTick: { show: false },
-      axisLabel: { color: '#6b5b2f', fontSize: 10, interval: 0, rotate: 30 }
+      axisLabel: { color: '#b8c0cf', fontSize: 10, interval: 0, rotate: 30 }
     },
     yAxis: {
       type: 'value',
-      splitLine: { lineStyle: { color: '#f0e1b9' } },
-      axisLabel: { color: '#8a7a4f', fontSize: 10 }
+      splitLine: { lineStyle: { color: '#2a3344' } },
+      axisLabel: { color: '#98a3b5', fontSize: 10 }
     },
     series: [
       {
@@ -214,7 +214,7 @@ onBeforeUnmount(() => {
   margin-top: 4px;
   font-size: 24px;
   font-weight: 700;
-  color: #6b5208;
+  color: #f0c674;
 }
 
 .dashboard-main {
@@ -262,7 +262,7 @@ onBeforeUnmount(() => {
 
 .section-title {
   margin: 0 0 8px;
-  color: #6b5208;
+  color: #f0c674;
   font-size: 15px;
 }
 

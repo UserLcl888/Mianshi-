@@ -125,7 +125,7 @@ const banners = [
 
 const tagColors = [
   '#d9a716', '#4d9f6e', '#c05b8a', '#3f7fc1', '#b0771f',
-  '#7a5c10', '#1f8f8f', '#8a5fc0', '#c2572f', '#2f8f5b',
+  '#e8b64c', '#1f8f8f', '#8a5fc0', '#c2572f', '#2f8f5b',
   '#a06a1f', '#4d7fc1', '#8f6a2f', '#b8456e', '#5f7f2f'
 ]
 
@@ -237,7 +237,7 @@ onMounted(async () => {
 .side-title {
   font-size: 14px;
   font-weight: 600;
-  color: #6b5208;
+  color: #f0c674;
   padding-left: 8px;
   border-left: 3px solid var(--app-accent);
   margin-bottom: 10px;
@@ -258,7 +258,7 @@ onMounted(async () => {
   margin: 0 0 6px;
   font-size: 13px;
   line-height: 1.7;
-  color: #6b5b2f;
+  color: #b8c0cf;
 }
 
 .quote-author {
@@ -270,17 +270,27 @@ onMounted(async () => {
 
 /* 轮播图 */
 .banner-carousel {
-  border-radius: 12px;
+  border-radius: 14px;
   overflow: hidden;
-  margin-bottom: 18px;
+  margin-bottom: 20px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
 }
 
 .banner-item {
   position: relative;
   width: 100%;
   height: 100%;
-  border-radius: 12px;
+  border-radius: 14px;
   overflow: hidden;
+  background: linear-gradient(120deg, #0c111c 0%, #090d16 55%, #05080f 100%);
+}
+
+.banner-item::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, rgba(0, 0, 0, 0.82) 0%, rgba(0, 0, 0, 0.38) 55%, rgba(0, 0, 0, 0.5) 100%);
+  pointer-events: none;
 }
 
 .banner-img {
@@ -288,6 +298,7 @@ onMounted(async () => {
   height: 100%;
   object-fit: cover;
   display: block;
+  filter: brightness(0.52) saturate(0.82) contrast(1.02);
 }
 
 .banner-mask {
@@ -295,24 +306,52 @@ onMounted(async () => {
   left: 0;
   top: 0;
   bottom: 0;
-  width: 55%;
+  z-index: 1;
+  width: 64%;
   display: flex;
   flex-direction: column;
   justify-content: center;
   padding: 0 36px;
-  background: linear-gradient(90deg, rgba(255, 253, 246, 0.78), rgba(255, 253, 246, 0));
+  background: linear-gradient(90deg, rgba(0, 0, 0, 0.86) 0%, rgba(0, 0, 0, 0.42) 72%, rgba(0, 0, 0, 0) 100%);
 }
 
 .banner-title {
-  font-size: 26px;
+  font-size: 28px;
   font-weight: 700;
-  color: #6b5208;
+  color: #ffffff;
+  letter-spacing: 1px;
+  text-shadow: 0 2px 14px rgba(0, 0, 0, 0.6);
+}
+
+.banner-title::before {
+  content: '';
+  display: block;
+  width: 34px;
+  height: 3px;
+  border-radius: 2px;
+  background: linear-gradient(90deg, #ffb338, #f5a623);
+  margin-bottom: 14px;
+  box-shadow: 0 0 10px rgba(245, 166, 35, 0.5);
 }
 
 .banner-desc {
-  margin-top: 8px;
+  margin-top: 10px;
   font-size: 14px;
-  color: #7a5c10;
+  color: #c6cfdc;
+  text-shadow: 0 1px 8px rgba(0, 0, 0, 0.55);
+}
+
+.banner-carousel :deep(.el-carousel__button) {
+  width: 18px;
+  height: 4px;
+  border-radius: 2px;
+  background: rgba(255, 255, 255, 0.45);
+  transition: width 0.2s ease, background 0.2s ease;
+}
+
+.banner-carousel :deep(.is-active .el-carousel__button) {
+  width: 30px;
+  background: #f5a623;
 }
 
 /* 分类卡片 */
@@ -343,7 +382,7 @@ onMounted(async () => {
 .card-name {
   font-size: 17px;
   font-weight: 600;
-  color: #4d4020;
+  color: #e8ecf3;
 }
 
 .card-desc {
@@ -386,13 +425,13 @@ onMounted(async () => {
   padding: 7px 4px;
   border-radius: 6px;
   font-size: 13px;
-  color: #6b5b2f;
+  color: #b8c0cf;
   transition: all 0.15s;
 }
 
 .hot-item:hover {
   background: var(--app-card-hover);
-  color: #a87f18;
+  color: #f5a623;
 }
 
 .hot-rank {
@@ -401,7 +440,7 @@ onMounted(async () => {
   height: 20px;
   border-radius: 6px;
   background: var(--app-accent-soft);
-  color: #a87f18;
+  color: #f5a623;
   font-size: 12px;
   font-weight: 700;
   display: flex;
@@ -411,17 +450,17 @@ onMounted(async () => {
 
 .hot-rank.rank-1 {
   background: #d9a716;
-  color: #fffdf6;
+  color: #141a26;
 }
 
 .hot-rank.rank-2 {
   background: #e3b54e;
-  color: #fffdf6;
+  color: #141a26;
 }
 
 .hot-rank.rank-3 {
   background: #e8c96a;
-  color: #fffdf6;
+  color: #141a26;
 }
 
 .hot-title {
@@ -469,7 +508,7 @@ onMounted(async () => {
 .stat-num {
   font-size: 24px;
   font-weight: 700;
-  color: #6b5208;
+  color: #f0c674;
 }
 
 .stat-label {

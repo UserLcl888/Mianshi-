@@ -61,7 +61,7 @@ defineProps<{ prev: ArticleBrief | null; next: ArticleBrief | null }>()
 
 .pn-title {
   font-size: 14px;
-  color: #4d4020;
+  color: #e8ecf3;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;

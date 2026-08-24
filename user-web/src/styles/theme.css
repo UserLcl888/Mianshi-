@@ -1,31 +1,69 @@
 :root {
-  --app-bg: #fffaf0;
-  --app-card: #fffdf6;
-  --app-card-hover: #fdf3d8;
-  --app-border: #f0e1b9;
-  --app-text: #4d4020;
-  --app-text-secondary: #8a7a4f;
-  --app-accent: #d9a716;
-  --app-accent-soft: #f8ead0;
-  --app-header-bg: #fff7e0;
-  --app-sidebar-bg: #fffdf6;
+  /* 应用主题色（延用登录页暗色背景 + 橙金强调色） */
+  --app-bg: #0a0e17;
+  --app-card: #141a26;
+  --app-card-hover: #1b2332;
+  --app-border: #2a3344;
+  --app-text: #e8ecf3;
+  --app-text-secondary: #98a3b5;
+  --app-accent: #f5a623;
+  --app-accent-soft: rgba(245, 166, 35, 0.12);
+  --app-header-bg: rgba(10, 14, 23, 0.88);
+  --app-sidebar-bg: #10151f;
 
   --brand-width: 148px;   /* Logo + 站点名宽度 */
   --header-gap: 28px;     /* Logo 与导航的间距 */
   --layout-pad-x: 24px;   /* 页面左右边距 */
-  --nav-item-half: 26px;  /* 首页菜单项宽度的一半 */
-  --sidebar-half: 125px;  /* 侧边栏宽度的一半（250px） */
+  --nav-item-half: 26px;  /* 首页菜单项宽度的二分之一 */
+  --sidebar-half: 125px;  /* 侧边栏宽度的二分之一（250px） */
 
-  /* 侧边栏左偏移 = 页面边距 + Logo宽度 + 间距 + 首页项半宽 - 侧边栏半宽，使"首页"位于侧边栏正中上方 */
+  /* 侧边栏左偏移 = 页面边距 + Logo宽度 + 间距 + 首页项半宽 - 侧边栏半宽，使"首页"位于侧边栏正上方 */
   --sidebar-offset: calc(var(--layout-pad-x) + var(--brand-width) + var(--header-gap) + var(--nav-item-half) - var(--sidebar-half));
 
-  --el-color-primary: #c89a1f;
-  --el-color-primary-light-3: #d8b354;
-  --el-color-primary-light-5: #e3c67e;
-  --el-color-primary-light-7: #efddb3;
-  --el-color-primary-light-8: #f5e9cb;
-  --el-color-primary-light-9: #faf3e2;
-  --el-color-primary-dark-2: #a87f18;
+  /* Element Plus 主色：橙金 */
+  --el-color-primary: #f5a623;
+  --el-color-primary-light-3: #f7b94e;
+  --el-color-primary-light-5: #f9cd79;
+  --el-color-primary-light-7: #fbe1a8;
+  --el-color-primary-light-8: #fcecd1;
+  --el-color-primary-light-9: #fdf6e8;
+  --el-color-primary-dark-2: #d98f14;
+
+  /* Element Plus 暗色基础变量 */
+  --el-bg-color: #141a26;
+  --el-bg-color-page: #0a0e17;
+  --el-bg-color-overlay: #1b2332;
+  --el-fill-color-blank: #141a26;
+  --el-fill-color: #1c2434;
+  --el-fill-color-light: #1a2230;
+  --el-fill-color-lighter: #18202d;
+  --el-fill-color-extra-light: #161d29;
+  --el-fill-color-dark: #222b3c;
+  --el-fill-color-darker: #28324a;
+  --el-text-color-primary: #e8ecf3;
+  --el-text-color-regular: #c2cad8;
+  --el-text-color-secondary: #98a3b5;
+  --el-text-color-placeholder: #6b7689;
+  --el-text-color-disabled: #4d5a70;
+  --el-border-color: #2a3344;
+  --el-border-color-light: #253041;
+  --el-border-color-lighter: #202a3a;
+  --el-border-color-extra-light: #1d2634;
+  --el-border-color-dark: #303b4e;
+  --el-border-color-darker: #38445a;
+  --el-mask-color: rgba(5, 8, 15, 0.72);
+  --el-box-shadow-light: 0 8px 24px rgba(0, 0, 0, 0.35);
+  --el-box-shadow: 0 12px 32px rgba(0, 0, 0, 0.42);
+  --el-disabled-bg-color: #10151f;
+  --el-disabled-text-color: #4d5a70;
+  --el-disabled-border-color: #202a3a;
+  --el-message-bg-color: #1b2332;
+  --el-color-info-light-9: #1b2332;
+  --el-color-info-light-8: #1d2534;
+  --el-color-success-light-9: rgba(103, 194, 58, 0.14);
+  --el-color-warning-light-9: rgba(230, 162, 60, 0.14);
+  --el-color-danger-light-9: rgba(245, 108, 108, 0.14);
+  --el-color-error-light-9: rgba(245, 108, 108, 0.14);
 }
 
 * {
@@ -52,6 +90,98 @@ a {
   text-decoration: none;
 }
 
+/* Element Plus 全局暗色微调 */
+.el-card,
+.el-dialog,
+.el-message-box,
+.el-popover,
+.el-dropdown-menu,
+.el-popper.is-light {
+  --el-bg-color-overlay: #1b2332;
+}
+
+.el-input__wrapper,
+.el-textarea__inner,
+.el-select__wrapper {
+  background-color: #161d29 !important;
+  box-shadow: 0 0 0 1px #2a3344 inset !important;
+}
+
+.el-input__wrapper.is-focus,
+.el-select__wrapper.is-focused {
+  box-shadow: 0 0 0 1px var(--app-accent) inset !important;
+}
+
+.el-input__inner,
+.el-textarea__inner {
+  color: var(--app-text) !important;
+}
+
+.el-input__inner::placeholder,
+.el-textarea__inner::placeholder {
+  color: #6b7689;
+}
+
+.el-input__prefix,
+.el-input__suffix {
+  color: #8895aa;
+}
+
+.el-table {
+  --el-table-border-color: #232c3d;
+  --el-table-header-bg-color: #131926;
+  --el-table-row-hover-bg-color: #1a2231;
+  --el-table-bg-color: #141a26;
+  --el-table-tr-bg-color: #141a26;
+  --el-table-header-text-color: #c2cad8;
+  --el-table-text-color: #d7dde7;
+}
+
+.el-table th.el-table__cell {
+  background: #131926 !important;
+}
+
+.el-table .el-table__row--striped td.el-table__cell {
+  background: #121824 !important;
+}
+
+.el-pagination {
+  --el-pagination-bg-color: transparent;
+}
+
+/* 暗色消息/通知弹层 */
+.el-message {
+  background: #1b2332 !important;
+  border-color: #2a3344 !important;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4) !important;
+}
+
+.el-message .el-message__content {
+  color: #e8ecf3 !important;
+}
+
+.el-notification {
+  background: #1b2332 !important;
+  border-color: #2a3344 !important;
+}
+
+.el-notification__title {
+  color: #e8ecf3 !important;
+}
+
+.el-notification__content {
+  color: #c2cad8 !important;
+}
+
+.el-message-box {
+  background: #1b2332 !important;
+}
+
+.el-message-box__title,
+.el-message-box__message {
+  color: #e8ecf3 !important;
+}
+
 .page-container {
   max-width: 1400px;
   margin: 0 auto;
@@ -72,7 +202,7 @@ a {
 .article-body {
   line-height: 1.85;
   font-size: 15px;
-  color: #3f3519;
+  color: #d8dee8;
   word-break: break-word;
 }
 
@@ -81,7 +211,7 @@ a {
   margin: 28px 0 14px;
   padding-bottom: 8px;
   border-bottom: 2px solid var(--app-accent-soft);
-  color: #6b5208;
+  color: #f0c674;
 }
 
 .article-body h1 {
@@ -89,26 +219,26 @@ a {
   margin: 30px 0 16px;
   padding-bottom: 10px;
   border-bottom: 2px solid var(--app-accent);
-  color: #6b5208;
+  color: #f0c674;
 }
 
 .article-body h3 {
   font-size: 17px;
   margin: 22px 0 10px;
-  color: #7a5c10;
+  color: #e8b64c;
 }
 
 .article-body h4 {
   font-size: 15px;
   margin: 18px 0 8px;
-  color: #7a5c10;
+  color: #e8b64c;
 }
 
 .article-body h5,
 .article-body h6 {
   font-size: 14px;
   margin: 16px 0 6px;
-  color: #7a5c10;
+  color: #e8b64c;
 }
 
 .article-body p {
@@ -122,7 +252,7 @@ a {
 }
 
 .article-body pre {
-  background: #fff8e3;
+  background: #141b2a;
   border: 1px solid var(--app-border);
   border-radius: 8px;
   padding: 14px 16px;
@@ -139,11 +269,11 @@ a {
   border-left: 4px solid var(--app-accent);
   background: var(--app-accent-soft);
   border-radius: 0 6px 6px 0;
-  color: #6b5208;
+  color: #f0c674;
 }
 
 .article-body a {
-  color: #1a6fb5;
+  color: #7db8ff;
   text-decoration: underline;
   text-underline-offset: 3px;
   font-weight: 600;
@@ -151,8 +281,8 @@ a {
 }
 
 .article-body a:hover {
-  color: #0d4f8f;
-  background: rgba(26, 111, 181, 0.08);
+  color: #a3c9ff;
+  background: rgba(125, 184, 255, 0.1);
   border-radius: 3px;
 }
 
