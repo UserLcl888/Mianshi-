@@ -94,6 +94,16 @@
 
   <build>
     <plugins>
+      <!-- 打 jar 时排除 application-example.yml：该文件只用于本地/开发（profile=example），不随部署包发布 -->
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-jar-plugin</artifactId>
+        <configuration>
+          <excludes>
+            <exclude>application-example.yml</exclude>
+          </excludes>
+        </configuration>
+      </plugin>
       <plugin>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-maven-plugin</artifactId>

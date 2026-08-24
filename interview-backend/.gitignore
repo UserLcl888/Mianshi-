@@ -15,3 +15,6 @@ logs/
 # ===== 本地数据库/Redis 配置（含真实密码，不提交）=====
 src/main/resources/application*.yml
 !src/main/resources/application-example.yml
+
+# 本地 jar 启动用的外部配置（复制自 application-example.yml，不提交）
+application-local.yml
