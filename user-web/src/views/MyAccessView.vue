@@ -49,6 +49,9 @@
                 <router-link v-else-if="row.categorySlug && row.status === 2" :to="`/category/${row.categorySlug}`">
                   <el-button size="small" text type="warning">重新申请</el-button>
                 </router-link>
+                <router-link v-else-if="row.scope === 'ALL' && row.status === 1" to="/">
+                  <el-button size="small" text type="primary">去首页</el-button>
+                </router-link>
               </template>
             </el-table-column>
           </el-table>

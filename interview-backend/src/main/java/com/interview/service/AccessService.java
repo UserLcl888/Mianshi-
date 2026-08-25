@@ -262,6 +262,14 @@ public class AccessService {
         apply.setReviewedAt(LocalDateTime.now());
         accessApplyMapper.updateById(apply);
         invalidate(apply.getUserId());
+        // 申请全部受限分类并审批通过：直接置 user.full_access=1，权限判断第一步即可快速放行
+        if ("ALL".equals(apply.getScope())) {
+            User user = userMapper.selectById(apply.getUserId());
+            if (user != null && (user.getFullAccess() == null || user.getFullAccess() != 1)) {
+                user.setFullAccess(1);
+                userMapper.updateById(user);
+            }
+        }
         String content = "ALL".equals(apply.getScope())
                 ? "你已开通全部受限分类的访问权限"
                 : "你申请的分类《" + categoryName(apply.getCategoryId()) + "》已开通访问";

@@ -126,9 +126,11 @@ const loginType = ref<'email' | 'phone'>('email')
 const emailMode = ref<'password' | 'code'>('password')
 const form = reactive({ account: '', password: '', code: '' })
 
-// 注册成功跳转回来时，按注册类型选中对应 Tab 并回填账号
+// 注册成功跳转回来时，按注册类型选中对应 Tab、回填账号，并预选验证码登录方式
 const queryType = String(route.query.type || '')
-if (queryType === 'phone') {
+if (queryType === 'email') {
+  emailMode.value = 'code'
+} else if (queryType === 'phone') {
   loginType.value = 'phone'
 }
 const queryAccount = String(route.query.account || '')
@@ -184,6 +186,10 @@ const rules = computed<FormRules>(() => {
 })
 
 async function submit() {
+  if (loginType.value === 'phone') {
+    ElMessage.warning('暂时未开放手机号登录，请先选择邮箱登录')
+    return
+  }
   const valid = await formRef.value?.validate().catch(() => false)
   if (!valid) return
   loading.value = true

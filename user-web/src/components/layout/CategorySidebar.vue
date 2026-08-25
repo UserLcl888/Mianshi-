@@ -305,6 +305,9 @@ async function loadArticles(slug: string) {
     const res = await getArticles({ categoryId: cat.id, page: 1, size: 100 })
     articles.value = res.list
     categoryCounts.value = { ...categoryCounts.value, [cat.id]: res.total }
+  } catch {
+    // 受限分类未授权时列表接口返回 40301，侧边栏不展示题目即可
+    articles.value = []
   } finally {
     articleLoading.value = false
   }

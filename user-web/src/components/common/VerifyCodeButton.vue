@@ -11,7 +11,7 @@ import { sendEmailCodeApi } from '@/api/auth'
 
 const props = defineProps<{
   email: string
-  scene: 'login' | 'reset'
+  scene: 'login' | 'register' | 'reset'
   sendable: boolean
 }>()
 

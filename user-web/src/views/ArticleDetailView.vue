@@ -154,6 +154,7 @@ const activeTocId = ref('')
 const isAdmin = computed(() => auth.userInfo?.role === 'ADMIN')
 let viewTimer: number | null = null
 let viewReported = false
+let accessPollTimer: number | null = null
 
 const categorySlug = computed(() => detail.value?.article.categorySlug || '')
 const categoryPath = computed(() =>
@@ -162,6 +163,7 @@ const categoryPath = computed(() =>
 
 async function load() {
   clearViewTimer()
+  stopAccessPoll()
   viewReported = false
   loading.value = true
   activeTocId.value = ''
@@ -189,6 +191,9 @@ async function load() {
           accessTitle.value = st.title
           accessStatus.value = st.status
           categoryIdForApply.value = st.categoryId
+          if (st.status !== 'GRANTED') {
+            startAccessPoll()
+          }
         } catch {
           // 状态获取失败时保持默认提示
         }
@@ -262,6 +267,33 @@ function clearViewTimer() {
   }
 }
 
+function stopAccessPoll() {
+  if (accessPollTimer !== null) {
+    window.clearInterval(accessPollTimer)
+    accessPollTimer = null
+  }
+}
+
+/** 受限内容页面：后台审批通过后自动解锁，无需用户手动刷新 */
+function startAccessPoll() {
+  stopAccessPoll()
+  accessPollTimer = window.setInterval(async () => {
+    if (!auth.isLoggedIn || !accessState.value) {
+      stopAccessPoll()
+      return
+    }
+    try {
+      const st = await getAccessStatusApi(activeSlug.value)
+      if (st.status === 'GRANTED') {
+        stopAccessPoll()
+        await load()
+      }
+    } catch {
+      // 轮询失败保持现状，下一轮继续
+    }
+  }, 10000)
+}
+
 function onBodyClick(e: MouseEvent) {
   const target = (e.target as HTMLElement).closest('a') as HTMLAnchorElement | null
   if (!target) return
@@ -297,6 +329,7 @@ onMounted(async () => {
 onBeforeUnmount(() => {
   window.removeEventListener('scroll', onScroll)
   clearViewTimer()
+  stopAccessPoll()
 })
 </script>
 

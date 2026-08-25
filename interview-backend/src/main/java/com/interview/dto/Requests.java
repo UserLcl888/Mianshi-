@@ -46,12 +46,11 @@ public class Requests {
 
     @Data
     public static class RegisterDTO {
-        @NotBlank(message = "请输入密码")
-        @Size(min = 6, max = 32, message = "密码长度为 6~32 位")
-        private String password;
-        private String nickname;
+        @NotBlank(message = "请输入邮箱")
         private String email;
-        private String phone;
+        @NotBlank(message = "请输入邮箱验证码")
+        private String code;
+        private String nickname;
     }
 
     @Data

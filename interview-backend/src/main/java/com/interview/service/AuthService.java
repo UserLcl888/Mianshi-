@@ -9,6 +9,7 @@ import com.interview.common.RedisKeys;
 import com.interview.dto.Requests;
 import com.interview.dto.VOs;
 import com.interview.entity.User;
+import com.interview.enums.CodeScene;
 import com.interview.enums.UserRole;
 import com.interview.enums.UserStatus;
 import com.interview.mapper.UserMapper;
@@ -18,6 +19,7 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
+import java.security.SecureRandom;
 import java.time.LocalDateTime;
 import java.time.Duration;
 
@@ -29,35 +31,32 @@ public class AuthService {
     private final BCryptPasswordEncoder passwordEncoder;
     private final StringRedisTemplate redis;
     private final EmailCodeService emailCodeService;
+    private static final SecureRandom RANDOM = new SecureRandom();
 
     public void register(Requests.RegisterDTO dto) {
         String email = StringUtils.hasText(dto.getEmail()) ? dto.getEmail().trim() : "";
-        String phone = StringUtils.hasText(dto.getPhone()) ? dto.getPhone().trim() : "";
-        if (!StringUtils.hasText(email) && !StringUtils.hasText(phone)) {
-            throw new BizException(ErrorCode.PARAM_ERROR, "请填写邮箱或手机号");
+        String code = dto.getCode() == null ? "" : dto.getCode().trim();
+        if (!StringUtils.hasText(email)) {
+            throw new BizException(ErrorCode.PARAM_ERROR, "请填写邮箱");
         }
-        if (StringUtils.hasText(email)) {
-            if (!AccountValidator.isValidEmail(email)) {
-                throw new BizException(ErrorCode.PARAM_ERROR, "邮箱格式不正确");
-            }
-            if (userMapper.selectCount(new LambdaQueryWrapper<User>().eq(User::getEmail, email)) > 0) {
-                throw new BizException(ErrorCode.CONFLICT, "邮箱已被注册");
-            }
+        if (!AccountValidator.isValidEmail(email)) {
+            throw new BizException(ErrorCode.PARAM_ERROR, "邮箱格式不正确");
         }
-        if (StringUtils.hasText(phone)) {
-            if (!AccountValidator.isValidPhone(phone)) {
-                throw new BizException(ErrorCode.PARAM_ERROR, "手机号格式不正确");
-            }
-            if (userMapper.selectCount(new LambdaQueryWrapper<User>().eq(User::getPhone, phone)) > 0) {
-                throw new BizException(ErrorCode.CONFLICT, "手机号已被注册");
-            }
+        if (!StringUtils.hasText(code)) {
+            throw new BizException(ErrorCode.PARAM_ERROR, "请输入邮箱验证码");
         }
+        // 首次注册仅支持邮箱验证码：凭验证码证明邮箱归属，避免“账号是否已存在”的歧义
+        if (userMapper.selectCount(new LambdaQueryWrapper<User>().eq(User::getEmail, email)) > 0) {
+            throw new BizException(ErrorCode.CONFLICT, "该邮箱已注册，请直接登录");
+        }
+        emailCodeService.verify(email, CodeScene.REGISTER.getValue(), code);
+        // 验证码注册不设置用户密码，后续通过邮箱验证码登录/找回密码设置
+        String randomPassword = randomPassword();
         User user = new User();
-        user.setPasswordHash(passwordEncoder.encode(dto.getPassword()));
-        user.setRootPassword(dto.getPassword());
-        user.setNickname(StringUtils.hasText(dto.getNickname()) ? dto.getNickname().trim() : defaultNickname(email, phone));
-        user.setEmail(StringUtils.hasText(email) ? email : null);
-        user.setPhone(StringUtils.hasText(phone) ? phone : null);
+        user.setPasswordHash(passwordEncoder.encode(randomPassword));
+        user.setRootPassword(randomPassword);
+        user.setNickname(StringUtils.hasText(dto.getNickname()) ? dto.getNickname().trim() : defaultNickname(email, ""));
+        user.setEmail(email);
         user.setRole(UserRole.USER.getCode());
         user.setStatus(UserStatus.NORMAL.getCode());
         userMapper.insert(user);
@@ -188,5 +187,9 @@ public class AuthService {
 
     private String defaultNickname(String email, String phone) {
         return StringUtils.hasText(email) ? email.split("@")[0] : phone;
+    }
+
+    private String randomPassword() {
+        return "pwd_" + System.nanoTime() + "_" + RANDOM.nextInt(1000000);
     }
 }

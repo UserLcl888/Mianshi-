@@ -101,6 +101,7 @@ import { ElMessage } from 'element-plus'
 import { ArrowDown, Bell, User } from '@element-plus/icons-vue'
 import { useAuthStore } from '@/stores/auth'
 import { useCategoryStore } from '@/stores/category'
+import { findCategoryById } from '@/utils/category'
 import {
   getAdminNotificationUnreadCountApi,
   getAdminNotificationsApi,
@@ -176,6 +177,20 @@ async function onNotifClick(n: NotificationItem) {
   }
   notifVisible.value = false
   if (n.type.startsWith('ACCESS_')) {
+    if (n.type === 'ACCESS_APPROVED') {
+      if (n.uploadId) {
+        await categoryStore.fetchTree(true)
+        const cat = findCategoryById(n.uploadId, categoryStore.tree)
+        if (cat) {
+          router.push(`/category/${cat.slug}`)
+          return
+        }
+      } else {
+        // 全部受限分类开通：直接回首页，所有内容已可访问
+        router.push('/')
+        return
+      }
+    }
     router.push(n.type === 'ACCESS_APPLY' && isAdmin.value ? '/admin/access' : '/profile/applies')
     return
   }

@@ -2,10 +2,9 @@ import request from './request'
 import type { LoginResult, UserInfo } from '@/types'
 
 export interface RegisterForm {
-  password: string
+  email: string
+  code: string
   nickname?: string
-  email?: string
-  phone?: string
 }
 
 export async function loginApi(account: string, password: string): Promise<LoginResult> {
@@ -16,7 +15,7 @@ export async function loginByCodeApi(email: string, code: string): Promise<Login
   return request.post('/auth/login/code', { email, code })
 }
 
-export async function sendEmailCodeApi(email: string, scene: 'login' | 'reset'): Promise<void> {
+export async function sendEmailCodeApi(email: string, scene: 'login' | 'register' | 'reset'): Promise<void> {
   return request.post('/auth/code/email', { email, scene })
 }
 

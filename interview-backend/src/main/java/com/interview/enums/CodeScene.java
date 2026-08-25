@@ -5,6 +5,7 @@ package com.interview.enums;
  */
 public enum CodeScene {
     LOGIN("login"),
+    REGISTER("register"),
     RESET("reset");
 
     private final String value;

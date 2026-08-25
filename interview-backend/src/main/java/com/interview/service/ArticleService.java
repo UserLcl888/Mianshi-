@@ -52,6 +52,12 @@ public class ArticleService {
     private final AdminLogService adminLogService;
 
     public PageResult<VOs.ArticleListItemVO> list(Long categoryId, String difficulty, long page, long size) {
+        // 受限分类：列表查询同样走权限校验，未授权（含游客/普通用户）不允许拉取任何题目
+        if (categoryId != null) {
+            Category category = categoryService.getById(categoryId);
+            User viewer = StpUtil.isLogin() ? userMapper.selectById(StpUtil.getLoginIdAsLong()) : null;
+            accessService.checkArticleAccess(viewer, null, category);
+        }
         String difficultyNorm = StringUtils.hasText(difficulty) ? Difficulty.normalize(difficulty).getCode() : null;
         String cacheKey = listCacheKey(categoryId, difficultyNorm, page, size);
         PageResult<VOs.ArticleListItemVO> cached = readListCache(cacheKey);

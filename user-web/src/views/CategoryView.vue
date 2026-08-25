@@ -140,6 +140,7 @@ const lockedList = ref<LockedCategoryItem[]>([])
 const listContainer = ref<HTMLElement | null>(null)
 const sentinel = ref<HTMLElement | null>(null)
 let observer: IntersectionObserver | null = null
+let accessPollTimer: number | null = null
 
 async function loadMore() {
   if (loading.value || !hasMore.value || !currentCategory.value) return
@@ -154,6 +155,12 @@ async function loadMore() {
     list.value.push(...res.list)
     hasMore.value = res.hasMore
     page.value += 1
+  } catch (e) {
+    const err = e as Error & { code?: number }
+    if (err.code === 40301) {
+      // 后端校验受限分类未授权：重新拉取状态并展示申请页，防止前端分类树缓存过期导致绕过
+      await checkGate()
+    }
   } finally {
     loading.value = false
   }
@@ -171,23 +178,29 @@ function goLogin() {
 }
 
 async function checkGate() {
+  stopAccessPoll()
   accessState.value = null
   accessStatus.value = null
   accessTitle.value = ''
   categoryIdForApply.value = null
-  if (!currentCategory.value || !isRestrictedCategory(currentCategory.value, categoryStore.tree)) {
+  if (!currentCategory.value) {
     return
   }
   if (!auth.isLoggedIn) {
-    accessState.value = { message: '该分类需登录后申请访问' }
+    // 游客：依据分类树判断是否受限，受限则提示登录申请
+    if (isRestrictedCategory(currentCategory.value, categoryStore.tree)) {
+      accessState.value = { message: '该分类需登录后申请访问' }
+    }
     return
   }
+  // 已登录：始终以服务端权限状态为准，避免本地分类树缓存过期导致漏拦截
   try {
     const st = await getAccessStatusApi(activeSlug.value)
     accessTitle.value = st.title
     accessStatus.value = st.status
     categoryIdForApply.value = st.categoryId
     if (st.status !== 'GRANTED') {
+      startAccessPoll()
       accessState.value = {
         message:
           st.status === 'PENDING'
@@ -200,6 +213,34 @@ async function checkGate() {
   } catch {
     accessState.value = { message: '该分类需申请后访问' }
   }
+}
+
+function stopAccessPoll() {
+  if (accessPollTimer !== null) {
+    window.clearInterval(accessPollTimer)
+    accessPollTimer = null
+  }
+}
+
+/** 受限分类页面：后台审批通过后自动解锁，无需用户手动刷新 */
+function startAccessPoll() {
+  stopAccessPoll()
+  accessPollTimer = window.setInterval(async () => {
+    if (!auth.isLoggedIn || !accessState.value) {
+      stopAccessPoll()
+      return
+    }
+    try {
+      const st = await getAccessStatusApi(activeSlug.value)
+      if (st.status === 'GRANTED') {
+        stopAccessPoll()
+        await checkGate()
+        if (!accessState.value) await reload()
+      }
+    } catch {
+      // 轮询失败保持现状，下一轮继续
+    }
+  }, 10000)
 }
 
 async function onScopeChange() {
@@ -262,6 +303,7 @@ onMounted(async () => {
 
 onBeforeUnmount(() => {
   observer?.disconnect()
+  stopAccessPoll()
 })
 </script>
 

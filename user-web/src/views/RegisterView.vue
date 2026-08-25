@@ -44,32 +44,20 @@
         />
       </el-form-item>
 
-      <el-form-item prop="password" class="auth-field">
+      <el-form-item v-if="registerType === 'email'" prop="code" class="auth-field">
         <template #label>
-          <span class="field-label">通行密码 <i class="req">*</i></span>
+          <span class="field-label">邮箱验证码 <i class="req">*</i></span>
         </template>
-        <el-input
-          v-model="form.password"
-          type="password"
-          show-password
-          placeholder="请输入通行密码"
-          :prefix-icon="Lock"
-          class="auth-input"
-        />
-      </el-form-item>
-
-      <el-form-item prop="confirmPassword" class="auth-field">
-        <template #label>
-          <span class="field-label">确认密码 <i class="req">*</i></span>
-        </template>
-        <el-input
-          v-model="form.confirmPassword"
-          type="password"
-          show-password
-          placeholder="请再次输入密码"
-          :prefix-icon="Lock"
-          class="auth-input"
-        />
+        <div class="code-row">
+          <el-input
+            v-model="form.code"
+            placeholder="6 位验证码"
+            class="auth-input code-input"
+            maxlength="6"
+            :prefix-icon="Key"
+          />
+          <VerifyCodeButton :email="form.account" scene="register" :sendable="emailValid" />
+        </div>
       </el-form-item>
 
       <el-button type="primary" class="submit-btn" :loading="loading" @click="submit">
@@ -89,9 +77,10 @@
 import { computed, reactive, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage, type FormInstance, type FormRules } from 'element-plus'
-import { Iphone, Lock, Message, User } from '@element-plus/icons-vue'
+import { Iphone, Key, Message, User } from '@element-plus/icons-vue'
 import { useAuthStore } from '@/stores/auth'
 import AuthLayout from '@/components/auth/AuthLayout.vue'
+import VerifyCodeButton from '@/components/common/VerifyCodeButton.vue'
 
 const router = useRouter()
 const auth = useAuthStore()
@@ -99,12 +88,16 @@ const auth = useAuthStore()
 const formRef = ref<FormInstance>()
 const loading = ref(false)
 const registerType = ref<'email' | 'phone'>('email')
-const form = reactive({ account: '', nickname: '', password: '', confirmPassword: '' })
+const form = reactive({ account: '', nickname: '', code: '' })
+const emailPattern = /^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/
+const phonePattern = /^1[3-9]\d{9}$/
+const emailValid = computed(() => emailPattern.test(form.account.trim()))
 
 function switchType(type: 'email' | 'phone') {
   if (registerType.value === type) return
   registerType.value = type
   form.account = ''
+  form.code = ''
   formRef.value?.clearValidate()
 }
 
@@ -123,35 +116,32 @@ const rules = computed<FormRules>(() => ({
         }
       : { pattern: /^1[3-9]\d{9}$/, message: '手机号格式不正确', trigger: 'blur' }
   ],
-  password: [
-    { required: true, message: '请输入密码', trigger: 'blur' },
-    { min: 6, max: 32, message: '密码长度为 6~32 位', trigger: 'blur' }
-  ],
-  confirmPassword: [
-    { required: true, message: '请再次输入密码', trigger: 'blur' },
-    {
-      validator: (_rule, value, callback) => {
-        if (value !== form.password) callback(new Error('两次输入的密码不一致'))
-        else callback()
-      },
-      trigger: 'blur'
-    }
-  ]
+  ...(registerType.value === 'email'
+    ? {
+        code: [
+          { required: true, message: '请输入验证码', trigger: 'blur' },
+          { pattern: /^\d{6}$/, message: '请输入 6 位数字验证码', trigger: 'blur' }
+        ]
+      }
+    : {})
 }))
 
 async function submit() {
+  if (registerType.value === 'phone') {
+    ElMessage.warning('暂时未开放手机号登录，请先选择邮箱登录')
+    return
+  }
   const valid = await formRef.value?.validate().catch(() => false)
   if (!valid) return
   loading.value = true
   try {
-    const base = { password: form.password, nickname: form.nickname.trim() || undefined }
-    const payload =
-      registerType.value === 'email'
-        ? { ...base, email: form.account.trim() }
-        : { ...base, phone: form.account.trim() }
-    await auth.register(payload)
+    await auth.register({
+      email: form.account.trim(),
+      code: form.code.trim(),
+      nickname: form.nickname.trim() || undefined
+    })
     ElMessage.success('注册成功，请登录')
-    router.push({ path: '/login', query: { type: registerType.value, account: form.account.trim() } })
+    router.push({ path: '/login', query: { type: 'email', account: form.account.trim() } })
   } catch (e) {
     // 错误提示由请求拦截器统一处理
   } finally {
@@ -227,6 +217,16 @@ async function submit() {
   color: #ff6b6b;
   font-style: normal;
   margin-left: 1px;
+}
+
+.code-row {
+  display: flex;
+  gap: 10px;
+  width: 100%;
+}
+
+.code-input {
+  flex: 1;
 }
 
 .submit-btn {

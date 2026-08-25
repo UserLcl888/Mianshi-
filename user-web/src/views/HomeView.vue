@@ -48,7 +48,7 @@
       </main>
 
       <aside class="right-col">
-        <div class="side-card">
+        <div class="side-card hot-doc-card">
           <div class="side-title">热门文档</div>
           <div v-if="!overview" class="side-empty">加载中…</div>
           <div v-else class="hot-list">
@@ -65,7 +65,7 @@
           </div>
         </div>
 
-        <div class="side-card">
+        <div class="side-card side-fixed-card">
           <div class="side-title">热门标签</div>
           <div class="tag-cloud">
             <el-tag
@@ -81,7 +81,7 @@
           </div>
         </div>
 
-        <div class="side-card">
+        <div class="side-card side-fixed-card">
           <div class="side-title">站点统计</div>
           <div class="stat-grid">
             <div class="stat-cell">
@@ -207,6 +207,7 @@ onMounted(async () => {
   width: 280px;
   position: sticky;
   top: 72px;
+  height: calc(100vh - 92px);
   max-height: calc(100vh - 92px);
   display: flex;
   flex-direction: column;
@@ -232,6 +233,15 @@ onMounted(async () => {
   min-height: 0;
   display: flex;
   flex-direction: column;
+}
+
+.hot-doc-card {
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.side-fixed-card {
+  flex: 0 0 auto;
 }
 
 .side-title {
@@ -416,6 +426,7 @@ onMounted(async () => {
 .hot-list {
   overflow-y: auto;
   min-height: 0;
+  flex: 1;
 }
 
 .hot-item {

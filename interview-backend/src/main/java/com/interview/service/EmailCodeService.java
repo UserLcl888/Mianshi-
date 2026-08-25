@@ -53,7 +53,9 @@ public class EmailCodeService {
     private String from;
 
     /**
-     * 发送验证码：scene 仅允许 login / reset。开发环境（mock=true）不真实发信，验证码打印到日志并返回。
+     * 发送验证码：scene 支持 login / register / reset。
+     * login/reset 要求邮箱已注册；register 要求邮箱未注册（避免重复注册）。
+     * 开发环境（mock=true）不真实发信，验证码打印到日志并返回。
      *
      * @return mock 模式下返回验证码，生产返回空 Map
      */
@@ -67,7 +69,12 @@ public class EmailCodeService {
         if (codeScene == null) {
             throw new BizException(ErrorCode.PARAM_ERROR, "场景不合法");
         }
-        if (userMapper.selectCount(new LambdaQueryWrapper<User>().eq(User::getEmail, mail)) == 0) {
+        boolean registered = userMapper.selectCount(new LambdaQueryWrapper<User>().eq(User::getEmail, mail)) > 0;
+        if ("register".equals(sc)) {
+            if (registered) {
+                throw new BizException(ErrorCode.CONFLICT, "该邮箱已注册，请直接登录");
+            }
+        } else if (!registered) {
             throw new BizException(ErrorCode.NOT_FOUND, "该邮箱未注册，请先注册");
         }
 

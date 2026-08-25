@@ -89,7 +89,7 @@ public class HomeService {
         long articleCount = stats.getArticleCount() == null ? 0L : stats.getArticleCount();
         long viewCount = stats.getViewCount() == null ? 0L : stats.getViewCount();
 
-        List<Map<String, Object>> hotArticles = articleMapper.selectTopPublished(8).stream().map(r -> {
+        List<Map<String, Object>> hotArticles = articleMapper.selectTopPublished(10).stream().map(r -> {
             Map<String, Object> m = new LinkedHashMap<>();
             m.put("id", r.getId());
             m.put("slug", r.getSlug());
