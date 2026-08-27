@@ -427,6 +427,8 @@ onMounted(async () => {
   overflow-y: auto;
   min-height: 0;
   flex: 1;
+  display: flex;
+  flex-direction: column;
 }
 
 .hot-item {
@@ -438,6 +440,8 @@ onMounted(async () => {
   font-size: 13px;
   color: #b8c0cf;
   transition: all 0.15s;
+  /* 10 条自动均分撑满卡片高度，避免窗口高时底部留白；空间不足时不压缩，改为列表滚动 */
+  flex: 1 0 auto;
 }
 
 .hot-item:hover {
