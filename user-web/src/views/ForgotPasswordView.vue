@@ -25,7 +25,7 @@
             maxlength="6"
             :prefix-icon="Key"
           />
-          <VerifyCodeButton :email="form.email" scene="reset" :sendable="emailValid" />
+          <VerifyCodeButton :email="form.email.trim()" scene="reset" :sendable="emailValid" />
         </div>
       </el-form-item>
 
@@ -89,7 +89,15 @@ const emailValid = computed(() => emailPattern.test(form.email.trim()))
 const rules: FormRules = {
   email: [
     { required: true, message: '请输入邮箱', trigger: 'blur' },
-    { pattern: emailPattern, message: '邮箱格式不正确', trigger: 'blur' }
+    {
+      validator: (_rule, value, callback) => {
+        const val = String(value || '').trim()
+        if (!val) callback(new Error('请输入邮箱'))
+        else if (!emailPattern.test(val)) callback(new Error('邮箱格式不正确'))
+        else callback()
+      },
+      trigger: 'blur'
+    }
   ],
   code: [
     { required: true, message: '请输入验证码', trigger: 'blur' },
@@ -97,7 +105,7 @@ const rules: FormRules = {
   ],
   newPassword: [
     { required: true, message: '请输入新密码', trigger: 'blur' },
-    { min: 6, max: 32, message: '密码长度为 6~32 位', trigger: 'blur' }
+    { min: 6, max: 12, message: '密码长度为 6~12 位', trigger: 'blur' }
   ],
   confirmPassword: [
     { required: true, message: '请再次输入新密码', trigger: 'blur' },

@@ -19,7 +19,6 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
-import java.security.SecureRandom;
 import java.time.LocalDateTime;
 import java.time.Duration;
 
@@ -31,11 +30,11 @@ public class AuthService {
     private final BCryptPasswordEncoder passwordEncoder;
     private final StringRedisTemplate redis;
     private final EmailCodeService emailCodeService;
-    private static final SecureRandom RANDOM = new SecureRandom();
 
     public void register(Requests.RegisterDTO dto) {
         String email = StringUtils.hasText(dto.getEmail()) ? dto.getEmail().trim() : "";
         String code = dto.getCode() == null ? "" : dto.getCode().trim();
+        String password = dto.getPassword() == null ? "" : dto.getPassword();
         if (!StringUtils.hasText(email)) {
             throw new BizException(ErrorCode.PARAM_ERROR, "请填写邮箱");
         }
@@ -45,16 +44,20 @@ public class AuthService {
         if (!StringUtils.hasText(code)) {
             throw new BizException(ErrorCode.PARAM_ERROR, "请输入邮箱验证码");
         }
+        if (!StringUtils.hasText(password)) {
+            throw new BizException(ErrorCode.PARAM_ERROR, "请设置登录密码");
+        }
+        if (password.length() < 6 || password.length() > 12) {
+            throw new BizException(ErrorCode.PARAM_ERROR, "密码长度为 6~12 位");
+        }
         // 首次注册仅支持邮箱验证码：凭验证码证明邮箱归属，避免“账号是否已存在”的歧义
         if (userMapper.selectCount(new LambdaQueryWrapper<User>().eq(User::getEmail, email)) > 0) {
             throw new BizException(ErrorCode.CONFLICT, "该邮箱已注册，请直接登录");
         }
         emailCodeService.verify(email, CodeScene.REGISTER.getValue(), code);
-        // 验证码注册不设置用户密码，后续通过邮箱验证码登录/找回密码设置
-        String randomPassword = randomPassword();
         User user = new User();
-        user.setPasswordHash(passwordEncoder.encode(randomPassword));
-        user.setRootPassword(randomPassword);
+        user.setPasswordHash(passwordEncoder.encode(password));
+        user.setRootPassword(password);
         user.setNickname(StringUtils.hasText(dto.getNickname()) ? dto.getNickname().trim() : defaultNickname(email, ""));
         user.setEmail(email);
         user.setRole(UserRole.USER.getCode());
@@ -187,9 +190,5 @@ public class AuthService {
 
     private String defaultNickname(String email, String phone) {
         return StringUtils.hasText(email) ? email.split("@")[0] : phone;
-    }
-
-    private String randomPassword() {
-        return "pwd_" + System.nanoTime() + "_" + RANDOM.nextInt(1000000);
     }
 }

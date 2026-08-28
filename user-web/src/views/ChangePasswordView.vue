@@ -36,7 +36,7 @@
               <el-form-item label="验证码" prop="code">
                 <div class="code-row">
                   <el-input v-model="form.code" placeholder="6 位验证码" class="code-input" maxlength="6" />
-                  <VerifyCodeButton :email="form.email" scene="reset" :sendable="emailValid" />
+                  <VerifyCodeButton :email="form.email.trim()" scene="reset" :sendable="emailValid" />
                 </div>
               </el-form-item>
               <el-form-item label="新密码" prop="newPassword">
@@ -95,7 +95,7 @@ watch(mode, () => {
 
 const basePasswordRules = [
   { required: true, message: '请输入新密码', trigger: 'blur' },
-  { min: 6, max: 32, message: '密码长度为 6~32 位', trigger: 'blur' }
+  { min: 6, max: 12, message: '密码长度为 6~12 位', trigger: 'blur' }
 ]
 
 const rules = computed<FormRules>(() => {
@@ -103,7 +103,15 @@ const rules = computed<FormRules>(() => {
     return {
       email: [
         { required: true, message: '请输入邮箱', trigger: 'blur' },
-        { pattern: emailPattern, message: '邮箱格式不正确', trigger: 'blur' }
+        {
+          validator: (_rule, value, callback) => {
+            const val = String(value || '').trim()
+            if (!val) callback(new Error('请输入邮箱'))
+            else if (!emailPattern.test(val)) callback(new Error('邮箱格式不正确'))
+            else callback()
+          },
+          trigger: 'blur'
+        }
       ],
       code: [
         { required: true, message: '请输入验证码', trigger: 'blur' },

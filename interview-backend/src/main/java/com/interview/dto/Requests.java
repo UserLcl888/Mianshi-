@@ -40,7 +40,7 @@ public class Requests {
         @NotBlank(message = "请输入验证码")
         private String code;
         @NotBlank(message = "请输入新密码")
-        @Size(min = 6, max = 32, message = "密码长度为 6~32 位")
+        @Size(min = 6, max = 12, message = "密码长度为 6~12 位")
         private String newPassword;
     }
 
@@ -50,6 +50,9 @@ public class Requests {
         private String email;
         @NotBlank(message = "请输入邮箱验证码")
         private String code;
+        @NotBlank(message = "请设置登录密码")
+        @Size(min = 6, max = 12, message = "密码长度为 6~12 位")
+        private String password;
         private String nickname;
     }
 
@@ -58,7 +61,7 @@ public class Requests {
         @NotBlank(message = "请输入旧密码")
         private String oldPassword;
         @NotBlank(message = "请输入新密码")
-        @Size(min = 6, max = 32, message = "密码长度为 6~32 位")
+        @Size(min = 6, max = 12, message = "密码长度为 6~12 位")
         private String newPassword;
     }
 
@@ -93,6 +96,7 @@ public class Requests {
     @Data
     public static class UserCreateDTO {
         @NotBlank(message = "请输入密码")
+        @Size(min = 6, max = 12, message = "密码长度为 6~12 位")
         private String password;
         private String nickname;
         private String role;
@@ -109,6 +113,7 @@ public class Requests {
     @Data
     public static class ResetPasswordDTO {
         @NotBlank(message = "请输入新密码")
+        @Size(min = 6, max = 12, message = "密码长度为 6~12 位")
         private String newPassword;
     }
 

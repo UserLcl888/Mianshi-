@@ -78,7 +78,7 @@
           <el-input v-model="createForm.phone" placeholder="选填，邮箱和手机号至少填一项" />
         </el-form-item>
         <el-form-item label="密码" prop="password">
-          <el-input v-model="createForm.password" type="password" show-password placeholder="6~32 位" />
+          <el-input v-model="createForm.password" type="password" show-password placeholder="6~12 位" />
         </el-form-item>
         <el-form-item label="昵称" prop="nickname">
           <el-input v-model="createForm.nickname" />
@@ -122,7 +122,7 @@
     <el-dialog v-model="resetVisible" title="重置密码" width="440px" append-to-body>
       <el-form ref="resetRef" :model="resetForm" :rules="resetRules" label-width="80px">
         <el-form-item label="新密码" prop="newPassword">
-          <el-input v-model="resetForm.newPassword" type="password" show-password placeholder="6~32 位" />
+          <el-input v-model="resetForm.newPassword" type="password" show-password placeholder="6~12 位" />
         </el-form-item>
       </el-form>
       <template #footer>
@@ -192,7 +192,7 @@ const createRules: FormRules = {
   ],
   password: [
     { required: true, message: '请输入密码', trigger: 'blur' },
-    { min: 6, max: 32, message: '密码长度为 6~32 位', trigger: 'blur' }
+    { min: 6, max: 12, message: '密码长度为 6~12 位', trigger: 'blur' }
   ]
 }
 
@@ -203,7 +203,7 @@ const editRules: FormRules = {
 const resetRules: FormRules = {
   newPassword: [
     { required: true, message: '请输入新密码', trigger: 'blur' },
-    { min: 6, max: 32, message: '密码长度为 6~32 位', trigger: 'blur' }
+    { min: 6, max: 12, message: '密码长度为 6~12 位', trigger: 'blur' }
   ]
 }
 

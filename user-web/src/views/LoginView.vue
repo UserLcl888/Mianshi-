@@ -45,7 +45,7 @@
               maxlength="6"
               :prefix-icon="Key"
             />
-            <VerifyCodeButton :email="form.account" scene="login" :sendable="emailValid" />
+            <VerifyCodeButton :email="form.account.trim()" scene="login" :sendable="emailValid" />
           </div>
         </el-form-item>
       </template>
@@ -164,11 +164,27 @@ const rules = computed<FormRules>(() => {
     loginType.value === 'phone'
       ? [
           { required: true, message: '请输入手机号', trigger: 'blur' },
-          { pattern: phonePattern, message: '手机号格式不正确', trigger: 'blur' }
+          {
+            validator: (_rule, value, callback) => {
+              const val = String(value || '').trim()
+              if (!val) callback(new Error('请输入手机号'))
+              else if (!phonePattern.test(val)) callback(new Error('手机号格式不正确'))
+              else callback()
+            },
+            trigger: 'blur'
+          }
         ]
       : [
           { required: true, message: '请输入邮箱', trigger: 'blur' },
-          { pattern: emailPattern, message: '邮箱格式不正确', trigger: 'blur' }
+          {
+            validator: (_rule, value, callback) => {
+              const val = String(value || '').trim()
+              if (!val) callback(new Error('请输入邮箱'))
+              else if (!emailPattern.test(val)) callback(new Error('邮箱格式不正确'))
+              else callback()
+            },
+            trigger: 'blur'
+          }
         ]
   if (loginType.value === 'email' && emailMode.value === 'code') {
     return {

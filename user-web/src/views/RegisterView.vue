@@ -56,9 +56,39 @@
             maxlength="6"
             :prefix-icon="Key"
           />
-          <VerifyCodeButton :email="form.account" scene="register" :sendable="emailValid" />
+          <VerifyCodeButton :email="form.account.trim()" scene="register" :sendable="emailValid" />
         </div>
       </el-form-item>
+
+      <template v-if="codeFilled">
+        <el-form-item prop="password" class="auth-field">
+          <template #label>
+            <span class="field-label">设置登录密码 <i class="req">*</i></span>
+          </template>
+          <el-input
+            v-model="form.password"
+            type="password"
+            show-password
+            placeholder="6~12 位登录密码"
+            :prefix-icon="Lock"
+            class="auth-input"
+          />
+        </el-form-item>
+
+        <el-form-item prop="confirmPassword" class="auth-field">
+          <template #label>
+            <span class="field-label">确认登录密码 <i class="req">*</i></span>
+          </template>
+          <el-input
+            v-model="form.confirmPassword"
+            type="password"
+            show-password
+            placeholder="请再次输入登录密码"
+            :prefix-icon="Lock"
+            class="auth-input"
+          />
+        </el-form-item>
+      </template>
 
       <el-button type="primary" class="submit-btn" :loading="loading" @click="submit">
         立即注册
@@ -77,7 +107,7 @@
 import { computed, reactive, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage, type FormInstance, type FormRules } from 'element-plus'
-import { Iphone, Key, Message, User } from '@element-plus/icons-vue'
+import { Iphone, Key, Lock, Message, User } from '@element-plus/icons-vue'
 import { useAuthStore } from '@/stores/auth'
 import AuthLayout from '@/components/auth/AuthLayout.vue'
 import VerifyCodeButton from '@/components/common/VerifyCodeButton.vue'
@@ -88,16 +118,20 @@ const auth = useAuthStore()
 const formRef = ref<FormInstance>()
 const loading = ref(false)
 const registerType = ref<'email' | 'phone'>('email')
-const form = reactive({ account: '', nickname: '', code: '' })
+const form = reactive({ account: '', nickname: '', code: '', password: '', confirmPassword: '' })
 const emailPattern = /^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/
 const phonePattern = /^1[3-9]\d{9}$/
 const emailValid = computed(() => emailPattern.test(form.account.trim()))
+// 输入完整 6 位验证码后，再显示自定义密码
+const codeFilled = computed(() => /^\d{6}$/.test(form.code))
 
 function switchType(type: 'email' | 'phone') {
   if (registerType.value === type) return
   registerType.value = type
   form.account = ''
   form.code = ''
+  form.password = ''
+  form.confirmPassword = ''
   formRef.value?.clearValidate()
 }
 
@@ -110,17 +144,43 @@ const rules = computed<FormRules>(() => ({
     },
     registerType.value === 'email'
       ? {
-          pattern: /^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/,
-          message: '邮箱格式不正确',
+          validator: (_rule, value, callback) => {
+            const val = String(value || '').trim()
+            if (!val) callback(new Error('请输入邮箱'))
+            else if (!emailPattern.test(val)) callback(new Error('邮箱格式不正确'))
+            else callback()
+          },
           trigger: 'blur'
         }
-      : { pattern: /^1[3-9]\d{9}$/, message: '手机号格式不正确', trigger: 'blur' }
+      : {
+          validator: (_rule, value, callback) => {
+            const val = String(value || '').trim()
+            if (!val) callback(new Error('请输入手机号'))
+            else if (!phonePattern.test(val)) callback(new Error('手机号格式不正确'))
+            else callback()
+          },
+          trigger: 'blur'
+        }
   ],
   ...(registerType.value === 'email'
     ? {
         code: [
           { required: true, message: '请输入验证码', trigger: 'blur' },
           { pattern: /^\d{6}$/, message: '请输入 6 位数字验证码', trigger: 'blur' }
+        ],
+        password: [
+          { required: true, message: '请设置登录密码', trigger: 'blur' },
+          { min: 6, max: 12, message: '密码长度为 6~12 位', trigger: 'blur' }
+        ],
+        confirmPassword: [
+          { required: true, message: '请再次输入登录密码', trigger: 'blur' },
+          {
+            validator: (_rule, value, callback) => {
+              if (value !== form.password) callback(new Error('两次输入的密码不一致'))
+              else callback()
+            },
+            trigger: 'blur'
+          }
         ]
       }
     : {})
@@ -138,7 +198,8 @@ async function submit() {
     await auth.register({
       email: form.account.trim(),
       code: form.code.trim(),
-      nickname: form.nickname.trim() || undefined
+      nickname: form.nickname.trim() || undefined,
+      password: form.password
     })
     ElMessage.success('注册成功，请登录')
     router.push({ path: '/login', query: { type: 'email', account: form.account.trim() } })
