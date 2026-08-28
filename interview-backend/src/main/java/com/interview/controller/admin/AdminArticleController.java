@@ -30,11 +30,12 @@ public class AdminArticleController {
 
     @GetMapping
     public Result<PageResult<VOs.ArticleListItemVO>> list(
+            @RequestParam(value = "columnType", required = false) String columnType,
             @RequestParam(value = "categoryId", required = false) Long categoryId,
             @RequestParam(value = "difficulty", required = false) String difficulty,
             @RequestParam(value = "page", defaultValue = "1") long page,
             @RequestParam(value = "size", defaultValue = "10") long size) {
-        return Result.ok(articleService.adminList(categoryId, difficulty, page, size));
+        return Result.ok(articleService.adminList(columnType, categoryId, difficulty, page, size));
     }
 
     @PostMapping
@@ -50,6 +51,12 @@ public class AdminArticleController {
     @PutMapping("/reorder")
     public Result<Void> reorder(@RequestBody List<Requests.ArticleReorderItem> items) {
         articleService.reorder(items);
+        return Result.ok();
+    }
+
+    @PutMapping("/topics/reorder")
+    public Result<Void> reorderTopics(@RequestBody List<Requests.TopicReorderItem> items) {
+        articleService.reorderTopics(items);
         return Result.ok();
     }
 

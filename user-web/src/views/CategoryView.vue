@@ -5,7 +5,7 @@
       <CategorySidebar :active-category-slug="activeSlug" :active-article-slug="''" />
       <main class="content">
         <el-breadcrumb class="breadcrumb-bar" separator="/">
-          <el-breadcrumb-item :to="{ path: '/' }">首页</el-breadcrumb-item>
+          <el-breadcrumb-item :to="{ path: '/home' }">首页</el-breadcrumb-item>
           <template v-for="(c, idx) in categoryPath" :key="c.id">
             <el-breadcrumb-item v-if="idx < categoryPath.length - 1" :to="`/category/${c.slug}`">{{ c.name }}</el-breadcrumb-item>
             <el-breadcrumb-item v-else>{{ c.name }}</el-breadcrumb-item>

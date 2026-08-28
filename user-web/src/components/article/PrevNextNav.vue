@@ -1,12 +1,12 @@
 <template>
   <div class="prev-next">
-    <router-link v-if="prev" :to="`/article/${prev.slug}`" class="pn-item">
+    <router-link v-if="prev" :to="`${base}/${prev.slug}`" class="pn-item">
       <span class="pn-label">上一篇</span>
       <span class="pn-title">{{ prev.title }}</span>
     </router-link>
     <span v-else class="pn-item disabled">已经是第一篇</span>
 
-    <router-link v-if="next" :to="`/article/${next.slug}`" class="pn-item right">
+    <router-link v-if="next" :to="`${base}/${next.slug}`" class="pn-item right">
       <span class="pn-label">下一篇</span>
       <span class="pn-title">{{ next.title }}</span>
     </router-link>
@@ -17,7 +17,10 @@
 <script setup lang="ts">
 import type { ArticleBrief } from '@/types'
 
-defineProps<{ prev: ArticleBrief | null; next: ArticleBrief | null }>()
+withDefaults(
+  defineProps<{ prev: ArticleBrief | null; next: ArticleBrief | null; base?: string }>(),
+  { base: '/article' }
+)
 </script>
 
 <style scoped>

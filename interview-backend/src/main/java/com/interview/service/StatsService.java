@@ -32,10 +32,12 @@ public class StatsService {
     public Map<String, Object> overview() {
         Map<String, Object> data = new LinkedHashMap<>();
         data.put("userCount", userMapper.selectCount(null));
-        data.put("articleCount", articleMapper.selectCount(null));
+        data.put("articleCount", articleMapper.selectCount(
+                new LambdaQueryWrapper<Article>().ne(Article::getColumnType, "topic")));
         data.put("categoryCount", categoryMapper.selectCount(null));
         data.put("publishedCount", articleMapper.selectCount(
-                new LambdaQueryWrapper<Article>().eq(Article::getStatus, 1)));
+                new LambdaQueryWrapper<Article>().eq(Article::getStatus, 1)
+                        .ne(Article::getColumnType, "topic")));
         return data;
     }
 

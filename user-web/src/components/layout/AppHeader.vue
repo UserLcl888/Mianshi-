@@ -1,36 +1,42 @@
 <template>
   <header class="app-header">
     <div class="header-inner">
-      <router-link to="/" class="brand">
+      <router-link to="/home" class="brand">
         <img src="/logo.png" alt="logo" class="brand-logo" />
         <span class="brand-name">知识分享平台</span>
       </router-link>
 
       <nav class="nav">
-        <router-link to="/" class="nav-item" exact-active-class="active">首页</router-link>
-        <template v-for="cat in visibleCategories" :key="cat.id">
-          <router-link :to="`/category/${cat.slug}`" class="nav-item" :class="{ active: isCategoryActive(cat.slug) }">
-            {{ cat.name }}
-          </router-link>
+        <router-link to="/topic" class="nav-item topic-entry" :class="{ active: isTopicArea }">专题</router-link>
+        <router-link to="/home" class="nav-item" exact-active-class="active">首页</router-link>
+        <template v-if="isTopicArea">
+          <span class="topic-welcome">欢迎访问专栏模块，大家一起进步</span>
         </template>
-        <el-dropdown v-if="moreCategories.length" trigger="click" :teleported="false" @command="onCategoryCommand">
-          <span class="nav-item category-trigger">
-            更多主题
-            <el-icon class="el-icon--right"><ArrowDown /></el-icon>
-          </span>
-          <template #dropdown>
-            <el-dropdown-menu class="category-menu">
-              <el-dropdown-item
-                v-for="cat in moreCategories"
-                :key="cat.id"
-                :command="cat.slug"
-                :class="{ 'menu-active': isCategoryActive(cat.slug) }"
-              >
-                {{ cat.name }}
-              </el-dropdown-item>
-            </el-dropdown-menu>
+        <template v-else>
+          <template v-for="cat in visibleCategories" :key="cat.id">
+            <router-link :to="`/category/${cat.slug}`" class="nav-item" :class="{ active: isCategoryActive(cat.slug) }">
+              {{ cat.name }}
+            </router-link>
           </template>
-        </el-dropdown>
+          <el-dropdown v-if="moreCategories.length" trigger="click" :teleported="false" @command="onCategoryCommand">
+            <span class="nav-item category-trigger">
+              更多主题
+              <el-icon class="el-icon--right"><ArrowDown /></el-icon>
+            </span>
+            <template #dropdown>
+              <el-dropdown-menu class="category-menu">
+                <el-dropdown-item
+                  v-for="cat in moreCategories"
+                  :key="cat.id"
+                  :command="cat.slug"
+                  :class="{ 'menu-active': isCategoryActive(cat.slug) }"
+                >
+                  {{ cat.name }}
+                </el-dropdown-item>
+              </el-dropdown-menu>
+            </template>
+          </el-dropdown>
+        </template>
       </nav>
 
       <div class="header-right">
@@ -123,6 +129,7 @@ const categories = computed(() => categoryStore.tree)
 const visibleCategories = computed(() => categories.value.slice(0, 13))
 const moreCategories = computed(() => categories.value.slice(13))
 const isAdmin = computed(() => auth.userInfo?.role === 'ADMIN')
+const isTopicArea = computed(() => route.path.startsWith('/topic'))
 
 const notifVisible = ref(false)
 const notifList = ref<NotificationItem[]>([])
@@ -187,7 +194,7 @@ async function onNotifClick(n: NotificationItem) {
         }
       } else {
         // 全部受限分类开通：直接回首页，所有内容已可访问
-        router.push('/')
+        router.push('/home')
         return
       }
     }
@@ -255,7 +262,7 @@ async function onCommand(command: string) {
   } else if (command === 'logout') {
     await auth.logout()
     ElMessage.success('已退出登录')
-    router.push('/')
+    router.push('/home')
   }
 }
 </script>
@@ -330,6 +337,43 @@ async function onCommand(command: string) {
   box-shadow: inset 0 -2px 0 var(--app-accent);
 }
 
+/* 专题入口：橙金渐变胶囊 + 呼吸光晕，突出且保持夜色氛围 */
+.topic-entry {
+  margin-left: 6px;
+  padding: 6px 15px;
+  border-radius: 20px;
+  font-weight: 600;
+  color: #141a26;
+  background: linear-gradient(135deg, #f2a82e 0%, #e18b18 100%);
+  box-shadow: 0 0 10px rgba(232, 154, 31, 0.4);
+  animation: topic-breathe 2.6s ease-in-out infinite;
+  transition: transform 0.15s ease, box-shadow 0.2s ease, filter 0.2s ease;
+  white-space: nowrap;
+}
+
+.topic-entry:hover {
+  transform: translateY(-1px);
+  filter: brightness(1.08);
+  box-shadow: 0 0 22px rgba(232, 154, 31, 0.7);
+  animation-play-state: paused;
+}
+
+.topic-entry.active {
+  color: #141a26;
+  background: linear-gradient(135deg, #f7b845 0%, #ea9624 100%);
+  box-shadow: 0 0 24px rgba(232, 154, 31, 0.8);
+}
+
+@keyframes topic-breathe {
+  0%,
+  100% {
+    box-shadow: 0 0 8px rgba(232, 154, 31, 0.28);
+  }
+  50% {
+    box-shadow: 0 0 18px rgba(232, 154, 31, 0.62);
+  }
+}
+
 .category-trigger {
   display: inline-flex;
   align-items: center;
@@ -337,6 +381,17 @@ async function onCommand(command: string) {
   cursor: pointer;
   outline: none;
   user-select: none;
+}
+
+.topic-welcome {
+  margin-left: 12px;
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-size: 13px;
+  color: #e9b862;
+  background: rgba(232, 154, 31, 0.1);
+  border: 1px solid rgba(232, 154, 31, 0.3);
+  white-space: nowrap;
 }
 
 .category-menu {

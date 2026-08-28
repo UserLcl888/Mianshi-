@@ -4,7 +4,7 @@
     <div class="page-body">
       <main class="content">
         <el-breadcrumb class="breadcrumb-bar" separator="/">
-          <el-breadcrumb-item :to="{ path: '/' }">首页</el-breadcrumb-item>
+          <el-breadcrumb-item :to="{ path: '/home' }">首页</el-breadcrumb-item>
           <el-breadcrumb-item :to="{ path: '/profile' }">个人中心</el-breadcrumb-item>
           <el-breadcrumb-item>内容上传</el-breadcrumb-item>
         </el-breadcrumb>

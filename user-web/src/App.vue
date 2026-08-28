@@ -1,12 +1,48 @@
 <template>
-  <router-view v-slot="{ Component }">
-    <transition name="page" mode="out-in">
-      <component :is="Component" />
-    </transition>
-  </router-view>
+  <div class="app-shell">
+    <!-- 全局背景：登录页背景图 + 暗色渐变，铺满几乎所有页面 -->
+    <div class="app-bg" aria-hidden="true"></div>
+    <div class="app-view">
+      <router-view v-slot="{ Component }">
+        <transition name="page" mode="out-in">
+          <component :is="Component" />
+        </transition>
+      </router-view>
+    </div>
+  </div>
 </template>
 
 <style>
+.app-shell {
+  position: relative;
+  min-height: 100%;
+}
+
+.app-bg {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(1100px 720px at 18% 8%, rgba(31, 47, 74, 0.5) 0%, rgba(31, 47, 74, 0) 62%),
+    radial-gradient(760px 560px at 88% 88%, rgba(20, 30, 48, 0.55) 0%, rgba(20, 30, 48, 0) 60%),
+    linear-gradient(135deg, #0a0e17 0%, #070b12 45%, #05080f 100%);
+}
+
+.app-bg::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: url('/auth-bg.png') center / cover no-repeat;
+  opacity: 0.16;
+  filter: brightness(1.25) contrast(1.05) saturate(1.05);
+}
+
+.app-view {
+  position: relative;
+  z-index: 1;
+}
+
 .page-enter-active,
 .page-leave-active {
   transition: opacity 0.28s ease, transform 0.28s cubic-bezier(0.22, 1, 0.36, 1);

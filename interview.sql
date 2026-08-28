@@ -128,10 +128,13 @@ CREATE TABLE `article` (
   `title` varchar(200) NOT NULL COMMENT '题目',
   `summary` varchar(500) NOT NULL DEFAULT '' COMMENT '摘要',
   `doc_url` varchar(500) NOT NULL DEFAULT '' COMMENT '文档链接',
+  `column_type` varchar(20) NOT NULL DEFAULT 'tech' COMMENT 'tech=技术问题专栏 topic=专题分享专栏',
   `category_id` bigint unsigned NOT NULL COMMENT '所属分类（可为子分类）',
   `difficulty` varchar(10) NOT NULL DEFAULT 'MEDIUM' COMMENT 'EASY/MEDIUM/HARD',
   `status` tinyint NOT NULL DEFAULT '0' COMMENT '0草稿 1已发布',
   `sort_order` int NOT NULL DEFAULT '0' COMMENT '排序权重，越小越靠前',
+  `is_pinned` tinyint NOT NULL DEFAULT '0' COMMENT '0=普通 1=置顶（专题分享内生效）',
+  `cover_url` varchar(500) NOT NULL DEFAULT '' COMMENT '封面图URL（专题分享可选）',
   `content_md` longtext NOT NULL COMMENT 'Markdown 原文',
   `content_html` longtext NOT NULL COMMENT '渲染并消毒后的 HTML',
   `view_count` bigint unsigned NOT NULL DEFAULT '0' COMMENT '浏览量',
@@ -142,7 +145,8 @@ CREATE TABLE `article` (
   UNIQUE KEY `slug` (`slug`),
   KEY `idx_category` (`category_id`,`status`),
   KEY `idx_status` (`status`),
-  KEY `idx_difficulty` (`difficulty`)
+  KEY `idx_difficulty` (`difficulty`),
+  KEY `idx_column` (`column_type`,`status`,`is_pinned`,`sort_order`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='面试题表';
 
 CREATE TABLE `tag` (
@@ -556,6 +560,14 @@ INSERT INTO `admin_log` (`id`, `admin_id`, `action`, `target_type`, `target_id`,
 ('134', '1', 'CATEGORY_UPDATE', 'CATEGORY', '43', '编辑分类 文档链接', '2026-08-18 15:53:13');
 
 SET FOREIGN_KEY_CHECKS = 1;
+
+-- =====================================================================
+-- 专题分享示例数据（测试用，用户后续可在管理端自行录入/删除）
+-- 已在生产库执行过 ALTER 的，仅需执行下面 2 条 INSERT
+-- =====================================================================
+INSERT INTO `article` (`id`, `slug`, `title`, `summary`, `doc_url`, `column_type`, `category_id`, `difficulty`, `status`, `sort_order`, `is_pinned`, `cover_url`, `content_md`, `content_html`, `view_count`, `created_by`, `created_at`, `updated_at`) VALUES
+('9001', 'topic-codex-tips', 'Codex 高效使用技巧', '汇总 Codex 常用配置、模型选择与效率技巧，帮助你更快上手。', '', 'topic', '0', 'MEDIUM', '1', '1', '1', '', '## 基础配置\n\n- 设置默认模型与推理强度\n- 学会用技能 Skill 扩展能力\n\n## 日常提效\n\n- 善用注释说明意图\n- 大任务拆分成小步骤\n\n## 避坑指南\n\n- 网络受限时先本地验证\n- 重要改动前先看现有代码', '<h2 id=\"base\">基础配置</h2><p>设置默认模型与推理强度，学会用技能 Skill 扩展能力。</p><h2 id=\"tips\">日常提效</h2><p>善用注释说明意图，大任务拆分成小步骤。</p><h2 id=\"pits\">避坑指南</h2><p>网络受限时先本地验证，重要改动前先看现有代码。</p>', '0', '1', '2026-08-28 10:00:00', '2026-08-28 10:00:00'),
+('9002', 'topic-ai-knowledge', 'AI 知识库搭建入门', '从 RAG 到 Prompt 的落地实践笔记，适合作为专题分享的第一篇。', '', 'topic', '0', 'EASY', '1', '2', '0', '', '## 为什么需要知识库\n\n- 大模型本身不擅长精确检索\n- 外挂知识库可提升回答准确度\n\n## 最小可行方案\n\n- 文档切块与向量化\n- 检索 TopK 后拼接 Prompt\n\n## 常见坑\n\n- 切块粒度影响召回质量\n- 权限与内容安全要提前考虑', '<h2 id=\"why\">为什么需要知识库</h2><p>大模型本身不擅长精确检索，外挂知识库可提升回答准确度。</p><h2 id=\"mvp\">最小可行方案</h2><p>文档切块与向量化，检索 TopK 后拼接 Prompt。</p><h2 id=\"pits\">常见坑</h2><p>切块粒度影响召回质量，权限与内容安全要提前考虑。</p>', '0', '1', '2026-08-28 10:00:00', '2026-08-28 10:00:00');
 
 -- =====================================================================
 -- 常见查询示例

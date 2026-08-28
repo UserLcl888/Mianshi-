@@ -56,9 +56,12 @@ public class VOs {
         private String title;
         private String summary;
         private String docUrl;
+        private String columnType;
         private Long categoryId;
         private String difficulty;
         private Integer status;
+        private Integer isPinned;
+        private String coverUrl;
         private Long viewCount;
         private LocalDateTime createdAt;
         private LocalDateTime updatedAt;
@@ -87,8 +90,11 @@ public class VOs {
         private String slug;
         private String title;
         private String summary;
+        private String columnType;
         private Long categoryId;
         private String difficulty;
+        private Integer isPinned;
+        private String coverUrl;
         private List<String> tags;
         private Long viewCount;
         private LocalDateTime updatedAt;
@@ -120,10 +126,13 @@ public class VOs {
         private String title;
         private String summary;
         private String docUrl;
+        private String columnType;
         private Long categoryId;
         private String categoryName;
         private String categorySlug;
         private String difficulty;
+        private Integer isPinned;
+        private String coverUrl;
         private List<String> tags;
         private String contentMd;
         private String contentHtml;

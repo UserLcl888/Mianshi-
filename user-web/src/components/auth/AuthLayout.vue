@@ -19,7 +19,7 @@
           </span>
           <div class="brand-text">
             <div class="brand-name">知识分享平台</div>
-            <div class="brand-sub">JAVA · AI · 场景 · 工具 · 计算机基础</div>
+            <div class="brand-sub">JAVA · AI · 场景 · 工具 · 计算机基础 · 专题</div>
           </div>
         </div>
 
@@ -49,9 +49,26 @@
           </div>
         </div>
 
+        <div class="column-entry">
+          <router-link to="/home" class="entry-card">
+            <div class="entry-name">
+              技术问题专栏
+              <span class="entry-arrow">→</span>
+            </div>
+            <div class="entry-desc">面试题、知识点与实战题汇总，未登录可访问公共模块</div>
+          </router-link>
+          <router-link to="/topic" class="entry-card">
+            <div class="entry-name">
+              专题分享专栏
+              <span class="entry-arrow">→</span>
+            </div>
+            <div class="entry-desc">专题文章与分享，未登录也可浏览</div>
+          </router-link>
+        </div>
+
         <div class="notice-bar">
           <span class="notice-icon">i</span>
-          <span>注意，未登录的用户仅能访问公共模块，请注意注册登录哦！</span>
+          <span>未登录可浏览技术问题与专题分享专栏，注册登录解锁更多</span>
         </div>
         </aside>
 
@@ -191,7 +208,7 @@ const features = [
   justify-content: center;
   gap: 28px;
   width: 100%;
-  max-width: 1180px;
+  max-width: 1240px;
   padding: 0;
 }
 
@@ -203,7 +220,7 @@ const features = [
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  gap: 26px;
+  gap: 20px;
   padding: 14px 0;
 }
 
@@ -247,7 +264,7 @@ const features = [
 }
 
 .slogan-line {
-  font-size: clamp(32px, 3.3vw, 47px);
+  font-size: clamp(30px, 3vw, 42px);
   font-weight: 700;
   line-height: 1.28;
   letter-spacing: 1px;
@@ -275,7 +292,7 @@ const features = [
 .feature-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 13px;
+  gap: 12px;
 }
 
 .feature-card {
@@ -283,7 +300,7 @@ const features = [
   display: flex;
   align-items: flex-start;
   gap: 12px;
-  padding: 15px 14px;
+  padding: 13px 13px;
   border-radius: 14px;
   background: rgba(26, 31, 46, 0.7);
   border: 1px solid rgba(255, 255, 255, 0.07);
@@ -339,6 +356,50 @@ const features = [
   color: rgba(255, 255, 255, 0.68);
 }
 
+.column-entry {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.entry-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 13px 15px;
+  border-radius: 14px;
+  background: rgba(232, 154, 31, 0.08);
+  border: 1px solid rgba(232, 154, 31, 0.28);
+  transition: transform 0.2s ease, border-color 0.2s ease, background 0.2s ease;
+}
+
+.entry-card:hover {
+  transform: translateY(-1px);
+  border-color: rgba(232, 154, 31, 0.6);
+  background: rgba(232, 154, 31, 0.14);
+}
+
+.entry-name {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 15px;
+  font-weight: 600;
+  color: #ffffff;
+}
+
+.entry-desc {
+  font-size: 12px;
+  line-height: 1.55;
+  color: #b8c0cf;
+}
+
+.entry-arrow {
+  color: var(--app-accent);
+  font-size: 13px;
+}
+
 .notice-bar {
   display: flex;
   align-items: center;
@@ -369,7 +430,7 @@ const features = [
 /* ---------------- 右：表单面板 ---------------- */
 .auth-form-side {
   flex: 0 0 auto;
-  width: min(430px, 100%);
+  width: min(460px, 100%);
   display: flex;
   align-items: stretch;
 }

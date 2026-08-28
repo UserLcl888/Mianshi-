@@ -79,11 +79,28 @@ public class Requests {
         private String slug;
         private String summary;
         private String docUrl;
-        @NotNull(message = "请选择所属分类")
+        /** tech=技术问题专栏 topic=专题分享专栏，默认 tech */
+        private String columnType = "tech";
+        /** 专题分享专属：0=普通 1=置顶 */
+        private Integer isPinned = 0;
+        /** 专题分享专属：封面图 URL */
+        private String coverUrl;
+        /** 技术问题专栏必填；专题分享可不填（默认 0） */
         private Long categoryId;
         private String difficulty = "MEDIUM";
         private List<String> tags;
         private String contentMd;
+    }
+
+    @Data
+    public static class TopicReorderItem {
+        @NotNull(message = "请传入题目ID")
+        private Long id;
+        @NotNull(message = "请传入排序值")
+        private Integer sortOrder;
+        /** 0=普通 1=置顶 */
+        @NotNull(message = "请传入置顶状态")
+        private Integer isPinned;
     }
 
     @Data

@@ -20,12 +20,12 @@
     <div class="admin-main">
       <header class="admin-top">
         <el-breadcrumb separator="/">
-          <el-breadcrumb-item :to="{ path: '/' }">首页</el-breadcrumb-item>
+          <el-breadcrumb-item :to="{ path: '/home' }">首页</el-breadcrumb-item>
           <el-breadcrumb-item>管理后台</el-breadcrumb-item>
           <el-breadcrumb-item>{{ currentLabel }}</el-breadcrumb-item>
         </el-breadcrumb>
         <div class="admin-top-right">
-          <router-link to="/">
+          <router-link to="/home">
             <el-button size="small" type="primary">返回前台</el-button>
           </router-link>
           <el-button size="small" type="danger" plain @click="logout">退出登录</el-button>
@@ -80,7 +80,7 @@ const currentLabel = computed(() => labelMap[String(route.name)] || '管理后�
 async function logout() {
   await auth.logout()
   ElMessage.success('已退出登录')
-  router.push('/')
+  router.push('/home')
 }
 </script>
 
@@ -88,7 +88,6 @@ async function logout() {
 .admin-layout {
   min-height: 100vh;
   display: flex;
-  background: var(--app-bg);
 }
 
 .admin-side {

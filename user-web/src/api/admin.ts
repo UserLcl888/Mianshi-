@@ -53,6 +53,7 @@ export async function getCategoryStatsApi(): Promise<CategoryStatsItem[]> {
 
 // 题目管理
 export async function getAdminArticlesApi(params: {
+  columnType?: string
   categoryId?: number
   difficulty?: string
   page?: number
@@ -63,6 +64,15 @@ export async function getAdminArticlesApi(params: {
 
 export async function deleteArticleApi(id: number): Promise<void> {
   return request.delete(`/admin/articles/${id}`)
+}
+
+/** 管理员上传专题封面图，返回可直接存入 coverUrl 的图片地址 */
+export async function uploadCoverApi(file: File): Promise<{ url: string }> {
+  const form = new FormData()
+  form.append('file', file)
+  return request.post('/admin/upload/cover', form, {
+    headers: { 'Content-Type': 'multipart/form-data' }
+  })
 }
 
 // 用户管理

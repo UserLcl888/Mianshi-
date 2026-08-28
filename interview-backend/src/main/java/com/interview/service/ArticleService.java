@@ -68,6 +68,8 @@ public class ArticleService {
 
         LambdaQueryWrapper<Article> qw = new LambdaQueryWrapper<>();
         qw.eq(Article::getStatus, 1);
+        // 首页/分类列表只展示技术问题专栏，专题分享文章不进普通列表
+        qw.eq(Article::getColumnType, "tech");
         if (StringUtils.hasText(difficultyNorm)) {
             qw.eq(Article::getDifficulty, difficultyNorm);
         }
@@ -86,8 +88,12 @@ public class ArticleService {
     /**
      * 管理端题目列表：不限制发布状态，按 id 倒序。
      */
-    public PageResult<VOs.ArticleListItemVO> adminList(Long categoryId, String difficulty, long page, long size) {
+    public PageResult<VOs.ArticleListItemVO> adminList(String columnType, Long categoryId, String difficulty,
+                                                       long page, long size) {
         LambdaQueryWrapper<Article> qw = new LambdaQueryWrapper<>();
+        if (StringUtils.hasText(columnType)) {
+            qw.eq(Article::getColumnType, normalizeColumnType(columnType));
+        }
         if (StringUtils.hasText(difficulty)) {
             qw.eq(Article::getDifficulty, Difficulty.normalize(difficulty).getCode());
         }
@@ -102,6 +108,25 @@ public class ArticleService {
         return pageResult;
     }
 
+    /**
+     * 专题分享专栏列表（公开）：置顶优先，其次手动排序，最后按 id 倒序。
+     */
+    public PageResult<VOs.ArticleListItemVO> topicList(String keyword, long page, long size) {
+        LambdaQueryWrapper<Article> qw = new LambdaQueryWrapper<>();
+        qw.eq(Article::getColumnType, "topic").eq(Article::getStatus, 1);
+        if (StringUtils.hasText(keyword)) {
+            qw.like(Article::getTitle, keyword.trim());
+        }
+        trimLongTextColumns(qw);
+        qw.orderByDesc(Article::getIsPinned)
+                .orderByAsc(Article::getSortOrder)
+                .orderByDesc(Article::getId);
+        Page<Article> result = articleMapper.selectPage(new Page<>(page, size), qw);
+        PageResult<VOs.ArticleListItemVO> pageResult = toPageResult(result, page, size);
+        refreshViewCounts(pageResult.getList());
+        return pageResult;
+    }
+
     public VOs.DetailRespVO detail(String slug) {
         // 先查文章并做访问权限校验：受限内容不能命中缓存跳过校验（审批撤销后立即失效）
         Article article = articleMapper.selectOne(new LambdaQueryWrapper<Article>()
@@ -109,9 +134,14 @@ public class ArticleService {
         if (article == null) {
             throw new BizException(ErrorCode.NOT_FOUND, "题目不存在或已下架");
         }
-        Category category = categoryService.getById(article.getCategoryId());
-        User viewer = StpUtil.isLogin() ? userMapper.selectById(StpUtil.getLoginIdAsLong()) : null;
-        accessService.checkArticleAccess(viewer, article, category);
+        boolean topic = "topic".equals(article.getColumnType());
+        if (!topic) {
+            // 技术问题专栏：沿用分类访问权限；专题分享公开可看，不做权限校验
+            Category category = categoryService.getById(article.getCategoryId());
+            User viewer = StpUtil.isLogin() ? userMapper.selectById(StpUtil.getLoginIdAsLong()) : null;
+            accessService.checkArticleAccess(viewer, article, category);
+        }
+        Category category = topic ? null : categoryService.getById(article.getCategoryId());
 
         String cacheKey = detailCacheKey(slug);
         String cached = redis.opsForValue().get(cacheKey);
@@ -131,8 +161,8 @@ public class ArticleService {
 
         VOs.DetailRespVO resp = new VOs.DetailRespVO();
         resp.setArticle(detailVO);
-        resp.setPrev(neighbor(article.getId(), article.getCategoryId(), false));
-        resp.setNext(neighbor(article.getId(), article.getCategoryId(), true));
+        resp.setPrev(neighbor(article.getId(), article.getCategoryId(), article.getColumnType(), false));
+        resp.setNext(neighbor(article.getId(), article.getCategoryId(), article.getColumnType(), true));
         try {
             redis.opsForValue().set(cacheKey, objectMapper.writeValueAsString(resp), DETAIL_CACHE_TTL);
         } catch (JsonProcessingException ignored) {
@@ -153,18 +183,26 @@ public class ArticleService {
         if (article == null || article.getStatus() == null || article.getStatus() != 1) {
             throw new BizException(ErrorCode.NOT_FOUND, "题目不存在或已下架");
         }
-        Long userId = StpUtil.getLoginIdAsLong();
-        String dedupKey = RedisKeys.viewDedup(userId, articleId);
-        Boolean first = redis.opsForValue().setIfAbsent(dedupKey, "1", Duration.ofHours(24));
-        if (Boolean.TRUE.equals(first)) {
+        Long userId = StpUtil.isLogin() ? StpUtil.getLoginIdAsLong() : null;
+        if (userId != null) {
+            String dedupKey = RedisKeys.viewDedup(userId, articleId);
+            Boolean first = redis.opsForValue().setIfAbsent(dedupKey, "1", Duration.ofHours(24));
+            if (Boolean.TRUE.equals(first)) {
+                viewCountService.increment(articleId);
+            }
+        } else {
+            // 游客浏览：直接计数（不做 24h 去重）
             viewCountService.increment(articleId);
         }
         return displayViewCount(articleId);
     }
 
-    private VOs.ArticleBriefVO neighbor(Long id, Long categoryId, boolean next) {
+    private VOs.ArticleBriefVO neighbor(Long id, Long categoryId, String columnType, boolean next) {
         LambdaQueryWrapper<Article> qw = new LambdaQueryWrapper<>();
-        qw.eq(Article::getCategoryId, categoryId).eq(Article::getStatus, 1);
+        qw.eq(Article::getStatus, 1).eq(Article::getColumnType, columnType);
+        if (!"topic".equals(columnType)) {
+            qw.eq(Article::getCategoryId, categoryId);
+        }
         if (next) {
             qw.gt(Article::getId, id).orderByAsc(Article::getId);
         } else {
@@ -197,8 +235,11 @@ public class ArticleService {
                 .slug(a.getSlug())
                 .title(a.getTitle())
                 .summary(a.getSummary())
+                .columnType(a.getColumnType())
                 .categoryId(a.getCategoryId())
                 .difficulty(a.getDifficulty())
+                .isPinned(a.getIsPinned())
+                .coverUrl(a.getCoverUrl())
                 .tags(tags)
                 .viewCount(a.getViewCount())
                 .updatedAt(a.getUpdatedAt())
@@ -213,10 +254,15 @@ public class ArticleService {
                 .title(a.getTitle())
                 .summary(a.getSummary())
                 .docUrl(a.getDocUrl())
+                .columnType(a.getColumnType())
                 .categoryId(a.getCategoryId())
-                .categoryName(category.getName())
-                .categorySlug(category.getSlug())
+                .categoryName(category == null
+                        ? ("topic".equals(a.getColumnType()) ? "专题分享" : "")
+                        : category.getName())
+                .categorySlug(category == null ? "" : category.getSlug())
                 .difficulty(a.getDifficulty())
+                .isPinned(a.getIsPinned())
+                .coverUrl(a.getCoverUrl())
                 .tags(tagsByArticle.getOrDefault(a.getId(), List.of()))
                 .contentMd(a.getContentMd())
                 .contentHtml(a.getContentHtml())
@@ -259,9 +305,25 @@ public class ArticleService {
 
     @Transactional
     public VOs.ArticleVO create(Requests.ArticleSaveDTO dto) {
-        Category category = categoryService.getById(dto.getCategoryId());
+        String columnType = normalizeColumnType(dto.getColumnType());
+        dto.setColumnType(columnType);
+        if ("topic".equals(columnType)) {
+            if (dto.getCategoryId() == null) {
+                dto.setCategoryId(0L);
+            }
+        } else if (dto.getCategoryId() == null) {
+            throw new BizException(ErrorCode.PARAM_ERROR, "请选择所属分类");
+        }
+        Category category = "topic".equals(columnType) ? null : categoryService.getById(dto.getCategoryId());
         Article article = new Article();
-        String slug = StringUtils.hasText(dto.getSlug()) ? dto.getSlug().trim() : category.getSlug() + "-" + System.currentTimeMillis();
+        String slug;
+        if (StringUtils.hasText(dto.getSlug())) {
+            slug = dto.getSlug().trim();
+        } else if ("topic".equals(columnType)) {
+            slug = "topic-" + System.currentTimeMillis();
+        } else {
+            slug = category.getSlug() + "-" + System.currentTimeMillis();
+        }
         if (articleMapper.selectCount(new LambdaQueryWrapper<Article>().eq(Article::getSlug, slug)) > 0) {
             throw new BizException(ErrorCode.CONFLICT, "slug 已存在");
         }
@@ -281,6 +343,15 @@ public class ArticleService {
         Article article = articleMapper.selectById(id);
         if (article == null) {
             throw new BizException(ErrorCode.NOT_FOUND, "题目不存在");
+        }
+        String columnType = normalizeColumnType(dto.getColumnType());
+        dto.setColumnType(columnType);
+        if ("topic".equals(columnType)) {
+            if (dto.getCategoryId() == null) {
+                dto.setCategoryId(0L);
+            }
+        } else if (dto.getCategoryId() == null) {
+            throw new BizException(ErrorCode.PARAM_ERROR, "请选择所属分类");
         }
         if (StringUtils.hasText(dto.getSlug())) {
             String slug = dto.getSlug().trim();
@@ -306,7 +377,8 @@ public class ArticleService {
      */
     private void trimLongTextColumns(LambdaQueryWrapper<Article> qw) {
         qw.select(Article::getId, Article::getSlug, Article::getTitle, Article::getSummary,
-                Article::getDocUrl, Article::getCategoryId, Article::getDifficulty, Article::getStatus,
+                Article::getDocUrl, Article::getColumnType, Article::getCategoryId, Article::getDifficulty,
+                Article::getStatus, Article::getIsPinned, Article::getCoverUrl,
                 Article::getViewCount, Article::getCreatedBy, Article::getCreatedAt, Article::getUpdatedAt);
     }
 
@@ -317,9 +389,12 @@ public class ArticleService {
                 .title(article.getTitle())
                 .summary(article.getSummary())
                 .docUrl(article.getDocUrl())
+                .columnType(article.getColumnType())
                 .categoryId(article.getCategoryId())
                 .difficulty(article.getDifficulty())
                 .status(article.getStatus())
+                .isPinned(article.getIsPinned())
+                .coverUrl(article.getCoverUrl())
                 .viewCount(article.getViewCount())
                 .createdAt(article.getCreatedAt())
                 .updatedAt(article.getUpdatedAt())
@@ -330,11 +405,18 @@ public class ArticleService {
         article.setTitle(dto.getTitle());
         article.setSummary(dto.getSummary() == null ? "" : dto.getSummary());
         article.setDocUrl(dto.getDocUrl() == null ? "" : dto.getDocUrl().trim());
-        article.setCategoryId(dto.getCategoryId());
+        article.setColumnType(normalizeColumnType(dto.getColumnType()));
+        article.setCategoryId(dto.getCategoryId() == null ? 0L : dto.getCategoryId());
         article.setDifficulty(Difficulty.normalize(dto.getDifficulty()).getCode());
         article.setStatus(1);
+        article.setIsPinned(dto.getIsPinned() != null && dto.getIsPinned() == 1 ? 1 : 0);
+        article.setCoverUrl(dto.getCoverUrl() == null ? "" : dto.getCoverUrl().trim());
         article.setContentMd(dto.getContentMd() == null ? "" : dto.getContentMd());
         article.setContentHtml(markdownService.render(dto.getContentMd()));
+    }
+
+    private String normalizeColumnType(String columnType) {
+        return "topic".equals(columnType) ? "topic" : "tech";
     }
 
     @Transactional
@@ -362,6 +444,32 @@ public class ArticleService {
                 throw new BizException(ErrorCode.NOT_FOUND, "题目不存在：" + item.getId());
             }
             article.setSortOrder(item.getSortOrder() == null ? 0 : item.getSortOrder());
+            articleMapper.updateById(article);
+        }
+        contentCacheService.bump();
+    }
+
+    /**
+     * 专题分享专栏排序 + 置顶：仅允许操作 column_type=topic 的文章。
+     */
+    @Transactional
+    public void reorderTopics(List<Requests.TopicReorderItem> items) {
+        if (items == null || items.isEmpty()) {
+            return;
+        }
+        for (Requests.TopicReorderItem item : items) {
+            if (item.getId() == null) {
+                continue;
+            }
+            Article article = articleMapper.selectById(item.getId());
+            if (article == null) {
+                throw new BizException(ErrorCode.NOT_FOUND, "题目不存在：" + item.getId());
+            }
+            if (!"topic".equals(article.getColumnType())) {
+                throw new BizException(ErrorCode.PARAM_ERROR, "仅支持对专题分享文章排序");
+            }
+            article.setSortOrder(item.getSortOrder() == null ? 0 : item.getSortOrder());
+            article.setIsPinned(item.getIsPinned() != null && item.getIsPinned() == 1 ? 1 : 0);
             articleMapper.updateById(article);
         }
         contentCacheService.bump();

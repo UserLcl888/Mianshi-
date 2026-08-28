@@ -2,7 +2,7 @@
   <div class="not-found">
     <h1>404</h1>
     <p>页面不存在或已下架</p>
-    <router-link to="/">
+        <router-link to="/home">
       <el-button type="primary">返回首页</el-button>
     </router-link>
   </div>

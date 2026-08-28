@@ -216,7 +216,7 @@ async function submit() {
       await auth.login(form.account.trim(), form.password)
     }
     ElMessage.success('登录成功')
-    router.push(String(route.query.redirect || '/'))
+    router.push(String(route.query.redirect || '/home'))
   } catch (e) {
     // 错误提示由请求拦截器统一处理
   } finally {

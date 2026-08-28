@@ -6,8 +6,11 @@ export interface ArticleSavePayload {
   slug?: string
   summary?: string
   docUrl?: string
-  categoryId: number
+  columnType?: string
+  categoryId?: number
   difficulty: string
+  isPinned?: number
+  coverUrl?: string
   tags: string[]
   contentMd?: string
 }
@@ -17,8 +20,22 @@ export interface ArticleReorderItem {
   sortOrder: number
 }
 
+export interface TopicReorderItem {
+  id: number
+  sortOrder: number
+  isPinned: number
+}
+
 export async function getArticles(params: ArticleQuery = {}): Promise<PageResult<ArticleListItem>> {
   return request.get('/articles', { params })
+}
+
+export async function getTopicArticlesApi(params: {
+  keyword?: string
+  page?: number
+  size?: number
+}): Promise<PageResult<ArticleListItem>> {
+  return request.get('/topics/articles', { params })
 }
 
 export async function getArticleDetail(slug: string): Promise<ArticleDetailResp> {
@@ -42,4 +59,8 @@ export async function updateArticleApi(
 
 export async function reorderArticlesApi(items: ArticleReorderItem[]): Promise<void> {
   return request.put('/admin/articles/reorder', items)
+}
+
+export async function reorderTopicArticlesApi(items: TopicReorderItem[]): Promise<void> {
+  return request.put('/admin/articles/topics/reorder', items)
 }

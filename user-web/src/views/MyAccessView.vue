@@ -4,7 +4,7 @@
     <div class="page-body">
       <main class="content">
         <el-breadcrumb class="breadcrumb-bar" separator="/">
-          <el-breadcrumb-item :to="{ path: '/' }">首页</el-breadcrumb-item>
+          <el-breadcrumb-item :to="{ path: '/home' }">首页</el-breadcrumb-item>
           <el-breadcrumb-item :to="{ path: '/profile' }">个人中心</el-breadcrumb-item>
           <el-breadcrumb-item>我的申请</el-breadcrumb-item>
         </el-breadcrumb>
@@ -49,7 +49,7 @@
                 <router-link v-else-if="row.categorySlug && row.status === 2" :to="`/category/${row.categorySlug}`">
                   <el-button size="small" text type="warning">重新申请</el-button>
                 </router-link>
-                <router-link v-else-if="row.scope === 'ALL' && row.status === 1" to="/">
+              <router-link v-else-if="row.scope === 'ALL' && row.status === 1" to="/home">
                   <el-button size="small" text type="primary">去首页</el-button>
                 </router-link>
               </template>

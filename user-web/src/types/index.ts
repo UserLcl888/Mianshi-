@@ -14,8 +14,11 @@ export interface ArticleListItem {
   slug: string
   title: string
   summary: string
+  columnType?: string
   categoryId: number
   difficulty: string
+  isPinned?: number
+  coverUrl?: string
   tags: string[]
   viewCount: number
   updatedAt: string
@@ -33,10 +36,13 @@ export interface ArticleDetail {
   title: string
   summary: string
   docUrl: string
+  columnType?: string
   categoryId: number
   categoryName: string
   categorySlug: string
   difficulty: string
+  isPinned?: number
+  coverUrl?: string
   tags: string[]
   contentMd: string
   contentHtml: string

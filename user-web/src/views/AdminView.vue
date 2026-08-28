@@ -4,7 +4,7 @@
     <div class="page-body" :class="{ embedded }">
       <main class="content">
         <el-breadcrumb v-if="!embedded" class="breadcrumb-bar" separator="/">
-          <el-breadcrumb-item :to="{ path: '/' }">首页</el-breadcrumb-item>
+          <el-breadcrumb-item :to="{ path: '/home' }">首页</el-breadcrumb-item>
           <el-breadcrumb-item>内容管理</el-breadcrumb-item>
           <template v-if="isEdit">
             <el-breadcrumb-item v-for="c in categoryPath" :key="c.id" :to="`/category/${c.slug}`">{{ c.name }}</el-breadcrumb-item>
@@ -13,7 +13,7 @@
         </el-breadcrumb>
 
         <div class="app-card">
-          <h3 class="section-title">{{ isEdit ? '编辑面试题' : '添加面试题' }}</h3>
+          <h3 class="section-title">{{ isEdit ? '编辑内容' : '添加内容' }}</h3>
           <el-form label-width="90px" class="edit-form">
             <el-form-item label="标题" required>
               <el-input v-model="form.title" placeholder="如：TCP 为什么需要三次握手？" />
@@ -27,7 +27,13 @@
             <el-form-item label="文档链接">
               <el-input v-model="form.docUrl" placeholder="选填，如 https://arthas.aliyun.com/（点击将在新标签页打开）" />
             </el-form-item>
-            <el-form-item label="所属分类" required>
+            <el-form-item label="专栏类型">
+              <el-radio-group v-model="form.columnType" @change="onColumnTypeChange">
+                <el-radio-button value="tech">技术问题专栏</el-radio-button>
+                <el-radio-button value="topic">专题分享专栏</el-radio-button>
+              </el-radio-group>
+            </el-form-item>
+            <el-form-item v-if="form.columnType !== 'topic'" label="所属分类" required>
               <div class="category-field">
                 <el-select v-model="form.categoryId" placeholder="选择分类（支持子分类）" class="category-select">
                   <template v-for="cat in categories" :key="cat.id">
@@ -42,7 +48,37 @@
                 <el-button size="small" @click="categoryManageVisible = true">管理分类</el-button>
               </div>
             </el-form-item>
-            <el-form-item label="难度">
+            <el-form-item v-else label="置顶">
+              <el-switch v-model="form.isPinned" :active-value="1" :inactive-value="0" />
+              <span class="field-tip">置顶后排在专题分享列表最前面</span>
+            </el-form-item>
+            <el-form-item v-if="form.columnType === 'topic'" label="封面图">
+              <div class="cover-field">
+                <div class="cover-upload">
+                  <el-upload
+                    accept=".png,.jpg,.jpeg,.webp"
+                    :show-file-list="false"
+                    :http-request="onCoverUpload"
+                    :before-upload="beforeCoverUpload"
+                  >
+                    <div v-if="form.coverUrl" class="cover-preview">
+                      <img :src="form.coverUrl" alt="封面预览" />
+                      <div class="cover-mask">点击更换</div>
+                    </div>
+                    <div v-else class="cover-placeholder-box">
+                      <el-icon :size="22"><Plus /></el-icon>
+                      <span>上传封面</span>
+                      <span class="cover-tip">建议 16:9，如 1280×720</span>
+                    </div>
+                  </el-upload>
+                  <el-button v-if="form.coverUrl" size="small" type="danger" plain class="cover-remove" @click="removeCover">
+                    移除封面
+                  </el-button>
+                </div>
+                <el-input v-model="form.coverUrl" placeholder="或直接粘贴图片 URL" class="cover-url" />
+              </div>
+            </el-form-item>
+            <el-form-item v-if="form.columnType !== 'topic'" label="难度">
               <el-select v-model="form.difficulty" style="width: 160px">
                 <el-option label="简单" value="EASY" />
                 <el-option label="中等" value="MEDIUM" />
@@ -110,13 +146,14 @@
 import { computed, nextTick, onMounted, reactive, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage, type UploadFile, type UploadUserFile } from 'element-plus'
-import { UploadFilled } from '@element-plus/icons-vue'
+import { Plus, UploadFilled } from '@element-plus/icons-vue'
 import { unsavedState } from '@/utils/unsaved'
 import { highlightCodeBlocks, renderMarkdown } from '@/utils/markdown'
 import AppHeader from '@/components/layout/AppHeader.vue'
 import AppFooter from '@/components/layout/AppFooter.vue'
 import CategoryManageDialog from '@/components/admin/CategoryManageDialog.vue'
 import { getArticleDetail, createArticleApi, updateArticleApi } from '@/api/article'
+import { uploadCoverApi } from '@/api/admin'
 import { useCategoryStore } from '@/stores/category'
 import { getCategoryPath } from '@/utils/category'
 
@@ -142,8 +179,11 @@ const form = reactive({
   slug: '',
   summary: '',
   docUrl: '',
+  columnType: 'tech',
   categoryId: undefined as number | undefined,
   difficulty: 'MEDIUM',
+  isPinned: 0,
+  coverUrl: '',
   tagsText: '',
   content: '',
 })
@@ -174,11 +214,48 @@ function snapshotForm(): string {
     slug: form.slug,
     summary: form.summary,
     docUrl: form.docUrl,
+    columnType: form.columnType,
     categoryId: form.categoryId,
     difficulty: form.difficulty,
+    isPinned: form.isPinned,
+    coverUrl: form.coverUrl,
     tagsText: form.tagsText,
     content: form.content
   })
+}
+
+function onColumnTypeChange() {
+  if (form.columnType === 'topic') {
+    form.categoryId = undefined
+  }
+}
+
+function beforeCoverUpload(file: File) {
+  const ok = ['image/png', 'image/jpeg', 'image/webp'].includes(file.type)
+  if (!ok) {
+    ElMessage.warning('仅支持 png/jpg/jpeg/webp 格式')
+    return false
+  }
+  if (file.size > 5 * 1024 * 1024) {
+    ElMessage.warning('封面图片不能超过 5MB')
+    return false
+  }
+  return true
+}
+
+async function onCoverUpload(options: { file: File; onSuccess: (res: unknown) => void; onError: (err: Error) => void }) {
+  try {
+    const res = await uploadCoverApi(options.file)
+    form.coverUrl = res.url
+    options.onSuccess(res)
+    ElMessage.success('封面上传成功')
+  } catch (e) {
+    options.onError(e as Error)
+  }
+}
+
+function removeCover() {
+  form.coverUrl = ''
 }
 
 watch(isDirty, (v) => {
@@ -260,8 +337,11 @@ async function loadForEdit() {
     form.slug = a.slug
     form.summary = a.summary
     form.docUrl = a.docUrl || ''
+    form.columnType = a.columnType === 'topic' ? 'topic' : 'tech'
     form.categoryId = a.categoryId
     form.difficulty = a.difficulty
+    form.isPinned = a.isPinned === 1 ? 1 : 0
+    form.coverUrl = a.coverUrl || ''
     form.tagsText = a.tags.join(', ')
     form.content = a.contentMd || htmlToText(a.contentHtml)
     initialSnapshot.value = snapshotForm()
@@ -275,7 +355,7 @@ async function submit() {
     ElMessage.warning('请填写标题')
     return
   }
-  if (!form.categoryId) {
+  if (form.columnType !== 'topic' && !form.categoryId) {
     ElMessage.warning('请选择所属分类')
     return
   }
@@ -290,8 +370,11 @@ async function submit() {
       slug: form.slug.trim() || undefined,
       summary: form.summary.trim(),
       docUrl: form.docUrl.trim() || undefined,
-      categoryId: form.categoryId,
+      columnType: form.columnType,
+      categoryId: form.columnType === 'topic' ? undefined : form.categoryId,
       difficulty: form.difficulty,
+      isPinned: form.isPinned,
+      coverUrl: form.coverUrl.trim() || undefined,
       tags,
       contentMd: form.content
     }
@@ -344,6 +427,88 @@ async function submit() {
 
 .category-select {
   flex: 1;
+}
+
+.field-tip {
+  margin-left: 10px;
+  font-size: 12px;
+  color: var(--app-text-secondary);
+}
+
+.cover-field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+}
+
+.cover-upload {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.cover-upload :deep(.el-upload) {
+  width: 320px;
+}
+
+.cover-preview,
+.cover-placeholder-box {
+  position: relative;
+  width: 320px;
+  aspect-ratio: 16 / 9;
+  border-radius: 10px;
+  overflow: hidden;
+  border: 1px dashed rgba(255, 255, 255, 0.25);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.cover-preview img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.cover-mask {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.45);
+  color: #ffffff;
+  font-size: 13px;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.cover-preview:hover .cover-mask {
+  opacity: 1;
+}
+
+.cover-placeholder-box {
+  flex-direction: column;
+  gap: 4px;
+  color: var(--app-text-secondary);
+  font-size: 13px;
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.cover-tip {
+  font-size: 11px;
+  color: #68788f;
+}
+
+.cover-remove {
+  margin-top: 2px;
+}
+
+.cover-url {
+  width: 100%;
 }
 
 .cat-parent-label {

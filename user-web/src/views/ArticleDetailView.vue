@@ -2,11 +2,23 @@
   <div class="page">
     <AppHeader />
     <div class="page-body">
-      <CategorySidebar :active-category-slug="categorySlug" :active-article-slug="activeSlug" />
+      <template v-if="!isTopicArticle">
+        <CategorySidebar :active-category-slug="categorySlug" :active-article-slug="activeSlug" />
+      </template>
+      <aside v-else class="topic-side">
+        <router-link to="/topic" class="topic-back-card">
+          <span class="back-arrow">←</span>
+          <div class="back-body">
+            <div class="back-title">返回专题</div>
+            <div class="back-sub">欢迎访问专栏模块，大家一起进步</div>
+          </div>
+        </router-link>
+      </aside>
 
       <main class="content">
         <el-breadcrumb class="breadcrumb-bar" separator="/">
-          <el-breadcrumb-item :to="{ path: '/' }">首页</el-breadcrumb-item>
+          <el-breadcrumb-item :to="{ path: '/home' }">首页</el-breadcrumb-item>
+          <el-breadcrumb-item v-if="isTopicArticle" :to="{ path: '/topic' }">专题</el-breadcrumb-item>
           <el-breadcrumb-item v-for="c in categoryPath" :key="c.id" :to="`/category/${c.slug}`">{{ c.name }}</el-breadcrumb-item>
           <el-breadcrumb-item>{{ detail?.article.title }}</el-breadcrumb-item>
         </el-breadcrumb>
@@ -15,7 +27,8 @@
           <header class="article-header">
             <h1 class="article-title">{{ detail.article.title }}</h1>
             <div class="article-meta">
-              <DifficultyTag :difficulty="detail.article.difficulty" />
+              <el-tag v-if="detail.article.columnType === 'topic'" size="small" effect="plain" type="success">专题分享</el-tag>
+              <DifficultyTag v-if="!isTopicArticle" :difficulty="detail.article.difficulty" />
               <el-tag v-for="t in detail.article.tags" :key="t" size="small" effect="plain" type="warning">{{ t }}</el-tag>
               <span class="meta-text">{{ detail.article.viewCount }} 次浏览</span>
               <span class="meta-text">更新于 {{ formatDateTime(detail.article.updatedAt) }}</span>
@@ -38,7 +51,7 @@
             <div ref="contentEl" class="article-body" v-html="detail.article.contentHtml" @click="onBodyClick"></div>
           </div>
 
-          <PrevNextNav :prev="detail.prev" :next="detail.next" />
+          <PrevNextNav :prev="detail.prev" :next="detail.next" :base="isTopicArticle ? '/topic' : '/article'" />
         </article>
 
         <div v-else-if="accessState" class="app-card access-card">
@@ -160,6 +173,7 @@ const categorySlug = computed(() => detail.value?.article.categorySlug || '')
 const categoryPath = computed(() =>
   categorySlug.value ? getCategoryPath(categorySlug.value, categoryStore.tree) || [] : []
 )
+const isTopicArticle = computed(() => detail.value?.article.columnType === 'topic')
 
 async function load() {
   clearViewTimer()
@@ -352,6 +366,52 @@ onBeforeUnmount(() => {
 .content {
   flex: 1;
   min-width: 0;
+}
+
+.topic-side {
+  width: 250px;
+  flex-shrink: 0;
+  position: sticky;
+  top: 72px;
+}
+
+.topic-back-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 14px 12px;
+  background: var(--app-sidebar-bg);
+  border: 1px solid var(--app-border);
+  border-radius: 10px;
+  transition: border-color 0.15s, background 0.15s;
+}
+
+.topic-back-card:hover {
+  border-color: var(--app-accent);
+  background: var(--app-card-hover);
+}
+
+.back-arrow {
+  color: var(--app-accent);
+  font-size: 16px;
+  line-height: 1.4;
+}
+
+.back-body {
+  min-width: 0;
+}
+
+.back-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #e8ecf3;
+}
+
+.back-sub {
+  margin-top: 4px;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--app-text-secondary);
 }
 
 .article-header {

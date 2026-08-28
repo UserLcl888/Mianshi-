@@ -6,7 +6,11 @@ import { unsavedState } from '@/utils/unsaved'
 const router = createRouter({
   history: createWebHistory(),
   routes: [
-    { path: '/', name: 'home', component: () => import('@/views/HomeView.vue') },
+    // 根路径 = 登录门户页（未登录展示；已登录自动跳 /home）
+    { path: '/', name: 'portal', component: () => import('@/views/LoginView.vue'), meta: { guestOnly: true } },
+    { path: '/home', name: 'home', component: () => import('@/views/HomeView.vue') },
+    { path: '/topic', name: 'topic', component: () => import('@/views/TopicListView.vue') },
+    { path: '/topic/:slug', name: 'topic-article', component: () => import('@/views/ArticleDetailView.vue') },
     { path: '/category/:slug', name: 'category', component: () => import('@/views/CategoryView.vue') },
     { path: '/article/:slug', name: 'article', component: () => import('@/views/ArticleDetailView.vue') },
     { path: '/login', name: 'login', component: () => import('@/views/LoginView.vue'), meta: { guestOnly: true } },
@@ -110,10 +114,10 @@ router.beforeEach(async (to) => {
     return { path: '/login', query: { redirect: to.fullPath } }
   }
   if (to.meta.guestOnly && auth.isLoggedIn) {
-    return { path: '/' }
+    return { path: '/home' }
   }
   if (to.meta.requiresAdmin && auth.userInfo?.role !== 'ADMIN') {
-    return { path: '/' }
+    return { path: '/home' }
   }
   return true
 })
