@@ -30,11 +30,19 @@
             <el-form-item label="专栏类型">
               <el-radio-group v-model="form.columnType" @change="onColumnTypeChange">
                 <el-radio-button value="tech">技术问题专栏</el-radio-button>
-                <el-radio-button value="topic">专题分享专栏</el-radio-button>
+                <el-radio-button value="topic">文章专栏</el-radio-button>
+                <el-radio-button value="learn">学习专题</el-radio-button>
               </el-radio-group>
             </el-form-item>
-            <el-form-item v-if="form.columnType !== 'topic'" label="所属分类" required>
+            <el-form-item v-if="form.columnType !== 'topic'" :label="form.columnType === 'learn' ? '学习分类' : '所属分类'" required>
               <div class="category-field">
+                <template v-if="form.columnType === 'learn'">
+                  <el-select v-model="form.learnCategoryId" placeholder="选择学习分类" class="category-select">
+                    <el-option v-for="c in learnCategories" :key="c.id" :label="c.name" :value="c.id" />
+                  </el-select>
+                  <el-button size="small" @click="$router.push('/admin/learn-categories')">管理分类</el-button>
+                </template>
+                <template v-else>
                 <el-select v-model="form.categoryId" placeholder="选择分类（支持子分类）" class="category-select">
                   <template v-for="cat in categories" :key="cat.id">
                     <el-option :label="cat.name" :value="cat.id">
@@ -46,13 +54,14 @@
                   </template>
                 </el-select>
                 <el-button size="small" @click="categoryManageVisible = true">管理分类</el-button>
+                </template>
               </div>
             </el-form-item>
-            <el-form-item v-else label="置顶">
+            <el-form-item v-if="form.columnType === 'topic'" label="置顶">
               <el-switch v-model="form.isPinned" :active-value="1" :inactive-value="0" />
-              <span class="field-tip">置顶后排在专题分享列表最前面</span>
+              <span class="field-tip">置顶后排在文章分享列表最前面</span>
             </el-form-item>
-            <el-form-item v-if="form.columnType === 'topic'" label="封面图">
+            <el-form-item v-if="form.columnType !== 'tech'" label="封面图">
               <div class="cover-field">
                 <div class="cover-upload">
                   <el-upload
@@ -78,7 +87,7 @@
                 <el-input v-model="form.coverUrl" placeholder="或直接粘贴图片 URL" class="cover-url" />
               </div>
             </el-form-item>
-            <el-form-item v-if="form.columnType !== 'topic'" label="难度">
+            <el-form-item v-if="form.columnType === 'tech'" label="难度">
               <el-select v-model="form.difficulty" style="width: 160px">
                 <el-option label="简单" value="EASY" />
                 <el-option label="中等" value="MEDIUM" />
@@ -154,8 +163,10 @@ import AppFooter from '@/components/layout/AppFooter.vue'
 import CategoryManageDialog from '@/components/admin/CategoryManageDialog.vue'
 import { getArticleDetail, createArticleApi, updateArticleApi } from '@/api/article'
 import { uploadCoverApi } from '@/api/admin'
+import { getLearnCategoriesApi } from '@/api/article'
 import { useCategoryStore } from '@/stores/category'
 import { getCategoryPath } from '@/utils/category'
+import type { LearnCategory } from '@/types'
 
 const router = useRouter()
 const route = useRoute()
@@ -173,6 +184,7 @@ const editCategorySlug = ref('')
 const previewBody = ref<HTMLElement | null>(null)
 
 const categories = computed(() => categoryStore.tree)
+const learnCategories = ref<LearnCategory[]>([])
 
 const form = reactive({
   title: '',
@@ -180,6 +192,7 @@ const form = reactive({
   summary: '',
   docUrl: '',
   columnType: 'tech',
+  learnCategoryId: undefined as number | undefined,
   categoryId: undefined as number | undefined,
   difficulty: 'MEDIUM',
   isPinned: 0,
@@ -215,6 +228,7 @@ function snapshotForm(): string {
     summary: form.summary,
     docUrl: form.docUrl,
     columnType: form.columnType,
+    learnCategoryId: form.learnCategoryId,
     categoryId: form.categoryId,
     difficulty: form.difficulty,
     isPinned: form.isPinned,
@@ -322,6 +336,11 @@ function htmlToText(html: string): string {
 onMounted(() => {
   initialSnapshot.value = snapshotForm()
   categoryStore.fetchTree()
+  getLearnCategoriesApi()
+    .then((list) => {
+      learnCategories.value = list
+    })
+    .catch(() => {})
   if (isEdit.value) {
     loadForEdit()
   }
@@ -337,7 +356,8 @@ async function loadForEdit() {
     form.slug = a.slug
     form.summary = a.summary
     form.docUrl = a.docUrl || ''
-    form.columnType = a.columnType === 'topic' ? 'topic' : 'tech'
+    form.columnType = a.columnType === 'learn' ? 'learn' : a.columnType === 'topic' ? 'topic' : 'tech'
+    form.learnCategoryId = a.learnCategoryId || undefined
     form.categoryId = a.categoryId
     form.difficulty = a.difficulty
     form.isPinned = a.isPinned === 1 ? 1 : 0
@@ -355,7 +375,11 @@ async function submit() {
     ElMessage.warning('请填写标题')
     return
   }
-  if (form.columnType !== 'topic' && !form.categoryId) {
+  if (form.columnType === 'learn' && !form.learnCategoryId) {
+    ElMessage.warning('请选择学习分类')
+    return
+  }
+  if (form.columnType !== 'topic' && form.columnType !== 'learn' && !form.categoryId) {
     ElMessage.warning('请选择所属分类')
     return
   }
@@ -371,6 +395,7 @@ async function submit() {
       summary: form.summary.trim(),
       docUrl: form.docUrl.trim() || undefined,
       columnType: form.columnType,
+      learnCategoryId: form.columnType === 'learn' ? form.learnCategoryId : undefined,
       categoryId: form.columnType === 'topic' ? undefined : form.categoryId,
       difficulty: form.difficulty,
       isPinned: form.isPinned,

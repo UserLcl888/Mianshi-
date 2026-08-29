@@ -15,10 +15,12 @@ import com.interview.dto.Rows;
 import com.interview.dto.VOs;
 import com.interview.entity.Article;
 import com.interview.entity.Category;
+import com.interview.entity.LearnCategory;
 import com.interview.entity.User;
 import com.interview.enums.AdminLogAction;
 import com.interview.enums.Difficulty;
 import com.interview.mapper.ArticleMapper;
+import com.interview.mapper.LearnCategoryMapper;
 import com.interview.mapper.UserMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.StringRedisTemplate;
@@ -28,8 +30,11 @@ import org.springframework.util.StringUtils;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 @Service
@@ -40,6 +45,7 @@ public class ArticleService {
     private static final Duration DETAIL_CACHE_TTL = Duration.ofMinutes(30);
 
     private final ArticleMapper articleMapper;
+    private final LearnCategoryMapper learnCategoryMapper;
     private final CategoryService categoryService;
     private final UserMapper userMapper;
     private final AccessService accessService;
@@ -127,6 +133,63 @@ public class ArticleService {
         return pageResult;
     }
 
+    /**
+     * 学习专题：按独立学习分类聚合的学习板块（AI / Java / MySQL …）。
+     */
+    public List<VOs.LearnCategoryVO> learnCategories() {
+        List<LearnCategory> cats = learnCategoryMapper.selectList(new LambdaQueryWrapper<LearnCategory>()
+                .orderByAsc(LearnCategory::getSortOrder)
+                .orderByAsc(LearnCategory::getId));
+        if (cats.isEmpty()) {
+            return List.of();
+        }
+        List<Long> ids = cats.stream().map(LearnCategory::getId).toList();
+        List<Article> learnArticles = articleMapper.selectList(new LambdaQueryWrapper<Article>()
+                .select(Article::getId, Article::getLearnCategoryId, Article::getUpdatedAt)
+                .eq(Article::getColumnType, "learn")
+                .eq(Article::getStatus, 1)
+                .in(Article::getLearnCategoryId, ids));
+        Map<Long, List<Article>> byCat = learnArticles.stream()
+                .collect(Collectors.groupingBy(a -> a.getLearnCategoryId() == null ? -1L : a.getLearnCategoryId()));
+        return cats.stream()
+                .map(c -> {
+                    List<Article> list = byCat.getOrDefault(c.getId(), List.of());
+                    LocalDateTime max = list.stream()
+                            .map(Article::getUpdatedAt)
+                            .filter(Objects::nonNull)
+                            .max(LocalDateTime::compareTo)
+                            .orElse(null);
+                    return VOs.LearnCategoryVO.builder()
+                            .id(c.getId())
+                            .slug(c.getSlug())
+                            .name(c.getName())
+                            .articleCount((long) list.size())
+                            .updatedAt(max == null ? null : max.toString())
+                            .build();
+                })
+                .toList();
+    }
+
+    /**
+     * 学习专题：某分类板块下的学习文章列表。
+     */
+    public PageResult<VOs.ArticleListItemVO> learnList(String categorySlug, long page, long size) {
+        LearnCategory learnCategory = learnCategoryMapper.selectOne(
+                new LambdaQueryWrapper<LearnCategory>().eq(LearnCategory::getSlug, categorySlug));
+        if (learnCategory == null) {
+            throw new BizException(ErrorCode.NOT_FOUND, "学习分类不存在");
+        }
+        LambdaQueryWrapper<Article> qw = new LambdaQueryWrapper<>();
+        qw.eq(Article::getColumnType, "learn").eq(Article::getStatus, 1)
+                .eq(Article::getLearnCategoryId, learnCategory.getId());
+        trimLongTextColumns(qw);
+        qw.orderByAsc(Article::getSortOrder).orderByAsc(Article::getId);
+        Page<Article> result = articleMapper.selectPage(new Page<>(page, size), qw);
+        PageResult<VOs.ArticleListItemVO> pageResult = toPageResult(result, page, size);
+        refreshViewCounts(pageResult.getList());
+        return pageResult;
+    }
+
     public VOs.DetailRespVO detail(String slug) {
         // 先查文章并做访问权限校验：受限内容不能命中缓存跳过校验（审批撤销后立即失效）
         Article article = articleMapper.selectOne(new LambdaQueryWrapper<Article>()
@@ -134,14 +197,14 @@ public class ArticleService {
         if (article == null) {
             throw new BizException(ErrorCode.NOT_FOUND, "题目不存在或已下架");
         }
-        boolean topic = "topic".equals(article.getColumnType());
-        if (!topic) {
-            // 技术问题专栏：沿用分类访问权限；专题分享公开可看，不做权限校验
+        boolean unrestricted = "topic".equals(article.getColumnType()) || "learn".equals(article.getColumnType());
+        if (!unrestricted) {
+            // 技术问题专栏：沿用分类访问权限；文章/学习专栏公开可看，不做权限校验
             Category category = categoryService.getById(article.getCategoryId());
             User viewer = StpUtil.isLogin() ? userMapper.selectById(StpUtil.getLoginIdAsLong()) : null;
             accessService.checkArticleAccess(viewer, article, category);
         }
-        Category category = topic ? null : categoryService.getById(article.getCategoryId());
+        Category category = unrestricted ? null : categoryService.getById(article.getCategoryId());
 
         String cacheKey = detailCacheKey(slug);
         String cached = redis.opsForValue().get(cacheKey);
@@ -200,7 +263,7 @@ public class ArticleService {
     private VOs.ArticleBriefVO neighbor(Long id, Long categoryId, String columnType, boolean next) {
         LambdaQueryWrapper<Article> qw = new LambdaQueryWrapper<>();
         qw.eq(Article::getStatus, 1).eq(Article::getColumnType, columnType);
-        if (!"topic".equals(columnType)) {
+        if (!"topic".equals(columnType) && !"learn".equals(columnType)) {
             qw.eq(Article::getCategoryId, categoryId);
         }
         if (next) {
@@ -255,9 +318,10 @@ public class ArticleService {
                 .summary(a.getSummary())
                 .docUrl(a.getDocUrl())
                 .columnType(a.getColumnType())
+                .learnCategoryId(a.getLearnCategoryId())
                 .categoryId(a.getCategoryId())
                 .categoryName(category == null
-                        ? ("topic".equals(a.getColumnType()) ? "专题分享" : "")
+                        ? fallbackCategoryName(a.getColumnType())
                         : category.getName())
                 .categorySlug(category == null ? "" : category.getSlug())
                 .difficulty(a.getDifficulty())
@@ -307,20 +371,31 @@ public class ArticleService {
     public VOs.ArticleVO create(Requests.ArticleSaveDTO dto) {
         String columnType = normalizeColumnType(dto.getColumnType());
         dto.setColumnType(columnType);
-        if ("topic".equals(columnType)) {
+        if ("learn".equals(columnType)) {
+            if (dto.getLearnCategoryId() == null) {
+                throw new BizException(ErrorCode.PARAM_ERROR, "请选择学习分类");
+            }
+            if (dto.getCategoryId() == null) {
+                dto.setCategoryId(0L);
+            }
+        } else if ("topic".equals(columnType)) {
             if (dto.getCategoryId() == null) {
                 dto.setCategoryId(0L);
             }
         } else if (dto.getCategoryId() == null) {
             throw new BizException(ErrorCode.PARAM_ERROR, "请选择所属分类");
         }
-        Category category = "topic".equals(columnType) ? null : categoryService.getById(dto.getCategoryId());
+        Category category = ("topic".equals(columnType) || "learn".equals(columnType))
+                ? null
+                : categoryService.getById(dto.getCategoryId());
         Article article = new Article();
         String slug;
         if (StringUtils.hasText(dto.getSlug())) {
             slug = dto.getSlug().trim();
         } else if ("topic".equals(columnType)) {
             slug = "topic-" + System.currentTimeMillis();
+        } else if ("learn".equals(columnType)) {
+            slug = "learn-" + System.currentTimeMillis();
         } else {
             slug = category.getSlug() + "-" + System.currentTimeMillis();
         }
@@ -346,7 +421,14 @@ public class ArticleService {
         }
         String columnType = normalizeColumnType(dto.getColumnType());
         dto.setColumnType(columnType);
-        if ("topic".equals(columnType)) {
+        if ("learn".equals(columnType)) {
+            if (dto.getLearnCategoryId() == null) {
+                throw new BizException(ErrorCode.PARAM_ERROR, "请选择学习分类");
+            }
+            if (dto.getCategoryId() == null) {
+                dto.setCategoryId(0L);
+            }
+        } else if ("topic".equals(columnType)) {
             if (dto.getCategoryId() == null) {
                 dto.setCategoryId(0L);
             }
@@ -406,6 +488,7 @@ public class ArticleService {
         article.setSummary(dto.getSummary() == null ? "" : dto.getSummary());
         article.setDocUrl(dto.getDocUrl() == null ? "" : dto.getDocUrl().trim());
         article.setColumnType(normalizeColumnType(dto.getColumnType()));
+        article.setLearnCategoryId("learn".equals(article.getColumnType()) ? dto.getLearnCategoryId() : null);
         article.setCategoryId(dto.getCategoryId() == null ? 0L : dto.getCategoryId());
         article.setDifficulty(Difficulty.normalize(dto.getDifficulty()).getCode());
         article.setStatus(1);
@@ -416,7 +499,23 @@ public class ArticleService {
     }
 
     private String normalizeColumnType(String columnType) {
-        return "topic".equals(columnType) ? "topic" : "tech";
+        if ("topic".equals(columnType)) {
+            return "topic";
+        }
+        if ("learn".equals(columnType)) {
+            return "learn";
+        }
+        return "tech";
+    }
+
+    private String fallbackCategoryName(String columnType) {
+        if ("topic".equals(columnType)) {
+            return "文章分享";
+        }
+        if ("learn".equals(columnType)) {
+            return "学习专题";
+        }
+        return "";
     }
 
     @Transactional

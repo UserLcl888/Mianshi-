@@ -4,11 +4,11 @@
     <div class="topic-body">
       <main class="topic-main">
         <header class="topic-head">
-          <h1 class="topic-title">专题分享</h1>
+          <h1 class="topic-title">文章分享</h1>
           <div class="topic-search">
             <el-input
               v-model="query.keyword"
-              placeholder="搜索专题标题"
+              placeholder="搜索文章标题"
               clearable
               class="search-input"
               :prefix-icon="Search"
@@ -19,7 +19,7 @@
           </div>
         </header>
 
-        <p class="topic-tip">在专题里面的文章，不显示在首页文章列表</p>
+        <p class="topic-tip">专题，知识合集，智慧之光</p>
 
         <div v-if="loading" class="topic-empty">加载中…</div>
         <div v-else-if="!list.length" class="topic-empty">暂无专题文章，敬请期待</div>
@@ -29,13 +29,13 @@
             v-for="a in list"
             :key="a.id"
             class="block-card"
-            @click="$router.push(`/topic/${a.slug}`)"
+            @click="$router.push(`/articles/${a.slug}`)"
           >
             <div class="block-cover">
               <img v-if="a.coverUrl" :src="a.coverUrl" :alt="a.title" class="cover-img" />
               <div v-else class="cover-placeholder">
-                <span class="placeholder-main">知识分享平台</span>
-                <span class="placeholder-sub">专题分享</span>
+                <span class="placeholder-main">知识分享</span>
+                <span class="placeholder-sub">文章分享</span>
               </div>
             </div>
             <div class="block-body">
@@ -47,7 +47,7 @@
               <div class="block-meta">
                 <span class="meta-item">
                   <el-icon :size="13"><CollectionTag /></el-icon>
-                  专题分享
+                  文章分享
                 </span>
                 <span class="meta-item">
                   <el-icon :size="13"><Clock /></el-icon>
@@ -145,7 +145,7 @@ onMounted(load)
 
 .topic-main {
   width: 100%;
-  max-width: 980px;
+  max-width: 900px;
 }
 
 .topic-head {
@@ -203,13 +203,13 @@ onMounted(load)
 .block-list {
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 12px;
 }
 
 .block-card {
   display: flex;
-  gap: 18px;
-  padding: 16px;
+  gap: 14px;
+  padding: 12px;
   border-radius: 14px;
   background: rgba(18, 24, 38, 0.62);
   backdrop-filter: blur(10px);
@@ -225,7 +225,7 @@ onMounted(load)
 }
 
 .block-cover {
-  width: 260px;
+  width: 196px;
   flex-shrink: 0;
   aspect-ratio: 16 / 9;
   border-radius: 10px;
@@ -279,7 +279,7 @@ onMounted(load)
 
 .block-title {
   margin: 0;
-  font-size: 17px;
+  font-size: 15px;
   font-weight: 600;
   color: #ffffff;
   overflow: hidden;
@@ -297,8 +297,8 @@ onMounted(load)
 }
 
 .block-summary {
-  margin: 8px 0 12px;
-  font-size: 13px;
+  margin: 6px 0 10px;
+  font-size: 12px;
   line-height: 1.7;
   color: #aab2c0;
   display: -webkit-box;
@@ -310,8 +310,8 @@ onMounted(load)
 .block-meta {
   display: flex;
   align-items: center;
-  gap: 18px;
-  font-size: 12px;
+  gap: 14px;
+  font-size: 11.5px;
   color: #8a9bb5;
 }
 

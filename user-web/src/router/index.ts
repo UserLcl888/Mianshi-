@@ -9,8 +9,13 @@ const router = createRouter({
     // 根路径 = 登录门户页（未登录展示；已登录自动跳 /home）
     { path: '/', name: 'portal', component: () => import('@/views/LoginView.vue'), meta: { guestOnly: true } },
     { path: '/home', name: 'home', component: () => import('@/views/HomeView.vue') },
-    { path: '/topic', name: 'topic', component: () => import('@/views/TopicListView.vue') },
-    { path: '/topic/:slug', name: 'topic-article', component: () => import('@/views/ArticleDetailView.vue') },
+    { path: '/learn', name: 'learn', component: () => import('@/views/LearnView.vue') },
+    { path: '/learn/:categorySlug', name: 'learn-category', component: () => import('@/views/LearnCategoryView.vue') },
+    { path: '/articles', name: 'articles', component: () => import('@/views/ArticlesView.vue') },
+    { path: '/articles/:slug', name: 'articles-article', component: () => import('@/views/ArticleDetailView.vue') },
+    { path: '/author', name: 'author', component: () => import('@/views/AuthorView.vue') },
+    { path: '/topic', redirect: '/articles' },
+    { path: '/topic/:slug', redirect: (to) => `/articles/${to.params.slug}` },
     { path: '/category/:slug', name: 'category', component: () => import('@/views/CategoryView.vue') },
     { path: '/article/:slug', name: 'article', component: () => import('@/views/ArticleDetailView.vue') },
     { path: '/login', name: 'login', component: () => import('@/views/LoginView.vue'), meta: { guestOnly: true } },
@@ -79,6 +84,18 @@ const router = createRouter({
       component: () => import('@/components/layout/AdminLayout.vue'),
       meta: { requiresAuth: true, requiresAdmin: true },
       children: [{ path: '', name: 'admin-tags', component: () => import('@/views/admin/TagManageView.vue') }]
+    },
+    {
+      path: '/admin/learn-categories',
+      component: () => import('@/components/layout/AdminLayout.vue'),
+      meta: { requiresAuth: true, requiresAdmin: true },
+      children: [
+        {
+          path: '',
+          name: 'admin-learn-categories',
+          component: () => import('@/views/admin/LearnCategoryManageView.vue')
+        }
+      ]
     },
     {
       path: '/admin/logs',

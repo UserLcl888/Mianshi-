@@ -17,7 +17,7 @@
   --nav-item-half: 26px;  /* 首页菜单项宽度的二分之一 */
   --sidebar-half: 125px;  /* 侧边栏宽度的二分之一（250px） */
 
-  /* 侧边栏左偏移 = 页面边距 + Logo宽度 + 间距 + 首页项半宽 - 侧边栏半宽，使"首页"位于侧边栏正上方 */
+  /* 侧边栏左偏移（保持原首页布局：左侧留空、与顶部导航对齐） */
   --sidebar-offset: calc(var(--layout-pad-x) + var(--brand-width) + var(--header-gap) + var(--nav-item-half) - var(--sidebar-half));
 
   /* Element Plus 主色：橙金 */
@@ -88,6 +88,22 @@ body {
 a {
   color: inherit;
   text-decoration: none;
+}
+
+/* 兼容不支持 aspect-ratio 的旧浏览器：给封面固定高度，避免塌陷 */
+@supports not (aspect-ratio: 1 / 1) {
+  .block-cover {
+    height: 110px;
+  }
+
+  .learn-cover {
+    height: 160px;
+  }
+
+  .cover-preview,
+  .cover-placeholder-box {
+    height: 180px;
+  }
 }
 
 /* Element Plus 全局暗色微调 */

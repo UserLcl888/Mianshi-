@@ -37,6 +37,7 @@ export interface ArticleDetail {
   summary: string
   docUrl: string
   columnType?: string
+  learnCategoryId?: number | null
   categoryId: number
   categoryName: string
   categorySlug: string
@@ -55,6 +56,14 @@ export interface ArticleBrief {
   id: number
   slug: string
   title: string
+}
+
+export interface LearnCategory {
+  id: number
+  slug: string
+  name: string
+  articleCount: number
+  updatedAt: string | null
 }
 
 export interface ArticleDetailResp {

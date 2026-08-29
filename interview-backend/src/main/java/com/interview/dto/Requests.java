@@ -85,6 +85,8 @@ public class Requests {
         private Integer isPinned = 0;
         /** 专题分享专属：封面图 URL */
         private String coverUrl;
+        /** 学习专题专属：学习分类ID */
+        private Long learnCategoryId;
         /** 技术问题专栏必填；专题分享可不填（默认 0） */
         private Long categoryId;
         private String difficulty = "MEDIUM";
@@ -149,6 +151,14 @@ public class Requests {
     public static class TagSaveDTO {
         @NotBlank(message = "请输入标签名")
         private String name;
+    }
+
+    @Data
+    public static class LearnCategorySaveDTO {
+        @NotBlank(message = "请输入分类名")
+        private String name;
+        private String slug;
+        private Integer sortOrder = 0;
     }
 
     @Data

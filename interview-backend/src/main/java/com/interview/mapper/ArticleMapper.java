@@ -26,7 +26,7 @@ public interface ArticleMapper extends BaseMapper<Article> {
      */
     @Select("SELECT a.id, a.slug, a.title, a.view_count AS viewCount, COALESCE(c.name, '') AS categoryName " +
             "FROM article a LEFT JOIN category c ON c.id = a.category_id " +
-            "WHERE a.status = 1 AND a.column_type <> 'topic' " +
+            "WHERE a.status = 1 AND a.column_type NOT IN ('topic', 'learn') " +
             "ORDER BY a.view_count DESC, a.id DESC " +
             "LIMIT #{limit}")
     List<Rows.TopArticleRow> selectTopPublished(@Param("limit") int limit);
@@ -35,7 +35,7 @@ public interface ArticleMapper extends BaseMapper<Article> {
      * 首页站点统计：已发布题目数 + 浏览量总和，单条 SQL 聚合。
      */
     @Select("SELECT COUNT(*) AS articleCount, COALESCE(SUM(view_count), 0) AS viewCount " +
-            "FROM article WHERE status = 1 AND column_type <> 'topic'")
+            "FROM article WHERE status = 1 AND column_type NOT IN ('topic', 'learn')")
     Rows.PublishedStatsRow selectPublishedStats();
 
     /**
@@ -43,7 +43,7 @@ public interface ArticleMapper extends BaseMapper<Article> {
      */
     @Select("SELECT category_id AS categoryId, COUNT(*) AS articleCount, " +
             "COALESCE(SUM(view_count), 0) AS viewCount " +
-            "FROM article WHERE column_type <> 'topic' GROUP BY category_id")
+            "FROM article WHERE column_type NOT IN ('topic', 'learn') GROUP BY category_id")
     List<Rows.CategoryAggRow> selectCategoryAgg();
 
     /**

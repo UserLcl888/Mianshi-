@@ -1,5 +1,5 @@
 import request from './request'
-import type { ArticleDetailResp, ArticleListItem, ArticleQuery, PageResult } from '@/types'
+import type { ArticleDetailResp, ArticleListItem, ArticleQuery, LearnCategory, PageResult } from '@/types'
 
 export interface ArticleSavePayload {
   title: string
@@ -7,6 +7,7 @@ export interface ArticleSavePayload {
   summary?: string
   docUrl?: string
   columnType?: string
+  learnCategoryId?: number
   categoryId?: number
   difficulty: string
   isPinned?: number
@@ -36,6 +37,18 @@ export async function getTopicArticlesApi(params: {
   size?: number
 }): Promise<PageResult<ArticleListItem>> {
   return request.get('/topics/articles', { params })
+}
+
+export async function getLearnCategoriesApi(): Promise<LearnCategory[]> {
+  return request.get('/learn/categories')
+}
+
+export async function getLearnArticlesApi(params: {
+  categorySlug: string
+  page?: number
+  size?: number
+}): Promise<PageResult<ArticleListItem>> {
+  return request.get('/learn/articles', { params })
 }
 
 export async function getArticleDetail(slug: string): Promise<ArticleDetailResp> {

@@ -1,5 +1,5 @@
 import request from './request'
-import type { ArticleListItem, PageResult, UserInfo } from '@/types'
+import type { ArticleListItem, LearnCategory, PageResult, UserInfo } from '@/types'
 
 export interface StatsOverview {
   userCount: number
@@ -64,6 +64,30 @@ export async function getAdminArticlesApi(params: {
 
 export async function deleteArticleApi(id: number): Promise<void> {
   return request.delete(`/admin/articles/${id}`)
+}
+
+// 学习专题分类管理
+export async function getAdminLearnCategoriesApi(): Promise<LearnCategory[]> {
+  return request.get('/admin/learn-categories')
+}
+
+export async function createAdminLearnCategoryApi(payload: {
+  name: string
+  slug?: string
+  sortOrder?: number
+}): Promise<LearnCategory> {
+  return request.post('/admin/learn-categories', payload)
+}
+
+export async function updateAdminLearnCategoryApi(
+  id: number,
+  payload: { name: string; slug?: string; sortOrder?: number }
+): Promise<LearnCategory> {
+  return request.put(`/admin/learn-categories/${id}`, payload)
+}
+
+export async function deleteAdminLearnCategoryApi(id: number): Promise<void> {
+  return request.delete(`/admin/learn-categories/${id}`)
 }
 
 /** 管理员上传专题封面图，返回可直接存入 coverUrl 的图片地址 */

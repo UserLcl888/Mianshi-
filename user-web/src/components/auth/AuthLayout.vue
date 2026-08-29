@@ -18,7 +18,7 @@
             </svg>
           </span>
           <div class="brand-text">
-            <div class="brand-name">知识分享平台</div>
+            <div class="brand-name">知识分享</div>
             <div class="brand-sub">JAVA · AI · 场景 · 工具 · 计算机基础 · 专题</div>
           </div>
         </div>
@@ -55,20 +55,34 @@
               技术问题专栏
               <span class="entry-arrow">→</span>
             </div>
-            <div class="entry-desc">面试题、知识点与实战题汇总，未登录可访问公共模块</div>
+            <div class="entry-desc">面试题、知识点与实战题汇总</div>
           </router-link>
-          <router-link to="/topic" class="entry-card">
+          <router-link to="/learn" class="entry-card">
             <div class="entry-name">
-              专题分享专栏
+              学习专题
+              <span class="entry-arrow">→</span>
+            </div>
+            <div class="entry-desc">我的学习笔记与代码实践</div>
+          </router-link>
+          <router-link to="/articles" class="entry-card">
+            <div class="entry-name">
+              文章专栏
               <span class="entry-arrow">→</span>
             </div>
             <div class="entry-desc">专题文章与分享，未登录也可浏览</div>
+          </router-link>
+          <router-link to="/author" class="entry-card">
+            <div class="entry-name">
+              作者
+              <span class="entry-arrow">→</span>
+            </div>
+            <div class="entry-desc">认识我：技术、项目与成长</div>
           </router-link>
         </div>
 
         <div class="notice-bar">
           <span class="notice-icon">i</span>
-          <span>未登录可浏览技术问题与专题分享专栏，注册登录解锁更多</span>
+          <span>未登录可浏览技术问题与文章专栏，注册登录解锁更多</span>
         </div>
         </aside>
 
@@ -220,14 +234,16 @@ const features = [
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  gap: 20px;
+  gap: 16px;
   padding: 14px 0;
 }
 
 .brand-head {
   display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: 14px;
+  text-align: center;
+  gap: 12px;
 }
 
 .brand-logo {
@@ -244,10 +260,10 @@ const features = [
 }
 
 .brand-name {
-  font-size: 20px;
+  font-size: 26px;
   font-weight: 700;
   color: #ffffff;
-  letter-spacing: 0.5px;
+  letter-spacing: 3px;
 }
 
 .brand-sub {
@@ -264,7 +280,7 @@ const features = [
 }
 
 .slogan-line {
-  font-size: clamp(30px, 3vw, 42px);
+  font-size: clamp(26px, 2.4vw, 36px);
   font-weight: 700;
   line-height: 1.28;
   letter-spacing: 1px;
@@ -292,15 +308,15 @@ const features = [
 .feature-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 12px;
+  gap: 10px;
 }
 
 .feature-card {
   position: relative;
   display: flex;
   align-items: flex-start;
-  gap: 12px;
-  padding: 13px 13px;
+  gap: 10px;
+  padding: 11px 12px;
   border-radius: 14px;
   background: rgba(26, 31, 46, 0.7);
   border: 1px solid rgba(255, 255, 255, 0.07);
@@ -336,7 +352,7 @@ const features = [
 
 .feature-desc {
   margin-top: 4px;
-  font-size: 12px;
+  font-size: 11.5px;
   line-height: 1.55;
   color: #aab2c0;
 }
@@ -366,8 +382,8 @@ const features = [
   position: relative;
   display: flex;
   flex-direction: column;
-  gap: 6px;
-  padding: 13px 15px;
+  gap: 5px;
+  padding: 11px 13px;
   border-radius: 14px;
   background: rgba(232, 154, 31, 0.08);
   border: 1px solid rgba(232, 154, 31, 0.28);
@@ -384,13 +400,13 @@ const features = [
   display: flex;
   align-items: center;
   justify-content: space-between;
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 600;
   color: #ffffff;
 }
 
 .entry-desc {
-  font-size: 12px;
+  font-size: 11.5px;
   line-height: 1.55;
   color: #b8c0cf;
 }

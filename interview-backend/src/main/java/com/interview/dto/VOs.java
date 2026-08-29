@@ -127,6 +127,7 @@ public class VOs {
         private String summary;
         private String docUrl;
         private String columnType;
+        private Long learnCategoryId;
         private Long categoryId;
         private String categoryName;
         private String categorySlug;
@@ -146,6 +147,16 @@ public class VOs {
         private Long id;
         private String slug;
         private String title;
+    }
+
+    @Data
+    @Builder
+    public static class LearnCategoryVO {
+        private Long id;
+        private String slug;
+        private String name;
+        private Long articleCount;
+        private String updatedAt;
     }
 
     @Data

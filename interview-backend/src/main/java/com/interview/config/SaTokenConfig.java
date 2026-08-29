@@ -32,7 +32,8 @@ public class SaTokenConfig {
                                 "/api/categories/tree",
                                 "/api/articles",
                                 "/api/articles/**",
-                                "/api/topics/**");
+                                "/api/topics/**",
+                                "/api/learn/**");
             }
         };
     }

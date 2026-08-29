@@ -16,15 +16,17 @@ public class Article {
     private String title;
     private String summary;
     private String docUrl;
-    /** tech=技术问题专栏 topic=专题分享专栏 */
+    /** tech=技术问题专栏 topic=文章专栏(原专题分享) learn=学习专题 */
     private String columnType;
+    /** 学习专题分类ID（仅 column_type=learn 使用） */
+    private Long learnCategoryId;
     private Long categoryId;
     private String difficulty;
     private Integer status;
     private Integer sortOrder;
-    /** 0=普通 1=置顶（专题分享内生效） */
+    /** 0=普通 1=置顶（文章专栏内生效） */
     private Integer isPinned;
-    /** 封面图 URL（专题分享可选，空则前端显示占位） */
+    /** 封面图 URL（文章/学习可选，空则前端显示占位） */
     private String coverUrl;
     private String contentMd;
     private String contentHtml;

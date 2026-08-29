@@ -128,8 +128,9 @@ CREATE TABLE `article` (
   `title` varchar(200) NOT NULL COMMENT '题目',
   `summary` varchar(500) NOT NULL DEFAULT '' COMMENT '摘要',
   `doc_url` varchar(500) NOT NULL DEFAULT '' COMMENT '文档链接',
-  `column_type` varchar(20) NOT NULL DEFAULT 'tech' COMMENT 'tech=技术问题专栏 topic=专题分享专栏',
+  `column_type` varchar(20) NOT NULL DEFAULT 'tech' COMMENT 'tech=技术问题专栏 topic=文章专栏(原专题分享) learn=学习专题',
   `category_id` bigint unsigned NOT NULL COMMENT '所属分类（可为子分类）',
+  `learn_category_id` bigint unsigned DEFAULT NULL COMMENT '学习专题分类ID（仅 column_type=learn 使用）',
   `difficulty` varchar(10) NOT NULL DEFAULT 'MEDIUM' COMMENT 'EASY/MEDIUM/HARD',
   `status` tinyint NOT NULL DEFAULT '0' COMMENT '0草稿 1已发布',
   `sort_order` int NOT NULL DEFAULT '0' COMMENT '排序权重，越小越靠前',
@@ -148,6 +149,17 @@ CREATE TABLE `article` (
   KEY `idx_difficulty` (`difficulty`),
   KEY `idx_column` (`column_type`,`status`,`is_pinned`,`sort_order`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='面试题表';
+
+CREATE TABLE `learn_category` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `name` varchar(50) NOT NULL COMMENT '分类名',
+  `slug` varchar(80) NOT NULL COMMENT 'URL标识',
+  `sort_order` int NOT NULL DEFAULT '0' COMMENT '排序权重，越小越靠前',
+  `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `slug` (`slug`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='学习专题分类表';
 
 CREATE TABLE `tag` (
   `id` bigint unsigned NOT NULL AUTO_INCREMENT,

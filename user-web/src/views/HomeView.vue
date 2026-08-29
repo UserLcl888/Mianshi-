@@ -44,7 +44,7 @@
           </router-link>
         </div>
 
-    <div class="home-footer">知识分享平台 · 仅供学习交流使用</div>
+    <div class="home-footer">知识分享 · 仅供学习交流使用</div>
       </main>
 
       <aside class="right-col">
@@ -168,9 +168,10 @@ onMounted(async () => {
 .page-body {
   flex: 1;
   width: 100%;
-  padding: 16px var(--layout-pad-x) 16px var(--sidebar-offset);
+  padding: 16px var(--layout-pad-x);
   display: flex;
   align-items: flex-start;
+  justify-content: center;
   gap: 18px;
 }
 
@@ -217,6 +218,7 @@ onMounted(async () => {
 .content {
   flex: 1;
   min-width: 0;
+  max-width: 880px;
   display: flex;
   flex-direction: column;
   min-height: calc(100vh - 92px);

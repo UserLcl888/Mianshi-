@@ -33,11 +33,14 @@ public class StatsService {
         Map<String, Object> data = new LinkedHashMap<>();
         data.put("userCount", userMapper.selectCount(null));
         data.put("articleCount", articleMapper.selectCount(
-                new LambdaQueryWrapper<Article>().ne(Article::getColumnType, "topic")));
+                new LambdaQueryWrapper<Article>()
+                        .ne(Article::getColumnType, "topic")
+                        .ne(Article::getColumnType, "learn")));
         data.put("categoryCount", categoryMapper.selectCount(null));
         data.put("publishedCount", articleMapper.selectCount(
                 new LambdaQueryWrapper<Article>().eq(Article::getStatus, 1)
-                        .ne(Article::getColumnType, "topic")));
+                        .ne(Article::getColumnType, "topic")
+                        .ne(Article::getColumnType, "learn")));
         return data;
     }
 

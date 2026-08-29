@@ -1,42 +1,13 @@
 <template>
   <header class="app-header">
     <div class="header-inner">
-      <router-link to="/home" class="brand">
-        <img src="/logo.png" alt="logo" class="brand-logo" />
-        <span class="brand-name">知识分享平台</span>
-      </router-link>
+      <router-link to="/home" class="brand">知识分享</router-link>
 
       <nav class="nav">
-        <router-link to="/topic" class="nav-item topic-entry" :class="{ active: isTopicArea }">专题</router-link>
-        <router-link to="/home" class="nav-item" exact-active-class="active">首页</router-link>
-        <template v-if="isTopicArea">
-          <span class="topic-welcome">欢迎访问专栏模块，大家一起进步</span>
-        </template>
-        <template v-else>
-          <template v-for="cat in visibleCategories" :key="cat.id">
-            <router-link :to="`/category/${cat.slug}`" class="nav-item" :class="{ active: isCategoryActive(cat.slug) }">
-              {{ cat.name }}
-            </router-link>
-          </template>
-          <el-dropdown v-if="moreCategories.length" trigger="click" :teleported="false" @command="onCategoryCommand">
-            <span class="nav-item category-trigger">
-              更多主题
-              <el-icon class="el-icon--right"><ArrowDown /></el-icon>
-            </span>
-            <template #dropdown>
-              <el-dropdown-menu class="category-menu">
-                <el-dropdown-item
-                  v-for="cat in moreCategories"
-                  :key="cat.id"
-                  :command="cat.slug"
-                  :class="{ 'menu-active': isCategoryActive(cat.slug) }"
-                >
-                  {{ cat.name }}
-                </el-dropdown-item>
-              </el-dropdown-menu>
-            </template>
-          </el-dropdown>
-        </template>
+        <router-link to="/home" class="nav-item" :class="{ active: isHome }">首页</router-link>
+        <router-link to="/learn" class="nav-item" :class="{ active: isLearnArea }">专题</router-link>
+        <router-link to="/articles" class="nav-item" :class="{ active: isArticlesArea }">文章</router-link>
+        <router-link to="/author" class="nav-item" :class="{ active: isAuthor }">作者</router-link>
       </nav>
 
       <div class="header-right">
@@ -125,11 +96,14 @@ const router = useRouter()
 const route = useRoute()
 const auth = useAuthStore()
 const categoryStore = useCategoryStore()
-const categories = computed(() => categoryStore.tree)
-const visibleCategories = computed(() => categories.value.slice(0, 13))
-const moreCategories = computed(() => categories.value.slice(13))
 const isAdmin = computed(() => auth.userInfo?.role === 'ADMIN')
-const isTopicArea = computed(() => route.path.startsWith('/topic'))
+const isHome = computed(() => {
+  const p = route.path
+  return p === '/home' || p.startsWith('/category') || p === '/article' || p.startsWith('/article/')
+})
+const isLearnArea = computed(() => route.path.startsWith('/learn'))
+const isArticlesArea = computed(() => route.path.startsWith('/articles'))
+const isAuthor = computed(() => route.path === '/author')
 
 const notifVisible = ref(false)
 const notifList = ref<NotificationItem[]>([])
@@ -224,15 +198,6 @@ async function markAllRead() {
   }
 }
 
-function isCategoryActive(slug: string): boolean {
-  const current = String(route.params.slug || '')
-  return current === slug || current.startsWith(`${slug}-`)
-}
-
-function onCategoryCommand(slug: string) {
-  router.push(`/category/${slug}`)
-}
-
 onMounted(() => {
   categoryStore.fetchTree()
   refreshUnread()
@@ -278,48 +243,41 @@ async function onCommand(command: string) {
 }
 
 .header-inner {
+  position: relative;
   width: 100%;
-  height: 58px;
-  padding: 0 24px;
+  /* 900px 内容 + 左右 20px 内边距 = 940px，与文章页内容区左右边缘精确对齐 */
+  max-width: 940px;
+  margin: 0 auto;
+  height: 62px;
+  padding: 0 20px;
   display: flex;
   align-items: center;
-  gap: var(--header-gap);
+  justify-content: space-between;
 }
 
 .brand {
-  display: flex;
-  align-items: center;
-  gap: 8px;
   flex-shrink: 0;
-  width: var(--brand-width);
-}
-
-.brand-logo {
-  width: 34px;
-  height: 34px;
-  border-radius: 8px;
-  object-fit: cover;
-  border: 1px solid var(--app-border);
-}
-
-.brand-name {
-  font-size: 18px;
+  font-size: clamp(18px, 2.1vw, 26px);
   font-weight: 700;
   color: #e9b862;
   white-space: nowrap;
+  letter-spacing: 2px;
+  text-shadow: 0 0 18px rgba(232, 154, 31, 0.35);
 }
 
 .nav {
-  flex: 1;
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
   display: flex;
   align-items: center;
-  justify-content: center;
-  gap: 4px;
+  gap: 6px;
 }
 
 .nav-item {
-  padding: 6px 12px;
-  border-radius: 6px;
+  padding: 7px clamp(10px, 1.4vw, 16px);
+  border-radius: 9px;
+  font-size: clamp(13px, 1.25vw, 15px);
   color: #b8c0cf;
   white-space: nowrap;
   transition: all 0.15s;
@@ -334,75 +292,6 @@ async function onCommand(command: string) {
   background: var(--app-accent-soft);
   color: var(--app-accent);
   font-weight: 600;
-  box-shadow: inset 0 -2px 0 var(--app-accent);
-}
-
-/* 专题入口：橙金渐变胶囊 + 呼吸光晕，突出且保持夜色氛围 */
-.topic-entry {
-  margin-left: 6px;
-  padding: 6px 15px;
-  border-radius: 20px;
-  font-weight: 600;
-  color: #141a26;
-  background: linear-gradient(135deg, #f2a82e 0%, #e18b18 100%);
-  box-shadow: 0 0 10px rgba(232, 154, 31, 0.4);
-  animation: topic-breathe 2.6s ease-in-out infinite;
-  transition: transform 0.15s ease, box-shadow 0.2s ease, filter 0.2s ease;
-  white-space: nowrap;
-}
-
-.topic-entry:hover {
-  transform: translateY(-1px);
-  filter: brightness(1.08);
-  box-shadow: 0 0 22px rgba(232, 154, 31, 0.7);
-  animation-play-state: paused;
-}
-
-.topic-entry.active {
-  color: #141a26;
-  background: linear-gradient(135deg, #f7b845 0%, #ea9624 100%);
-  box-shadow: 0 0 24px rgba(232, 154, 31, 0.8);
-}
-
-@keyframes topic-breathe {
-  0%,
-  100% {
-    box-shadow: 0 0 8px rgba(232, 154, 31, 0.28);
-  }
-  50% {
-    box-shadow: 0 0 18px rgba(232, 154, 31, 0.62);
-  }
-}
-
-.category-trigger {
-  display: inline-flex;
-  align-items: center;
-  gap: 2px;
-  cursor: pointer;
-  outline: none;
-  user-select: none;
-}
-
-.topic-welcome {
-  margin-left: 12px;
-  padding: 6px 14px;
-  border-radius: 20px;
-  font-size: 13px;
-  color: #e9b862;
-  background: rgba(232, 154, 31, 0.1);
-  border: 1px solid rgba(232, 154, 31, 0.3);
-  white-space: nowrap;
-}
-
-.category-menu {
-  max-height: 60vh;
-  overflow-y: auto;
-}
-
-.category-menu :deep(.el-dropdown-menu__item.menu-active) {
-  color: var(--app-accent);
-  font-weight: 600;
-  background: var(--app-accent-soft);
 }
 
 .header-right {
@@ -535,5 +424,46 @@ async function onCommand(command: string) {
 .header-btn.primary:hover {
   background: var(--el-color-primary-dark-2);
   border-color: var(--el-color-primary-dark-2);
+}
+
+@media (max-width: 1100px) {
+  .header-inner {
+    gap: 0;
+  }
+
+  .header-right {
+    gap: 6px;
+  }
+}
+
+@media (max-width: 860px) {
+  .nav {
+    gap: 2px;
+  }
+
+  .nav-item {
+    padding: 5px 9px;
+    border-radius: 8px;
+  }
+}
+
+@media (max-width: 640px) {
+  .header-inner {
+    height: 56px;
+    padding: 0 12px;
+  }
+
+  .brand {
+    letter-spacing: 1px;
+  }
+
+  .nav-item {
+    padding: 4px 7px;
+    font-size: 12.5px;
+  }
+
+  .user-entry .el-icon {
+    display: none;
+  }
 }
 </style>

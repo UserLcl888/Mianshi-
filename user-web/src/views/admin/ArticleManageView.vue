@@ -5,7 +5,8 @@
     <div class="filters">
       <el-select v-model="query.columnType" placeholder="全部专栏" clearable style="width: 160px" @change="reload">
         <el-option label="技术问题专栏" value="tech" />
-        <el-option label="专题分享专栏" value="topic" />
+        <el-option label="文章专栏" value="topic" />
+        <el-option label="学习专题" value="learn" />
       </el-select>
       <el-select v-if="query.columnType !== 'topic'" v-model="query.categoryId" placeholder="全部分类" clearable style="width: 200px">
         <template v-for="cat in categories" :key="cat.id">
@@ -25,7 +26,7 @@
       <el-button type="primary" plain @click="reload">查询</el-button>
     </div>
 
-    <!-- 专题分享专栏：支持拖拽排序 + 置顶（仅管理员可见此操作） -->
+    <!-- 文章专栏：支持拖拽排序 + 置顶（仅管理员可见此操作） -->
     <div v-if="query.columnType === 'topic'" class="topic-sort-list">
       <div
         v-for="(row, i) in list"
@@ -67,8 +68,8 @@
       <el-table-column prop="title" label="标题" min-width="240" show-overflow-tooltip />
       <el-table-column label="专栏" width="130">
         <template #default="{ row }">
-          <el-tag :type="row.columnType === 'topic' ? 'success' : 'info'" size="small">
-            {{ row.columnType === 'topic' ? '专题分享' : '技术问题' }}
+          <el-tag :type="columnTagType(row.columnType)" size="small">
+            {{ columnTagText(row.columnType) }}
           </el-tag>
         </template>
       </el-table-column>
@@ -77,7 +78,7 @@
       </el-table-column>
       <el-table-column label="难度" width="90">
         <template #default="{ row }">
-          <template v-if="row.columnType === 'topic'">
+          <template v-if="row.columnType !== 'tech'">
             <span class="no-difficulty">-</span>
           </template>
           <el-tag v-else :type="difficultyType(row.difficulty)" size="small">{{ difficultyText(row.difficulty) }}</el-tag>
@@ -159,12 +160,24 @@ function difficultyType(d: string): 'success' | 'warning' | 'danger' {
   return { EASY: 'success', MEDIUM: 'warning', HARD: 'danger' }[d] || 'info'
 }
 
+function columnTagText(columnType?: string): string {
+  if (columnType === 'topic') return '文章'
+  if (columnType === 'learn') return '学习'
+  return '技术问题'
+}
+
+function columnTagType(columnType?: string): 'success' | 'warning' | 'info' {
+  if (columnType === 'topic') return 'success'
+  if (columnType === 'learn') return 'warning'
+  return 'info'
+}
+
 async function load() {
   loading.value = true
   try {
     const res = await getAdminArticlesApi({
       ...query,
-      // 专题分享模式下一次加载全部，保证拖拽排序在整栏范围内生效
+      // 文章专栏模式下一次加载全部，保证拖拽排序在整栏范围内生效
       size: query.columnType === 'topic' ? 100 : query.size
     })
     list.value = res.list

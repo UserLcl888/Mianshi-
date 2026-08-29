@@ -20,7 +20,10 @@
 
 .app-bg {
   position: fixed;
-  inset: 0;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
   z-index: 0;
   pointer-events: none;
   background:
@@ -32,7 +35,10 @@
 .app-bg::after {
   content: '';
   position: absolute;
-  inset: 0;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
   background: url('/auth-bg.png') center / cover no-repeat;
   opacity: 0.16;
   filter: brightness(1.25) contrast(1.05) saturate(1.05);

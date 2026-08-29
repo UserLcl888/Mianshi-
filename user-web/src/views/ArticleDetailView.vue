@@ -6,11 +6,11 @@
         <CategorySidebar :active-category-slug="categorySlug" :active-article-slug="activeSlug" />
       </template>
       <aside v-else class="topic-side">
-        <router-link to="/topic" class="topic-back-card">
+        <router-link to="/articles" class="topic-back-card">
           <span class="back-arrow">←</span>
           <div class="back-body">
-            <div class="back-title">返回专题</div>
-            <div class="back-sub">欢迎访问专栏模块，大家一起进步</div>
+            <div class="back-title">知识分享</div>
+            <div class="back-sub">文章分享</div>
           </div>
         </router-link>
       </aside>
@@ -18,7 +18,7 @@
       <main class="content">
         <el-breadcrumb class="breadcrumb-bar" separator="/">
           <el-breadcrumb-item :to="{ path: '/home' }">首页</el-breadcrumb-item>
-          <el-breadcrumb-item v-if="isTopicArticle" :to="{ path: '/topic' }">专题</el-breadcrumb-item>
+          <el-breadcrumb-item v-if="isTopicArticle" :to="{ path: '/articles' }">文章</el-breadcrumb-item>
           <el-breadcrumb-item v-for="c in categoryPath" :key="c.id" :to="`/category/${c.slug}`">{{ c.name }}</el-breadcrumb-item>
           <el-breadcrumb-item>{{ detail?.article.title }}</el-breadcrumb-item>
         </el-breadcrumb>
@@ -27,7 +27,7 @@
           <header class="article-header">
             <h1 class="article-title">{{ detail.article.title }}</h1>
             <div class="article-meta">
-              <el-tag v-if="detail.article.columnType === 'topic'" size="small" effect="plain" type="success">专题分享</el-tag>
+              <el-tag v-if="detail.article.columnType === 'topic'" size="small" effect="plain" type="success">文章分享</el-tag>
               <DifficultyTag v-if="!isTopicArticle" :difficulty="detail.article.difficulty" />
               <el-tag v-for="t in detail.article.tags" :key="t" size="small" effect="plain" type="warning">{{ t }}</el-tag>
               <span class="meta-text">{{ detail.article.viewCount }} 次浏览</span>
@@ -51,7 +51,7 @@
             <div ref="contentEl" class="article-body" v-html="detail.article.contentHtml" @click="onBodyClick"></div>
           </div>
 
-          <PrevNextNav :prev="detail.prev" :next="detail.next" :base="isTopicArticle ? '/topic' : '/article'" />
+          <PrevNextNav :prev="detail.prev" :next="detail.next" :base="isTopicArticle ? '/articles' : '/article'" />
         </article>
 
         <div v-else-if="accessState" class="app-card access-card">
