@@ -7,6 +7,7 @@ import com.vladsch.flexmark.ext.tables.TablesExtension;
 import com.vladsch.flexmark.html.HtmlRenderer;
 import com.vladsch.flexmark.parser.Parser;
 import com.vladsch.flexmark.util.data.MutableDataSet;
+import org.owasp.html.AttributePolicy;
 import org.owasp.html.HtmlPolicyBuilder;
 import org.owasp.html.PolicyFactory;
 import org.springframework.stereotype.Service;
@@ -25,6 +26,17 @@ public class MarkdownService {
     private static final Pattern H_PATTERN = Pattern.compile("<h([1-6])\\s+id=\"([^\"]+)\">([^<]+)</h\\1>");
     private static final Pattern HEADING_PATTERN = Pattern.compile("<h([1-6])([^>]*)>(.*?)</h\\1>", Pattern.DOTALL);
     private static final Pattern ID_PATTERN = Pattern.compile("id=\"([^\"]+)\"");
+    /** img src：允许 base64(data:image/*)、http(s)、站内相对路径；其余丢弃（防止 javascript:/data:text 等）。 */
+    private static final AttributePolicy IMG_SRC_POLICY = (el, attr, val) -> {
+        String v = val == null ? "" : val.trim();
+        if (v.toLowerCase().startsWith("data:image/")) return v;
+        if (v.startsWith("http://") || v.startsWith("https://") || v.startsWith("mailto:")) return v;
+        if (v.startsWith("/")) return v;
+        return null;
+    };
+    /** a href：拒绝 data: URL，防止 data:text/html 等 XSS。 */
+    private static final AttributePolicy HREF_POLICY = (el, attr, val) ->
+            val != null && val.trim().toLowerCase().startsWith("data:") ? null : val;
     private final PolicyFactory policy;
 
     public MarkdownService() {
@@ -34,9 +46,10 @@ public class MarkdownService {
                         "ul", "ol", "li", "blockquote", "strong", "em", "br", "hr")
                 .allowAttributes("id").onElements("h1", "h2", "h3", "h4", "h5", "h6")
                 .allowAttributes("class").matching(Pattern.compile("(language-[\\w-]+|hljs)")).onElements("code")
-                .allowAttributes("href").onElements("a")
-                .allowUrlProtocols("http", "https", "mailto")
-                .allowAttributes("src", "alt").onElements("img")
+                .allowUrlProtocols("http", "https", "mailto", "data")
+                .allowAttributes("href").matching(HREF_POLICY).onElements("a")
+                .allowAttributes("src").matching(IMG_SRC_POLICY).onElements("img")
+                .allowAttributes("alt").onElements("img")
                 .allowElements("input")
                 .allowAttributes("type", "checked", "disabled").onElements("input")
                 .toFactory();

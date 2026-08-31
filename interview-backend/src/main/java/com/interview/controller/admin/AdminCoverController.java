@@ -4,7 +4,9 @@ import cn.dev33.satoken.annotation.SaCheckRole;
 import com.interview.common.BizException;
 import com.interview.common.ErrorCode;
 import com.interview.common.Result;
+import com.interview.service.MarkdownImageService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -31,6 +33,7 @@ import java.util.UUID;
 @RequestMapping("/api/admin/upload")
 @SaCheckRole("ADMIN")
 @RequiredArgsConstructor
+@Slf4j
 public class AdminCoverController {
 
     private static final long MAX_SIZE = 5 * 1024 * 1024L;
@@ -39,6 +42,8 @@ public class AdminCoverController {
 
     @Value("${app.upload-dir:./uploads}")
     private String uploadDir;
+
+    private final MarkdownImageService markdownImageService;
 
     @PostMapping(value = "/cover", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public Result<Map<String, String>> uploadCover(@RequestPart("file") MultipartFile file) {
@@ -55,6 +60,16 @@ public class AdminCoverController {
         if (!ALLOWED_EXT.contains(ext)) {
             throw new BizException(ErrorCode.PARAM_ERROR, "仅支持 png/jpg/jpeg/webp 格式");
         }
+        // MinIO 已配置：封面直接存 MinIO，返回公开 URL
+        if (markdownImageService.enabled()) {
+            try {
+                String url = markdownImageService.storeImage(file.getBytes(), ext, "cover");
+                return Result.ok(Map.of("url", url));
+            } catch (IOException e) {
+                throw new BizException(ErrorCode.SERVER_ERROR, "封面读取失败，请重试");
+            }
+        }
+        // MinIO 未配置：回退本地 uploads/covers/ 存储
         String day = LocalDate.now().format(DAY);
         String fileName = UUID.randomUUID().toString().replace("-", "") + "." + ext;
         Path dir = Paths.get(uploadDir).resolve("covers").resolve(day);
@@ -62,6 +77,7 @@ public class AdminCoverController {
             Files.createDirectories(dir);
             file.transferTo(dir.resolve(fileName).toFile());
         } catch (IOException e) {
+            log.error("封面本地保存失败, uploadDir={}, day={}", uploadDir, day, e);
             throw new BizException(ErrorCode.SERVER_ERROR, "封面上传失败，请重试");
         }
         return Result.ok(Map.of("url", "/images/covers/" + day + "/" + fileName));

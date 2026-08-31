@@ -56,6 +56,7 @@ public class ArticleService {
     private final ContentCacheService contentCacheService;
     private final ViewCountService viewCountService;
     private final AdminLogService adminLogService;
+    private final MarkdownImageService markdownImageService;
 
     public PageResult<VOs.ArticleListItemVO> list(Long categoryId, String difficulty, long page, long size) {
         // 受限分类：列表查询同样走权限校验，未授权（含游客/普通用户）不允许拉取任何题目
@@ -494,8 +495,10 @@ public class ArticleService {
         article.setStatus(1);
         article.setIsPinned(dto.getIsPinned() != null && dto.getIsPinned() == 1 ? 1 : 0);
         article.setCoverUrl(dto.getCoverUrl() == null ? "" : dto.getCoverUrl().trim());
-        article.setContentMd(dto.getContentMd() == null ? "" : dto.getContentMd());
-        article.setContentHtml(markdownService.render(dto.getContentMd()));
+        // 正文里的图片自动上传 MinIO 并重写 URL（未配置 MinIO 时原样返回）
+        String contentMd = markdownImageService.processImages(dto.getContentMd() == null ? "" : dto.getContentMd(), "article");
+        article.setContentMd(contentMd);
+        article.setContentHtml(markdownService.render(contentMd));
     }
 
     private String normalizeColumnType(String columnType) {
