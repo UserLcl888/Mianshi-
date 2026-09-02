@@ -128,19 +128,34 @@ public class ViewCountService {
         if (ids.isEmpty()) {
             return;
         }
+        // 先原子取走每个字段（并发下不丢），再批量落库
+        Map<Long, Long> deltas = new HashMap<>();
         for (Long id : ids) {
             Long delta = takeCounter(id);
             if (delta == null || delta <= 0) {
                 continue;
             }
+            deltas.put(id, delta);
+            total += delta;
+        }
+        if (deltas.isEmpty()) {
+            return;
+        }
+        // 分片批量 UPDATE，避免单条 SQL 过长
+        int chunk = 200;
+        List<Map.Entry<Long, Long>> entryList = new ArrayList<>(deltas.entrySet());
+        for (int i = 0; i < entryList.size(); i += chunk) {
+            Map<Long, Long> group = new HashMap<>();
+            for (int j = i; j < Math.min(i + chunk, entryList.size()); j++) {
+                group.put(entryList.get(j).getKey(), entryList.get(j).getValue());
+            }
             try {
-                articleMapper.incrementViewCount(id, delta);
-                total += delta;
+                articleMapper.batchIncrementViewCount(group);
             } catch (Exception ex) {
-                log.warn("浏览量落库失败 articleId={} delta={}", id, delta, ex);
+                log.warn("浏览量批量落库失败 count={}", group.size(), ex);
             }
         }
-        log.info("浏览量聚合落库完成：{} 篇题目，共 {} 次", ids.size(), total);
+        log.info("浏览量聚合落库完成：{} 篇题目，共 {} 次", deltas.size(), total);
     }
 
     /**
