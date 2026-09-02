@@ -36,7 +36,7 @@ import java.util.UUID;
 @Slf4j
 public class AdminCoverController {
 
-    private static final long MAX_SIZE = 5 * 1024 * 1024L;
+    private static final long MAX_SIZE = 10 * 1024 * 1024L;
     private static final Set<String> ALLOWED_EXT = Set.of("png", "jpg", "jpeg", "webp");
     private static final DateTimeFormatter DAY = DateTimeFormatter.ofPattern("yyyyMMdd");
 
@@ -51,7 +51,7 @@ public class AdminCoverController {
             throw new BizException(ErrorCode.PARAM_ERROR, "请选择封面图片");
         }
         if (file.getSize() > MAX_SIZE) {
-            throw new BizException(ErrorCode.PARAM_ERROR, "封面图片不能超过 5MB");
+            throw new BizException(ErrorCode.PARAM_ERROR, "封面图片不能超过 10MB");
         }
         String original = file.getOriginalFilename() == null ? "" : file.getOriginalFilename().trim();
         String ext = original.contains(".")

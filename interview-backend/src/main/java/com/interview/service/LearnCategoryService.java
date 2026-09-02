@@ -44,6 +44,7 @@ public class LearnCategoryService {
         category.setName(name);
         category.setSlug(slug);
         category.setSortOrder(dto.getSortOrder() == null ? 0 : dto.getSortOrder());
+        category.setCoverUrl(dto.getCoverUrl());
         learnCategoryMapper.insert(category);
         adminLogService.write(AdminLogAction.CATEGORY_CREATE, category.getId(), "新增学习分类：" + name);
         return toVO(category);
@@ -65,6 +66,7 @@ public class LearnCategoryService {
         if (dto.getSortOrder() != null) {
             category.setSortOrder(dto.getSortOrder());
         }
+        category.setCoverUrl(dto.getCoverUrl());
         learnCategoryMapper.updateById(category);
         adminLogService.write(AdminLogAction.CATEGORY_UPDATE, id, "编辑学习分类：" + category.getName());
         return toVO(category);
@@ -95,6 +97,7 @@ public class LearnCategoryService {
                 .id(category.getId())
                 .slug(category.getSlug())
                 .name(category.getName())
+                .coverUrl(category.getCoverUrl())
                 .articleCount(0L)
                 .build();
     }

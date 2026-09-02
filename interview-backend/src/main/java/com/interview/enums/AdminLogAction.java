@@ -20,7 +20,10 @@ public enum AdminLogAction {
     USER_RESET_PASSWORD(AdminLogTargetType.USER),
     USER_DELETE(AdminLogTargetType.USER),
     UPLOAD_REPLY(AdminLogTargetType.UPLOAD),
-    UPLOAD_DELETE(AdminLogTargetType.UPLOAD);
+    UPLOAD_DELETE(AdminLogTargetType.UPLOAD),
+    NOTICE_CREATE(AdminLogTargetType.NOTICE),
+    NOTICE_UPDATE(AdminLogTargetType.NOTICE),
+    NOTICE_DELETE(AdminLogTargetType.NOTICE);
 
     private final AdminLogTargetType targetType;
 

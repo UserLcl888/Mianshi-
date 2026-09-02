@@ -159,6 +159,15 @@ public class Requests {
         private String name;
         private String slug;
         private Integer sortOrder = 0;
+        private String coverUrl;
+    }
+
+    @Data
+    public static class NoticeSaveDTO {
+        @NotBlank(message = "请输入公告内容")
+        private String content;
+        private Integer sortOrder = 0;
+        private Integer status = 1;
     }
 
     @Data

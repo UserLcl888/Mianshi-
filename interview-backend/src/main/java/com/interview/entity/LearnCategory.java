@@ -15,6 +15,7 @@ public class LearnCategory {
     private String name;
     private String slug;
     private Integer sortOrder;
+    private String coverUrl;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 }

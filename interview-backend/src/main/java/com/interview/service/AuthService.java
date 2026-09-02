@@ -18,9 +18,12 @@ import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.time.LocalDateTime;
 import java.time.Duration;
+import java.util.Set;
 
 @Service
 @RequiredArgsConstructor
@@ -30,6 +33,10 @@ public class AuthService {
     private final BCryptPasswordEncoder passwordEncoder;
     private final StringRedisTemplate redis;
     private final EmailCodeService emailCodeService;
+    private final MarkdownImageService markdownImageService;
+
+    /** 头像仅支持 png/jpg */
+    private static final Set<String> AVATAR_EXT = Set.of("png", "jpg", "jpeg");
 
     public void register(Requests.RegisterDTO dto) {
         String email = StringUtils.hasText(dto.getEmail()) ? dto.getEmail().trim() : "";
@@ -149,6 +156,34 @@ public class AuthService {
         user.setNickname(nickname);
         userMapper.updateById(user);
         return toVO(user);
+    }
+
+    public VOs.UserVO updateAvatar(MultipartFile file) {
+        if (file == null || file.isEmpty()) {
+            throw new BizException(ErrorCode.PARAM_ERROR, "请选择头像图片");
+        }
+        if (file.getSize() > 10L * 1024 * 1024) {
+            throw new BizException(ErrorCode.PARAM_ERROR, "头像不能超过 10MB");
+        }
+        String name = file.getOriginalFilename() == null ? "" : file.getOriginalFilename().trim();
+        String ext = name.contains(".") ? name.substring(name.lastIndexOf('.') + 1).toLowerCase() : "";
+        if (!AVATAR_EXT.contains(ext)) {
+            throw new BizException(ErrorCode.PARAM_ERROR, "仅支持 png/jpg 格式");
+        }
+        try {
+            String url = markdownImageService.storeImage(file.getBytes(), ext, "avatar");
+            User user = currentUser();
+            String oldAvatar = user.getAvatar();
+            user.setAvatar(url);
+            userMapper.updateById(user);
+            // 替换头像后删除旧的 MinIO 头像（最佳努力）
+            if (StringUtils.hasText(oldAvatar) && !oldAvatar.equals(url)) {
+                markdownImageService.removeObjectByUrl(oldAvatar);
+            }
+            return toVO(user);
+        } catch (IOException e) {
+            throw new BizException(ErrorCode.SERVER_ERROR, "头像读取失败，请重试");
+        }
     }
 
     public VOs.UserVO profile() {

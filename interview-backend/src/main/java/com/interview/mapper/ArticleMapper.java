@@ -9,6 +9,7 @@ import org.apache.ibatis.annotations.Update;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 
 public interface ArticleMapper extends BaseMapper<Article> {
 
@@ -51,4 +52,15 @@ public interface ArticleMapper extends BaseMapper<Article> {
      */
     @Update("UPDATE article SET view_count = view_count + #{delta} WHERE id = #{id}")
     int incrementViewCount(@Param("id") Long id, @Param("delta") long delta);
+
+    /**
+     * 批量累加浏览量：一条 UPDATE 对多个 id 分别加上各自的增量，减少逐条 UPDATE。
+     */
+    @Update("<script>" +
+            "UPDATE article SET view_count = view_count + (CASE id " +
+            "<foreach collection='deltas' index='id' item='d'>WHEN #{id} THEN #{d} </foreach>" +
+            "ELSE 0 END) WHERE id IN " +
+            "<foreach collection='deltas' index='id' item='d' open='(' separator=',' close=')'>#{id}</foreach>" +
+            "</script>")
+    int batchIncrementViewCount(@Param("deltas") Map<Long, Long> deltas);
 }

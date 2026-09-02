@@ -56,6 +56,9 @@ public class UserUploadService {
         if (!lower.endsWith(".md") && !lower.endsWith(".markdown")) {
             throw new BizException(ErrorCode.PARAM_ERROR, "仅支持 .md 或 .markdown 文件");
         }
+        if (file.getSize() > 20L * 1024 * 1024) {
+            throw new BizException(ErrorCode.PARAM_ERROR, "文档不能超过 20MB");
+        }
         String contentMd;
         try {
             contentMd = new String(file.getBytes(), StandardCharsets.UTF_8);

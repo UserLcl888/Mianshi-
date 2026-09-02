@@ -155,6 +155,7 @@ public class VOs {
         private Long id;
         private String slug;
         private String name;
+        private String coverUrl;
         private Long articleCount;
         private String updatedAt;
     }

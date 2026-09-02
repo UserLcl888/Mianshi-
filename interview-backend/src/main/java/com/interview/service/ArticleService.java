@@ -164,6 +164,7 @@ public class ArticleService {
                             .id(c.getId())
                             .slug(c.getSlug())
                             .name(c.getName())
+                            .coverUrl(c.getCoverUrl())
                             .articleCount((long) list.size())
                             .updatedAt(max == null ? null : max.toString())
                             .build();
@@ -242,10 +243,14 @@ public class ArticleService {
      */
     public Long recordView(Long articleId) {
         Article article = articleMapper.selectOne(new LambdaQueryWrapper<Article>()
-                .select(Article::getId, Article::getStatus)
+                .select(Article::getId, Article::getStatus, Article::getColumnType)
                 .eq(Article::getId, articleId));
         if (article == null || article.getStatus() == null || article.getStatus() != 1) {
             throw new BizException(ErrorCode.NOT_FOUND, "题目不存在或已下架");
+        }
+        // 学习专题不统计浏览量，只返回当前值
+        if ("learn".equals(article.getColumnType())) {
+            return displayViewCount(articleId);
         }
         Long userId = StpUtil.isLogin() ? StpUtil.getLoginIdAsLong() : null;
         if (userId != null) {
