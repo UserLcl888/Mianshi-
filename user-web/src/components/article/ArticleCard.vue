@@ -43,7 +43,7 @@ defineProps<{ article: ArticleListItem }>()
 .card-title {
   font-size: 16px;
   font-weight: 600;
-  color: #e8ecf3;
+  color: var(--app-text);
   margin-bottom: 6px;
 }
 

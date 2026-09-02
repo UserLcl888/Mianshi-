@@ -345,8 +345,14 @@ watch(
   padding: 12px;
   max-height: calc(100vh - 92px);
   overflow-y: auto;
+  scrollbar-width: none;
   position: sticky;
   top: 72px;
+}
+
+/* 隐藏滚动条，保留上下滚动 */
+.sidebar::-webkit-scrollbar {
+  display: none;
 }
 
 .sidebar-title {
@@ -385,7 +391,7 @@ watch(
   gap: 8px;
   padding: 8px 10px;
   border-radius: 6px;
-  color: #b8c0cf;
+  color: var(--app-text);
   font-size: 14px;
   transition: all 0.15s;
 }

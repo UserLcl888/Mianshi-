@@ -64,7 +64,7 @@ withDefaults(
 
 .pn-title {
   font-size: 14px;
-  color: #e8ecf3;
+  color: var(--app-text);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;

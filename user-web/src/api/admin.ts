@@ -75,13 +75,14 @@ export async function createAdminLearnCategoryApi(payload: {
   name: string
   slug?: string
   sortOrder?: number
+  coverUrl?: string
 }): Promise<LearnCategory> {
   return request.post('/admin/learn-categories', payload)
 }
 
 export async function updateAdminLearnCategoryApi(
   id: number,
-  payload: { name: string; slug?: string; sortOrder?: number }
+  payload: { name: string; slug?: string; sortOrder?: number; coverUrl?: string }
 ): Promise<LearnCategory> {
   return request.put(`/admin/learn-categories/${id}`, payload)
 }

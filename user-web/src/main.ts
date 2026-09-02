@@ -7,9 +7,11 @@ import 'highlight.js/styles/atom-one-dark.css'
 import App from './App.vue'
 import router from './router'
 import './styles/theme.css'
+import { enableImageLightbox } from './utils/lightbox'
 
 const app = createApp(App)
 app.use(createPinia())
 app.use(router)
 app.use(ElementPlus, { locale: zhCn })
 app.mount('#app')
+enableImageLightbox()

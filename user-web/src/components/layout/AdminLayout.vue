@@ -54,6 +54,7 @@ const menu = [
   { path: '/admin/articles/create', label: '添加题目' },
   { path: '/admin/categories', label: '分类管理' },
   { path: '/admin/learn-categories', label: '学习专题分类' },
+  { path: '/admin/notices', label: '公告管理' },
   { path: '/admin/uploads', label: '用户上传' },
   { path: '/admin/access', label: '访问申请' },
   { path: '/admin/users', label: '用户管理' },
@@ -68,6 +69,7 @@ const labelMap: Record<string, string> = {
   'admin-article-edit': '编辑题目',
   'admin-categories': '分类管理',
   'admin-learn-categories': '学习专题分类',
+  'admin-notices': '公告管理',
   'admin-uploads': '用户上传',
   'admin-access': '访问申请',
   'admin-users': '用户管理',
@@ -128,7 +130,7 @@ async function logout() {
 .admin-nav-item {
   padding: 10px 14px;
   border-radius: 8px;
-  color: #b8c0cf;
+  color: var(--app-text);
   transition: all 0.15s;
 }
 

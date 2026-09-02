@@ -1,6 +1,14 @@
 import request from './request'
 import type { PageResult, UserUploadDetail, UserUploadItem } from '@/types'
 
+// 通用图片上传（登录可用）：编辑器插图用，返回 MinIO URL
+export async function uploadImageApi(file: File, dir = 'image'): Promise<{ url: string }> {
+  const formData = new FormData()
+  formData.append('file', file)
+  formData.append('dir', dir)
+  return request.post('/upload/image', formData)
+}
+
 // 普通用户：上传 / 我的上传
 export async function createUserUploadApi(formData: FormData): Promise<UserUploadItem> {
   return request.post('/user/uploads', formData)

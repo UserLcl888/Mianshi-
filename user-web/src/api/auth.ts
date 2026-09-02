@@ -45,6 +45,14 @@ export async function updateNicknameApi(nickname: string): Promise<UserInfo> {
   return request.put('/user/profile', { nickname })
 }
 
+export async function updateAvatarApi(file: File): Promise<UserInfo> {
+  const form = new FormData()
+  form.append('file', file)
+  return request.post('/user/avatar', form, {
+    headers: { 'Content-Type': 'multipart/form-data' }
+  })
+}
+
 export async function changePasswordApi(oldPassword: string, newPassword: string): Promise<void> {
   return request.put('/user/password', { oldPassword, newPassword })
 }

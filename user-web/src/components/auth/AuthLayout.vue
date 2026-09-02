@@ -82,7 +82,7 @@
 
         <div class="notice-bar">
           <span class="notice-icon">i</span>
-          <span>未登录可浏览技术问题与文章专栏，注册登录解锁更多</span>
+          <span>未登录可浏览技术问题、学习专题、文章专栏与作者，注册登录解锁更多</span>
         </div>
         </aside>
 
