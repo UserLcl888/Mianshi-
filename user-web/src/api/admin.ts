@@ -87,6 +87,10 @@ export async function updateAdminLearnCategoryApi(
   return request.put(`/admin/learn-categories/${id}`, payload)
 }
 
+export async function reorderLearnCategoriesApi(items: { id: number; sortOrder: number }[]): Promise<void> {
+  return request.put('/admin/learn-categories/reorder', items)
+}
+
 export async function deleteAdminLearnCategoryApi(id: number): Promise<void> {
   return request.delete(`/admin/learn-categories/${id}`)
 }

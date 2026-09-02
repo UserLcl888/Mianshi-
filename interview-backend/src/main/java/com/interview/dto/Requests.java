@@ -171,6 +171,12 @@ public class Requests {
     }
 
     @Data
+    public static class LearnCategoryReorderItem {
+        private Long id;
+        private Integer sortOrder;
+    }
+
+    @Data
     public static class CategoryReorderItem {
         @NotNull(message = "请传入分类ID")
         private Long id;

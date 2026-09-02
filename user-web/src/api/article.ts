@@ -59,14 +59,16 @@ export async function recordViewApi(id: number): Promise<number> {
   return request.post(`/articles/${id}/view`)
 }
 
-export async function createArticleApi(payload: ArticleSavePayload): Promise<{ id: number; slug: string; title: string }> {
+export async function createArticleApi(
+  payload: ArticleSavePayload
+): Promise<{ id: number; slug: string; title: string; columnType?: string }> {
   return request.post('/admin/articles', payload)
 }
 
 export async function updateArticleApi(
   id: number,
   payload: ArticleSavePayload
-): Promise<{ id: number; slug: string; title: string }> {
+): Promise<{ id: number; slug: string; title: string; columnType?: string }> {
   return request.put(`/admin/articles/${id}`, payload)
 }
 

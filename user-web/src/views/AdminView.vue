@@ -258,7 +258,9 @@ function onColumnTypeChange() {
 }
 
 function beforeCoverUpload(file: File) {
-  const ok = ['image/png', 'image/jpeg', 'image/webp'].includes(file.type)
+  const ok =
+    ['image/png', 'image/jpeg', 'image/jpg', 'image/webp'].includes(file.type) ||
+    /\.(png|jpe?g|webp)$/i.test(file.name || '')
   if (!ok) {
     ElMessage.warning('仅支持 png/jpg/jpeg/webp 格式')
     return false
@@ -467,10 +469,11 @@ async function submit() {
     ElMessage.success(isEdit.value ? '修改成功' : '添加成功')
     initialSnapshot.value = snapshotForm()
     unsavedState.dirty = false
-    if (form.columnType === 'learn') {
+    const savedColumnType = article.columnType || form.columnType
+    if (savedColumnType === 'learn') {
       const cat = learnCategories.value.find((c) => c.id === form.learnCategoryId)
       router.push(cat ? `/learn/${cat.slug}` : '/learn')
-    } else if (form.columnType === 'topic') {
+    } else if (savedColumnType === 'topic') {
       router.push(`/articles/${article.slug}`)
     } else {
       router.push(`/article/${article.slug}`)

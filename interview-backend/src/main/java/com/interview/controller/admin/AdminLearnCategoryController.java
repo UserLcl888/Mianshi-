@@ -42,6 +42,12 @@ public class AdminLearnCategoryController {
         return Result.ok(learnCategoryService.update(id, dto));
     }
 
+    @PutMapping("/reorder")
+    public Result<Void> reorder(@RequestBody List<Requests.LearnCategoryReorderItem> items) {
+        learnCategoryService.reorder(items);
+        return Result.ok();
+    }
+
     @DeleteMapping("/{id}")
     public Result<Void> delete(@PathVariable("id") Long id) {
         learnCategoryService.delete(id);

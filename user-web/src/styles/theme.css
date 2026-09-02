@@ -203,6 +203,18 @@ body,
   padding: 0;
 }
 
+/* 隐藏页面滚动条、保留滚动：避免切换页面时滚动条“出现/消失”造成的布局跳动 */
+html {
+  scrollbar-width: none;      /* Firefox */
+  -ms-overflow-style: none;   /* 旧 Edge/IE */
+}
+html::-webkit-scrollbar,
+body::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+  display: none;              /* Chrome/Edge/Safari */
+}
+
 body {
   background: var(--app-bg);
   color: var(--app-text);

@@ -450,9 +450,14 @@ public class ArticleService {
             }
             article.setSlug(slug);
         }
+        String oldCover = article.getCoverUrl();
         applySave(article, dto);
         article.setUpdatedAt(LocalDateTime.now());
         articleMapper.updateById(article);
+        // 替换封面：保存成功后删除旧图，避免孤儿对象
+        if (StringUtils.hasText(oldCover) && !oldCover.equals(article.getCoverUrl())) {
+            markdownImageService.removeObjectByUrl(oldCover);
+        }
         tagService.replaceArticleTags(article.getId(), dto.getTags());
         categoryService.clearCache();
         contentCacheService.bump();
