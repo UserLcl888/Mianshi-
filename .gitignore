@@ -48,3 +48,4 @@ interview-backend/src/main/resources/static/images/
 # 打包产物
 interview-backend/target/
 *.jar
+interview-backend/src/main/resources/application-example.yml
