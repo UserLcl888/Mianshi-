@@ -19,9 +19,12 @@
             @click="$router.push(`/learn/${c.slug}`)"
           >
             <div class="learn-cover">
-              <span class="cover-index">{{ String(i + 1).padStart(2, '0') }}</span>
-              <span class="cover-name">{{ c.name }}</span>
-              <span class="cover-sub">LEARNING</span>
+              <img v-if="c.coverUrl" :src="c.coverUrl" :alt="c.name" class="learn-cover-img" />
+              <template v-else>
+                <span class="cover-index">{{ String(i + 1).padStart(2, '0') }}</span>
+                <span class="cover-name">{{ c.name }}</span>
+                <span class="cover-sub">LEARNING</span>
+              </template>
             </div>
             <div class="learn-info">
               <h2 class="learn-card-name">{{ c.name }}</h2>
@@ -99,22 +102,22 @@ onMounted(async () => {
   margin: 0;
   font-size: 28px;
   font-weight: 700;
-  color: #ffffff;
+  color: var(--app-text);
   letter-spacing: 1px;
 }
 
 .learn-sub {
   margin: 8px 0 0;
   font-size: 13px;
-  color: #8a9bb5;
+  color: var(--app-text-secondary);
 }
 
 .learn-empty {
   padding: 70px 20px;
   text-align: center;
-  color: #8a9bb5;
+  color: var(--app-text-secondary);
   font-size: 14px;
-  background: rgba(18, 24, 38, 0.55);
+  background: var(--app-card-translucent);
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 14px;
 }
@@ -128,7 +131,7 @@ onMounted(async () => {
 .learn-card {
   border-radius: 14px;
   overflow: hidden;
-  background: rgba(18, 24, 38, 0.68);
+  background: var(--app-card-translucent);
   border: 1px solid rgba(255, 255, 255, 0.08);
   cursor: pointer;
   transition: transform 0.2s ease, border-color 0.2s ease, background 0.2s ease;
@@ -137,7 +140,7 @@ onMounted(async () => {
 .learn-card:hover {
   transform: translateY(-3px);
   border-color: rgba(232, 154, 31, 0.5);
-  background: rgba(24, 32, 50, 0.82);
+  background: var(--app-card-translucent-hover);
 }
 
 .learn-cover {
@@ -148,20 +151,38 @@ onMounted(async () => {
   align-items: center;
   justify-content: center;
   gap: 6px;
+  overflow: hidden;
   background:
     radial-gradient(circle at 80% 15%, rgba(232, 154, 31, 0.35) 0%, transparent 45%),
     linear-gradient(135deg, rgba(38, 52, 80, 0.9) 0%, rgba(16, 22, 36, 0.95) 70%);
+}
+
+.learn-cover-img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  z-index: 0;
+  transition: transform 0.3s ease;
+}
+
+.learn-card:hover .learn-cover-img {
+  transform: scale(1.05);
 }
 
 .cover-index {
   position: absolute;
   left: 12px;
   top: 10px;
+  z-index: 2;
   font-size: 12px;
   color: rgba(255, 255, 255, 0.45);
 }
 
 .cover-name {
+  position: relative;
+  z-index: 2;
   font-size: 18px;
   font-weight: 700;
   color: #ffffff;
@@ -170,6 +191,8 @@ onMounted(async () => {
 }
 
 .cover-sub {
+  position: relative;
+  z-index: 2;
   font-size: 11px;
   letter-spacing: 5px;
   color: #e9b862;
@@ -183,7 +206,7 @@ onMounted(async () => {
   margin: 0;
   font-size: 14px;
   font-weight: 600;
-  color: #ffffff;
+  color: var(--app-text);
 }
 
 .learn-meta {
@@ -192,7 +215,7 @@ onMounted(async () => {
   align-items: center;
   gap: 12px;
   font-size: 11px;
-  color: #8a9bb5;
+  color: var(--app-text-secondary);
 }
 
 .meta-item {

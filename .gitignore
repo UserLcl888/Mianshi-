@@ -27,3 +27,24 @@ yun/
 
 # 前端构建产物
 dist/
+
+# ===== 按需求排除（保留主脚本 interview.sql 与用户端 UI 必需的 public 图片） =====
+# 文档（README 提交，其它只留本地）
+*.md
+!README.md
+# 中间 / 种子 SQL 脚本
+interview.sql
+learn-seed.sql
+topic-seed.sql
+学习专题分类.sql
+# 示例 / 本地配置（只提交 application.yml）
+application-example.yml
+# 根目录散落截图
+/*.png
+/*.jpg
+/*.jpeg
+# 后端静态图片素材（现走 MinIO）
+interview-backend/src/main/resources/static/images/
+# 打包产物
+interview-backend/target/
+*.jar

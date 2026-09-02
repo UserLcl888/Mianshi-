@@ -12,20 +12,24 @@
       </aside>
 
       <main class="content">
+        <div v-if="notices.length" class="notice-bar">
+          <span class="notice-badge"><span class="notice-dot"></span>公告</span>
+          <div class="notice-marquee">
+            <div class="notice-track">
+              <span v-for="(n, i) in [...notices, ...notices]" :key="i" class="notice-item">{{ n.content }}</span>
+            </div>
+          </div>
+        </div>
         <el-carousel
           class="banner-carousel"
-          height="240px"
-          :interval="4000"
+          :height="bannerHeight + 'px'"
+          :interval="3000"
           arrow="hover"
-          indicator-position="outside"
+          indicator-position="none"
         >
           <el-carousel-item v-for="b in banners" :key="b.src">
             <div class="banner-item">
               <img :src="b.src" class="banner-img" :alt="b.title" />
-              <div class="banner-mask">
-                <div class="banner-title">{{ b.title }}</div>
-                <div class="banner-desc">{{ b.desc }}</div>
-              </div>
             </div>
           </el-carousel-item>
         </el-carousel>
@@ -100,12 +104,16 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import AppHeader from '@/components/layout/AppHeader.vue'
 import CategorySidebar from '@/components/layout/CategorySidebar.vue'
 import { useCategoryStore } from '@/stores/category'
 import { useAuthStore } from '@/stores/auth'
 import { getHomeOverviewApi, getHomeQuoteApi, type HomeOverview } from '@/api/home'
+import { usePolling } from '@/composables/usePolling'
+import { CAROUSEL_BANNERS } from '@/config/site'
+import { getNoticesApi } from '@/api/notice'
+import type { NoticeItem } from '@/types'
 
 const categoryStore = useCategoryStore()
 const auth = useAuthStore()
@@ -115,13 +123,21 @@ const categories = computed(() => categoryStore.tree)
 const visibleCategories = computed(() => categories.value.slice(0, 8))
 
 const quote = ref({ text: '每一天都是新的开始，加油！', author: '每日一句' })
+const notices = ref<NoticeItem[]>([])
 
-const banners = [
-  { src: '/images/java-banner.png', title: 'Java 面试精选', desc: '集合、并发、JVM 高频考点' },
-  { src: '/images/ai-banner.png', title: 'AI 知识库', desc: 'RAG / Prompt / MCP 持续更新' },
-  { src: '/images/interview-banner.png', title: '面试真题', desc: '真实面试经验与解题思路' },
-  { src: '/images/doc-banner.png', title: '文档链接合集', desc: '好用的官方文档与技术资源' }
-]
+const banners = CAROUSEL_BANNERS
+
+const bannerHeight = ref(330)
+function updateBannerHeight() {
+  const h = window.innerHeight
+  bannerHeight.value = Math.max(200, Math.min(330, Math.round(h * 0.4)))
+}
+function onResize() {
+  updateBannerHeight()
+}
+function onFocus() {
+  loadNotices()
+}
 
 const tagColors = [
   '#d9a716', '#4d9f6e', '#c05b8a', '#3f7fc1', '#b0771f',
@@ -139,14 +155,35 @@ function formatNum(n: number): string {
   return String(n)
 }
 
-onMounted(async () => {
-  await categoryStore.fetchTree()
-  loading.value = false
+async function loadOverview() {
   try {
     overview.value = await getHomeOverviewApi()
   } catch {
-    overview.value = { articleCount: 0, viewCount: 0, hotArticles: [], hotTags: [] }
+    if (!overview.value) {
+      overview.value = { articleCount: 0, viewCount: 0, hotArticles: [], hotTags: [] }
+    }
   }
+}
+
+async function loadNotices() {
+  try {
+    const data = await getNoticesApi()
+    const cur = notices.value
+    const same =
+      data.length === cur.length &&
+      data.every((n, i) => n.id === cur[i].id && n.content === cur[i].content && n.status === cur[i].status)
+    if (!same) {
+      notices.value = data
+    }
+  } catch {
+    // 公告获取失败不影响首页
+  }
+}
+
+onMounted(async () => {
+  await categoryStore.fetchTree()
+  loading.value = false
+  await loadOverview()
   try {
     const q = await getHomeQuoteApi()
     if (q.content) {
@@ -155,7 +192,21 @@ onMounted(async () => {
   } catch {
     // 保持默认语录
   }
+  await loadNotices()
+  updateBannerHeight()
+  window.addEventListener('resize', onResize)
+  window.addEventListener('focus', onFocus)
 })
+
+onBeforeUnmount(() => {
+  window.removeEventListener('resize', onResize)
+  window.removeEventListener('focus', onFocus)
+})
+
+// 页面停留时每 30 秒刷新热门文档/站点统计
+usePolling(loadOverview, 30000)
+// 公告轮询：20 秒更新一次；切回标签页时立即刷新，无需手动刷新页面
+usePolling(loadNotices, 20000)
 </script>
 
 <style scoped>
@@ -284,8 +335,80 @@ onMounted(async () => {
 .banner-carousel {
   border-radius: 14px;
   overflow: hidden;
-  margin-bottom: 20px;
+  margin-bottom: 12px;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+}
+
+.notice-bar {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  height: 34px;
+  padding: 0 12px;
+  margin-bottom: 10px;
+  border-radius: 10px;
+  background: rgba(20, 26, 38, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  overflow: hidden;
+}
+
+.notice-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 9px;
+  border-radius: 20px;
+  background: var(--app-accent-soft);
+  border: 1px solid rgba(232, 154, 31, 0.35);
+  color: var(--app-accent);
+  font-size: 12px;
+  font-weight: 600;
+  flex-shrink: 0;
+}
+
+.notice-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--app-accent);
+  box-shadow: 0 0 8px rgba(232, 154, 31, 0.8);
+}
+
+.notice-marquee {
+  overflow: hidden;
+  white-space: nowrap;
+  flex: 1;
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 4%, #000 96%, transparent);
+  mask-image: linear-gradient(90deg, transparent, #000 4%, #000 96%, transparent);
+}
+
+.notice-track {
+  display: inline-block;
+  animation: notice-scroll 22s linear infinite;
+  padding-right: 40px;
+}
+
+.notice-item {
+  display: inline-flex;
+  align-items: center;
+  margin-right: 44px;
+  color: #c7cfda;
+  font-size: 13px;
+}
+
+.notice-item::before {
+  content: '';
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--app-accent);
+  opacity: 0.55;
+  margin-right: 9px;
+}
+
+@keyframes notice-scroll {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
 }
 
 .banner-item {
@@ -297,90 +420,28 @@ onMounted(async () => {
   background: linear-gradient(120deg, #0c111c 0%, #090d16 55%, #05080f 100%);
 }
 
-.banner-item::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(90deg, rgba(0, 0, 0, 0.82) 0%, rgba(0, 0, 0, 0.38) 55%, rgba(0, 0, 0, 0.5) 100%);
-  pointer-events: none;
-}
-
 .banner-img {
   width: 100%;
   height: 100%;
   object-fit: cover;
   display: block;
-  filter: brightness(0.52) saturate(0.82) contrast(1.02);
-}
-
-.banner-mask {
-  position: absolute;
-  left: 0;
-  top: 0;
-  bottom: 0;
-  z-index: 1;
-  width: 64%;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  padding: 0 36px;
-  background: linear-gradient(90deg, rgba(0, 0, 0, 0.86) 0%, rgba(0, 0, 0, 0.42) 72%, rgba(0, 0, 0, 0) 100%);
-}
-
-.banner-title {
-  font-size: 28px;
-  font-weight: 700;
-  color: #ffffff;
-  letter-spacing: 1px;
-  text-shadow: 0 2px 14px rgba(0, 0, 0, 0.6);
-}
-
-.banner-title::before {
-  content: '';
-  display: block;
-  width: 34px;
-  height: 3px;
-  border-radius: 2px;
-  background: linear-gradient(90deg, #f2a82e, #e89a1f);
-  margin-bottom: 14px;
-  box-shadow: 0 0 10px rgba(232, 154, 31, 0.5);
-}
-
-.banner-desc {
-  margin-top: 10px;
-  font-size: 14px;
-  color: #c6cfdc;
-  text-shadow: 0 1px 8px rgba(0, 0, 0, 0.55);
-}
-
-.banner-carousel :deep(.el-carousel__button) {
-  width: 18px;
-  height: 4px;
-  border-radius: 2px;
-  background: rgba(255, 255, 255, 0.45);
-  transition: width 0.2s ease, background 0.2s ease;
-}
-
-.banner-carousel :deep(.is-active .el-carousel__button) {
-  width: 30px;
-  background: var(--app-accent);
 }
 
 /* 分类卡片 */
 .category-grid {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 16px;
+  gap: 12px;
 }
 
 .category-card {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 8px;
   background: var(--app-card);
   border: 1px solid var(--app-border);
   border-radius: 12px;
-  padding: 18px 20px;
+  padding: 14px 16px;
   transition: all 0.15s;
 }
 
@@ -394,14 +455,13 @@ onMounted(async () => {
 .card-name {
   font-size: 17px;
   font-weight: 600;
-  color: #e8ecf3;
+  color: var(--app-text);
 }
 
 .card-desc {
   color: var(--app-text-secondary);
   font-size: 13px;
-  line-height: 1.7;
-  flex: 1;
+  line-height: 1.55;
 }
 
 .card-link {
@@ -427,10 +487,16 @@ onMounted(async () => {
 /* 热门文档 */
 .hot-list {
   overflow-y: auto;
+  scrollbar-width: none;
   min-height: 0;
   flex: 1;
   display: flex;
   flex-direction: column;
+}
+
+/* 隐藏滚动条，保留上下滚动 */
+.hot-list::-webkit-scrollbar {
+  display: none;
 }
 
 .hot-item {
@@ -532,5 +598,14 @@ onMounted(async () => {
   margin-top: 4px;
   font-size: 12px;
   color: var(--app-text-secondary);
+}
+
+/* 视口较矮时：中间分类方块区内部滚动，避免整页滚动 */
+@media (max-height: 700px) {
+  .category-grid {
+    max-height: calc(100vh - 460px);
+    overflow-y: auto;
+    padding-right: 4px;
+  }
 }
 </style>

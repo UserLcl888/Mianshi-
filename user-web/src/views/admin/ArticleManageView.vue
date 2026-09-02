@@ -322,7 +322,7 @@ onMounted(async () => {
 .drag-handle {
   cursor: grab;
   font-size: 18px;
-  color: #8a9bb5;
+  color: var(--app-text-secondary);
   user-select: none;
 }
 
@@ -352,7 +352,7 @@ onMounted(async () => {
 .sort-title {
   font-size: 14px;
   font-weight: 600;
-  color: #e8ecf3;
+  color: var(--app-text);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;

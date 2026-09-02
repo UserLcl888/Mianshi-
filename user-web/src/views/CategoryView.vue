@@ -370,7 +370,7 @@ onBeforeUnmount(() => {
 
 .access-title {
   font-size: 20px;
-  color: #e8ecf3;
+  color: var(--app-text);
   margin: 0 0 10px;
 }
 

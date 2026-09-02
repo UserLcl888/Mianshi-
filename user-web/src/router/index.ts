@@ -98,6 +98,18 @@ const router = createRouter({
       ]
     },
     {
+      path: '/admin/notices',
+      component: () => import('@/components/layout/AdminLayout.vue'),
+      meta: { requiresAuth: true, requiresAdmin: true },
+      children: [
+        {
+          path: '',
+          name: 'admin-notices',
+          component: () => import('@/views/admin/NoticeManageView.vue')
+        }
+      ]
+    },
+    {
       path: '/admin/logs',
       component: () => import('@/components/layout/AdminLayout.vue'),
       meta: { requiresAuth: true, requiresAdmin: true },

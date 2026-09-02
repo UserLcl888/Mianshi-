@@ -62,8 +62,18 @@ export interface LearnCategory {
   id: number
   slug: string
   name: string
+  coverUrl: string
   articleCount: number
   updatedAt: string | null
+}
+
+export interface NoticeItem {
+  id: number
+  content: string
+  sortOrder: number
+  status: number
+  createdAt?: string
+  updatedAt?: string
 }
 
 export interface ArticleDetailResp {
@@ -83,6 +93,7 @@ export interface PageResult<T> {
 export interface UserInfo {
   id: number
   nickname: string
+  avatar?: string
   email: string
   phone?: string
   role: string

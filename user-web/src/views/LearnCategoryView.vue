@@ -24,7 +24,18 @@
       <main class="cat-content">
         <div v-if="loadingDetail" class="cat-empty">加载中…</div>
         <article v-else-if="detail" class="cat-article">
-          <h1 class="cat-article-title">{{ detail.article.title }}</h1>
+          <img
+            v-if="detail.article.coverUrl"
+            :src="detail.article.coverUrl"
+            :alt="detail.article.title"
+            class="cat-article-cover"
+          />
+          <div class="cat-article-head">
+            <h1 class="cat-article-title">{{ detail.article.title }}</h1>
+            <router-link v-if="isAdmin" :to="`/admin/edit/${detail.article.slug}`" class="cat-edit-link">
+              <el-button size="small" type="warning" plain>编辑</el-button>
+            </router-link>
+          </div>
           <p v-if="detail.article.summary" class="cat-article-summary">{{ detail.article.summary }}</p>
           <div ref="contentEl" class="article-body" v-html="detail.article.contentHtml"></div>
         </article>
@@ -57,10 +68,13 @@ import { useRoute } from 'vue-router'
 import hljs from 'highlight.js'
 import AppHeader from '@/components/layout/AppHeader.vue'
 import AppFooter from '@/components/layout/AppFooter.vue'
+import { useAuthStore } from '@/stores/auth'
 import { getArticleDetail, getLearnArticlesApi, getLearnCategoriesApi } from '@/api/article'
 import type { ArticleDetailResp, ArticleListItem } from '@/types'
 
 const route = useRoute()
+const auth = useAuthStore()
+const isAdmin = computed(() => auth.userInfo?.role === 'ADMIN')
 const categorySlug = computed(() => String(route.params.categorySlug || ''))
 const categoryName = ref('学习专题')
 const articles = ref<ArticleListItem[]>([])
@@ -157,7 +171,7 @@ watch(categorySlug, () => {
   padding: 9px 12px;
   border-radius: 8px;
   font-size: 13px;
-  color: #b8c0cf;
+  color: var(--app-text);
   cursor: pointer;
   line-height: 1.5;
   transition: background 0.15s, color 0.15s;
@@ -165,7 +179,7 @@ watch(categorySlug, () => {
 
 .cat-item:hover {
   background: var(--app-accent-soft);
-  color: #e9b862;
+  color: var(--app-accent);
 }
 
 .cat-item.active {
@@ -177,7 +191,7 @@ watch(categorySlug, () => {
 .cat-tip {
   padding: 12px;
   font-size: 13px;
-  color: #8a9bb5;
+  color: var(--app-text-secondary);
 }
 
 /* 中：正文 */
@@ -187,17 +201,38 @@ watch(categorySlug, () => {
 }
 
 .cat-article {
-  background: rgba(18, 24, 38, 0.66);
+  background: var(--app-card-translucent);
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 14px;
   padding: 30px 36px;
+}
+
+.cat-article-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.cat-article-cover {
+  display: block;
+  width: 100%;
+  max-height: 340px;
+  object-fit: cover;
+  border-radius: 10px;
+  margin-bottom: 18px;
+}
+
+.cat-edit-link {
+  flex-shrink: 0;
+  margin-top: 2px;
 }
 
 .cat-article-title {
   margin: 0 0 12px;
   font-size: 26px;
   font-weight: 700;
-  color: #ffffff;
+  color: var(--app-text);
   line-height: 1.4;
 }
 
@@ -208,14 +243,14 @@ watch(categorySlug, () => {
   background: rgba(232, 154, 31, 0.08);
   border: 1px solid rgba(232, 154, 31, 0.22);
   font-size: 13px;
-  color: #b8c0cf;
+  color: var(--app-text-secondary);
   line-height: 1.7;
 }
 
 .cat-empty {
   padding: 70px 20px;
   text-align: center;
-  color: #8a9bb5;
+  color: var(--app-text-secondary);
   font-size: 14px;
 }
 
@@ -228,7 +263,7 @@ watch(categorySlug, () => {
 .toc-title {
   font-size: 14px;
   font-weight: 700;
-  color: #e9b862;
+  color: var(--app-accent);
   padding: 8px 10px;
   border-bottom: 1px solid var(--app-border);
   margin-bottom: 8px;
@@ -237,7 +272,7 @@ watch(categorySlug, () => {
 .toc-empty {
   padding: 10px;
   font-size: 13px;
-  color: #8a9bb5;
+  color: var(--app-text-secondary);
 }
 
 .toc-item {
@@ -245,7 +280,7 @@ watch(categorySlug, () => {
   padding: 6px 10px;
   border-radius: 6px;
   font-size: 13px;
-  color: #b8c0cf;
+  color: var(--app-text);
   line-height: 1.5;
   transition: background 0.15s, color 0.15s;
 }

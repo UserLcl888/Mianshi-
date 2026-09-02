@@ -63,7 +63,7 @@
                 <div class="upload-hint">
                   <el-icon class="upload-icon"><UploadFilled /></el-icon>
                   <div>拖拽 .md 文件到此处，或 <em>点击选择</em></div>
-                  <div class="upload-tip">仅支持 .md / .markdown，最大 10MB，内容将以 UTF-8 读取</div>
+                  <div class="upload-tip">仅支持 .md / .markdown，最大 20MB，内容将以 UTF-8 读取</div>
                 </div>
               </el-upload>
             </el-form-item>
@@ -268,6 +268,10 @@ function onMdFileChange(file: UploadFile, files: UploadUserFile[]) {
   mdFileList.value = files.slice(-1)
   const raw = file.raw
   if (!raw) return
+  if (raw.size > 20 * 1024 * 1024) {
+    ElMessage.warning('文档不能超过 20MB')
+    return
+  }
   const reader = new FileReader()
   reader.onload = () => {
     mdContent.value = String(reader.result || '')

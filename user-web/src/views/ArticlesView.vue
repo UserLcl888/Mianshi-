@@ -160,7 +160,7 @@ onMounted(load)
   margin: 0;
   font-size: 28px;
   font-weight: 700;
-  color: #ffffff;
+  color: var(--app-text);
   letter-spacing: 1px;
 }
 
@@ -187,15 +187,15 @@ onMounted(load)
 .topic-tip {
   margin: 0 0 18px;
   font-size: 13px;
-  color: #8a9bb5;
+  color: var(--app-text-secondary);
 }
 
 .topic-empty {
   padding: 70px 20px;
   text-align: center;
-  color: #8a9bb5;
+  color: var(--app-text-secondary);
   font-size: 14px;
-  background: rgba(18, 24, 38, 0.55);
+  background: var(--app-card-translucent);
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 14px;
 }
@@ -211,7 +211,7 @@ onMounted(load)
   gap: 14px;
   padding: 12px;
   border-radius: 14px;
-  background: rgba(18, 24, 38, 0.62);
+  background: var(--app-card-translucent);
   backdrop-filter: blur(10px);
   border: 1px solid rgba(255, 255, 255, 0.08);
   cursor: pointer;
@@ -221,7 +221,7 @@ onMounted(load)
 .block-card:hover {
   transform: translateY(-2px);
   border-color: rgba(232, 154, 31, 0.5);
-  background: rgba(24, 32, 50, 0.78);
+  background: var(--app-card-translucent-hover);
 }
 
 .block-cover {
@@ -281,7 +281,7 @@ onMounted(load)
   margin: 0;
   font-size: 15px;
   font-weight: 600;
-  color: #ffffff;
+  color: var(--app-text);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;

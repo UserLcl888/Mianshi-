@@ -10,6 +10,9 @@
   --app-accent-soft: rgba(232, 154, 31, 0.12);
   --app-header-bg: rgba(10, 14, 23, 0.88);
   --app-sidebar-bg: #10151f;
+  /* 半透明卡片背景（部分页面硬编码 rgba(18,24,38,…)） */
+  --app-card-translucent: rgba(18, 24, 38, 0.66);
+  --app-card-translucent-hover: rgba(24, 32, 50, 0.8);
 
   --brand-width: 148px;   /* Logo + 站点名宽度 */
   --header-gap: 28px;     /* Logo 与导航的间距 */
@@ -66,6 +69,128 @@
   --el-color-error-light-9: rgba(245, 108, 108, 0.14);
 }
 
+/* ============ 主题：黑色（保留橙金强调色，背景去图片） ============ */
+html[data-theme='black'] {
+  --app-bg: #06080d;
+  --app-card: #0b0e14;
+  --app-card-hover: #11151d;
+  --app-border: #1c212c;
+  --app-text: #eef1f6;
+  --app-text-secondary: #8b95a8;
+  --app-accent: #e89a1f;
+  --app-accent-soft: rgba(232, 154, 31, 0.14);
+  --app-header-bg: rgba(6, 8, 13, 0.92);
+  --app-sidebar-bg: #080b11;
+  --app-card-translucent: rgba(9, 12, 18, 0.9);
+  --app-card-translucent-hover: rgba(14, 19, 27, 0.92);
+
+  --el-bg-color: #0b0e14;
+  --el-bg-color-page: #06080d;
+  --el-bg-color-overlay: #11151d;
+  --el-fill-color-blank: #0b0e14;
+  --el-fill-color: #141a23;
+  --el-fill-color-light: #10141c;
+  --el-fill-color-lighter: #0d1118;
+  --el-fill-color-extra-light: #0b0f15;
+  --el-fill-color-dark: #1a212c;
+  --el-fill-color-darker: #20283a;
+  --el-text-color-primary: #eef1f6;
+  --el-text-color-regular: #c7cfda;
+  --el-text-color-secondary: #8b95a8;
+  --el-text-color-placeholder: #5d6a7e;
+  --el-text-color-disabled: #47536a;
+  --el-border-color: #1c212c;
+  --el-border-color-light: #171c26;
+  --el-border-color-lighter: #131820;
+  --el-border-color-extra-light: #10151c;
+  --el-border-color-dark: #222a38;
+  --el-border-color-darker: #2a3344;
+  --el-mask-color: rgba(0, 0, 0, 0.8);
+  --el-box-shadow-light: 0 8px 24px rgba(0, 0, 0, 0.5);
+  --el-box-shadow: 0 12px 32px rgba(0, 0, 0, 0.58);
+  --el-disabled-bg-color: #080b11;
+  --el-disabled-text-color: #47536a;
+  --el-disabled-border-color: #171c26;
+  --el-message-bg-color: #11151d;
+}
+
+/* ============ 主题：白色（浅色，背景去图片） ============ */
+html[data-theme='white'] {
+  --app-bg: #f4f5f7;
+  --app-card: #ffffff;
+  --app-card-hover: #f6f7f9;
+  --app-border: #e3e6ec;
+  --app-text: #1f2937;
+  --app-text-secondary: #6b7280;
+  --app-accent: #b0740a;
+  --app-accent-soft: rgba(176, 116, 10, 0.12);
+  --app-header-bg: rgba(255, 255, 255, 0.92);
+  --app-sidebar-bg: #ffffff;
+  --app-card-translucent: rgba(255, 255, 255, 0.96);
+  --app-card-translucent-hover: #f6f7f9;
+
+  --el-color-primary: #b0740a;
+  --el-color-primary-light-3: #b98c3e;
+  --el-color-primary-light-5: #cfa871;
+  --el-color-primary-light-7: #e5cba1;
+  --el-color-primary-light-8: #efdcc0;
+  --el-color-primary-light-9: #f8eedd;
+  --el-color-primary-dark-2: #8f5e08;
+
+  --el-bg-color: #ffffff;
+  --el-bg-color-page: #f4f5f7;
+  --el-bg-color-overlay: #ffffff;
+  --el-fill-color-blank: #ffffff;
+  --el-fill-color: #f0f2f5;
+  --el-fill-color-light: #f5f7fa;
+  --el-fill-color-lighter: #fafbfc;
+  --el-fill-color-extra-light: #fbfcfd;
+  --el-fill-color-dark: #e5e7eb;
+  --el-fill-color-darker: #d9dde3;
+  --el-text-color-primary: #1f2937;
+  --el-text-color-regular: #374151;
+  --el-text-color-secondary: #6b7280;
+  --el-text-color-placeholder: #9ca3af;
+  --el-text-color-disabled: #c2c8d0;
+  --el-border-color: #dcdfe6;
+  --el-border-color-light: #e4e7ed;
+  --el-border-color-lighter: #ebeef5;
+  --el-border-color-extra-light: #f2f6fc;
+  --el-border-color-dark: #d3d8e0;
+  --el-border-color-darker: #c6ccd6;
+  --el-mask-color: rgba(31, 41, 55, 0.45);
+  --el-box-shadow-light: 0 8px 24px rgba(0, 0, 0, 0.08);
+  --el-box-shadow: 0 12px 32px rgba(0, 0, 0, 0.1);
+  --el-disabled-bg-color: #eef0f3;
+  --el-disabled-text-color: #b6bcc6;
+  --el-disabled-border-color: #e4e7ed;
+  --el-message-bg-color: #ffffff;
+}
+
+/* 白色模式下 Element Plus 弹层改浅色（覆盖顶部对暗色的统一覆盖） */
+html[data-theme='white'] .el-card,
+html[data-theme='white'] .el-dialog,
+html[data-theme='white'] .el-message-box,
+html[data-theme='white'] .el-popover,
+html[data-theme='white'] .el-dropdown-menu,
+html[data-theme='white'] .el-popper.is-light {
+  --el-bg-color-overlay: #ffffff;
+}
+
+/* 黑白模式：忽略背景图片与头部极光装饰 */
+html[data-theme='black'] .app-bg,
+html[data-theme='white'] .app-bg {
+  background: var(--app-bg);
+}
+html[data-theme='black'] .app-bg::after,
+html[data-theme='white'] .app-bg::after {
+  opacity: 0;
+}
+html[data-theme='black'] .app-header .ambient,
+html[data-theme='white'] .app-header .ambient {
+  display: none;
+}
+
 * {
   box-sizing: border-box;
 }
@@ -119,8 +244,8 @@ a {
 .el-input__wrapper,
 .el-textarea__inner,
 .el-select__wrapper {
-  background-color: #161d29 !important;
-  box-shadow: 0 0 0 1px #2a3344 inset !important;
+  background-color: var(--el-fill-color-blank) !important;
+  box-shadow: 0 0 0 1px var(--el-border-color) inset !important;
 }
 
 .el-input__wrapper.is-focus,
@@ -135,12 +260,12 @@ a {
 
 .el-input__inner::placeholder,
 .el-textarea__inner::placeholder {
-  color: #6b7689;
+  color: var(--el-text-color-placeholder);
 }
 
 .el-input__prefix,
 .el-input__suffix {
-  color: #8895aa;
+  color: var(--el-text-color-secondary);
 }
 
 .el-table {
@@ -218,8 +343,72 @@ a {
 .article-body {
   line-height: 1.85;
   font-size: 15px;
-  color: #d8dee8;
+  color: var(--app-text);
   word-break: break-word;
+}
+
+.article-body img {
+  max-width: 80%;
+  height: auto;
+  display: block;
+  margin: 14px auto;
+  border-radius: 8px;
+}
+
+/* 文章图片双击放大灯箱 */
+.image-lightbox {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.78);
+}
+
+.image-lightbox-mask {
+  position: absolute;
+  inset: 0;
+  cursor: zoom-out;
+}
+
+.image-lightbox-body {
+  position: relative;
+  max-width: 92vw;
+  max-height: 92vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.image-lightbox-body img {
+  max-width: 92vw;
+  max-height: 92vh;
+  object-fit: contain;
+  border-radius: 8px;
+  box-shadow: 0 10px 50px rgba(0, 0, 0, 0.6);
+  background: #fff;
+  cursor: zoom-out;
+}
+
+.image-lightbox-close {
+  position: absolute;
+  top: 18px;
+  right: 22px;
+  z-index: 1;
+  width: 40px;
+  height: 40px;
+  border: none;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.12);
+  color: #fff;
+  font-size: 26px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.image-lightbox-close:hover {
+  background: rgba(255, 255, 255, 0.26);
 }
 
 .article-body h2 {
@@ -227,7 +416,7 @@ a {
   margin: 28px 0 14px;
   padding-bottom: 8px;
   border-bottom: 2px solid var(--app-accent-soft);
-  color: #e9b862;
+  color: var(--app-accent);
 }
 
 .article-body h1 {
@@ -235,26 +424,26 @@ a {
   margin: 30px 0 16px;
   padding-bottom: 10px;
   border-bottom: 2px solid var(--app-accent);
-  color: #e9b862;
+  color: var(--app-accent);
 }
 
 .article-body h3 {
   font-size: 17px;
   margin: 22px 0 10px;
-  color: #dfaa40;
+  color: var(--app-accent);
 }
 
 .article-body h4 {
   font-size: 15px;
   margin: 18px 0 8px;
-  color: #dfaa40;
+  color: var(--app-accent);
 }
 
 .article-body h5,
 .article-body h6 {
   font-size: 14px;
   margin: 16px 0 6px;
-  color: #dfaa40;
+  color: var(--app-accent);
 }
 
 .article-body p {

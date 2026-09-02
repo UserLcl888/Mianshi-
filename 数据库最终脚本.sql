@@ -58,16 +58,43 @@ CREATE TABLE IF NOT EXISTS `learn_category` (
   `name` varchar(50) NOT NULL COMMENT '分类名',
   `slug` varchar(80) NOT NULL COMMENT 'URL标识',
   `sort_order` int NOT NULL DEFAULT '0' COMMENT '排序权重，越小越靠前',
+  `cover_url` varchar(500) NOT NULL DEFAULT '' COMMENT '分类封面图URL',
   `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
   UNIQUE KEY `slug` (`slug`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='学习专题分类表';
 
+-- 存量库补 cover_url 字段（已存在则跳过）
+SET @lc := (SELECT COUNT(*) FROM information_schema.COLUMNS
+            WHERE TABLE_SCHEMA = 'interview' AND TABLE_NAME = 'learn_category' AND COLUMN_NAME = 'cover_url');
+SET @ls := IF(@lc = 0,
+  'ALTER TABLE `learn_category` ADD COLUMN `cover_url` varchar(500) NOT NULL DEFAULT '''' COMMENT ''分类封面图URL'' AFTER `sort_order`',
+  'SELECT 1');
+PREPARE lst FROM @ls; EXECUTE lst; DEALLOCATE PREPARE lst;
+
 INSERT IGNORE INTO `learn_category` (`name`, `slug`, `sort_order`) VALUES
 ('Java', 'learn-java', 1),
 ('AI', 'learn-ai', 2),
 ('MySQL', 'learn-mysql', 3);
+
+-- ---------------------------------------------------------------
+-- 5) 站内滚动公告表 + 预置公告（已存在则跳过）
+-- ---------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS `notice` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `content` varchar(255) NOT NULL COMMENT '公告内容',
+  `sort_order` int NOT NULL DEFAULT '0' COMMENT '排序权重，越小越靠前',
+  `status` tinyint NOT NULL DEFAULT '1' COMMENT '1启用 0停用',
+  `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `idx_status` (`status`,`sort_order`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='站内滚动公告';
+
+INSERT IGNORE INTO `notice` (`content`, `sort_order`, `status`) VALUES
+('网站维护中，卡顿请见谅', 1, 1),
+('下次新增一个项目专题，准备中', 2, 1);
 
 -- ---------------------------------------------------------------
 -- 4) 示例数据：文章专栏 2 条 + 学习专题 3 条（带学习分类映射）

@@ -77,7 +77,7 @@
                     <div v-else class="cover-placeholder-box">
                       <el-icon :size="22"><Plus /></el-icon>
                       <span>上传封面</span>
-                      <span class="cover-tip">建议 16:9，如 1280×720</span>
+                      <span class="cover-tip">建议 16:9，如 1280×720，最大 10MB</span>
                     </div>
                   </el-upload>
                   <el-button v-if="form.coverUrl" size="small" type="danger" plain class="cover-remove" @click="removeCover">
@@ -108,7 +108,14 @@
                     </el-button>
                   </div>
                 </div>
-                <el-input v-model="form.content" type="textarea" :rows="12" placeholder="支持 Markdown，留空则使用默认模板" />
+                <el-input
+                  ref="contentTextarea"
+                  v-model="form.content"
+                  type="textarea"
+                  :rows="12"
+                  placeholder="支持 Markdown，留空则使用默认模板"
+                  @paste="onContentPaste"
+                />
               </div>
             </el-form-item>
             <el-form-item>
@@ -139,6 +146,7 @@
               <div class="upload-tip">只导入正文内容（自动去掉文件头 frontmatter），会替换当前正文；分类、难度、标签请在表单中填写</div>
             </div>
           </el-upload>
+          <div class="md-size-tip">单个文件最大 20MB</div>
           <div v-if="mdFileName" class="md-file-name">已选择：{{ mdFileName }}</div>
           <template #footer>
             <el-button @click="mdImportVisible = false">取消</el-button>
@@ -166,6 +174,7 @@ import { uploadCoverApi } from '@/api/admin'
 import { getLearnCategoriesApi } from '@/api/article'
 import { useCategoryStore } from '@/stores/category'
 import { getCategoryPath } from '@/utils/category'
+import { dataUrlToFile } from '@/utils/file'
 import type { LearnCategory } from '@/types'
 
 const router = useRouter()
@@ -180,6 +189,10 @@ const mdImportVisible = ref(false)
 const mdFileList = ref<UploadUserFile[]>([])
 const mdContent = ref('')
 const mdFileName = ref('')
+const contentTextarea = ref()
+/** 粘贴图片：占位符 token -> base64 dataURL，避免把大段 base64 写进正文 textarea */
+const pasteImages = reactive<Record<string, string>>({})
+let pasteSeq = 0
 const editCategorySlug = ref('')
 const previewBody = ref<HTMLElement | null>(null)
 
@@ -250,22 +263,22 @@ function beforeCoverUpload(file: File) {
     ElMessage.warning('仅支持 png/jpg/jpeg/webp 格式')
     return false
   }
-  if (file.size > 5 * 1024 * 1024) {
-    ElMessage.warning('封面图片不能超过 5MB')
+  if (file.size > 10 * 1024 * 1024) {
+    ElMessage.warning('封面图片不能超过 10MB')
     return false
   }
   return true
 }
 
-async function onCoverUpload(options: { file: File; onSuccess: (res: unknown) => void; onError: (err: Error) => void }) {
-  try {
-    const res = await uploadCoverApi(options.file)
-    form.coverUrl = res.url
-    options.onSuccess(res)
-    ElMessage.success('封面上传成功')
-  } catch (e) {
-    options.onError(e as Error)
+function onCoverUpload(options: { file: File; onSuccess: (res: unknown) => void; onError: (err: Error) => void }) {
+  const reader = new FileReader()
+  reader.onload = () => {
+    form.coverUrl = String(reader.result || '')
+    options.onSuccess({ url: form.coverUrl })
+    ElMessage.success('封面已选择，保存时上传')
   }
+  reader.onerror = () => options.onError(new Error('读取图片失败'))
+  reader.readAsDataURL(options.file)
 }
 
 function removeCover() {
@@ -276,7 +289,7 @@ watch(isDirty, (v) => {
   unsavedState.dirty = v
 }, { immediate: true })
 
-const previewHtml = computed(() => renderMarkdown(form.content || ''))
+const previewHtml = computed(() => renderMarkdown(resolvePasteImages(form.content || '')))
 
 function onPreviewOpen() {
   nextTick(() => {
@@ -298,6 +311,10 @@ function onMdFileChange(file: UploadFile, files: UploadUserFile[]) {
   mdFileList.value = files.slice(-1)
   const raw = file.raw
   if (!raw) return
+  if (raw.size > 20 * 1024 * 1024) {
+    ElMessage.warning('文档不能超过 20MB')
+    return
+  }
   const reader = new FileReader()
   reader.onload = () => {
     mdContent.value = stripFrontmatter(String(reader.result || ''))
@@ -325,6 +342,43 @@ function applyMdImport() {
   form.content = mdContent.value
   ElMessage.success(`已导入 ${mdFileName.value}，可点击“预览”查看效果`)
   mdImportVisible.value = false
+}
+
+/** 直接在正文粘贴图片：图片暂存前台（token -> base64），正文里只写短占位符，保存时再还原交给后端 */
+function onContentPaste(e: ClipboardEvent) {
+  const files = e.clipboardData?.files
+  const img = files && Array.from(files).find((f) => f.type.startsWith('image/'))
+  if (!img) return
+  e.preventDefault()
+  const reader = new FileReader()
+  reader.onload = () => {
+    const token = `paste-${Date.now()}-${++pasteSeq}`
+    pasteImages[token] = String(reader.result || '')
+    insertImageUrl(`paste://${token}`)
+  }
+  reader.readAsDataURL(img)
+}
+
+/** 把正文里的 paste://token 占位符还原成 base64 dataURL（预览用；保存时也用它作为后端入参） */
+function resolvePasteImages(md: string): string {
+  return md.replace(/paste:\/\/([A-Za-z0-9_-]+)/g, (whole, token: string) => pasteImages[token] || whole)
+}
+
+function insertImageUrl(url: string) {
+  const snippet = `![图片](${url})`
+  const ta = contentTextarea.value?.textarea as HTMLTextAreaElement | undefined
+  if (ta && typeof ta.selectionStart === 'number') {
+    const start = ta.selectionStart
+    const end = ta.selectionEnd
+    form.content = form.content.slice(0, start) + snippet + form.content.slice(end)
+    nextTick(() => {
+      ta.focus()
+      const pos = start + snippet.length
+      ta.setSelectionRange(pos, pos)
+    })
+  } else {
+    form.content = (form.content ? form.content + '\n' : '') + snippet
+  }
 }
 
 function htmlToText(html: string): string {
@@ -385,6 +439,10 @@ async function submit() {
   }
   saving.value = true
   try {
+    let coverUrl = form.coverUrl.trim() || undefined
+    if (coverUrl && coverUrl.startsWith('data:')) {
+      coverUrl = (await uploadCoverApi(dataUrlToFile(coverUrl, 'cover.png'))).url
+    }
     const tags = form.tagsText
       .split(/[,，]/)
       .map((t) => t.trim())
@@ -399,9 +457,9 @@ async function submit() {
       categoryId: form.columnType === 'topic' ? undefined : form.categoryId,
       difficulty: form.difficulty,
       isPinned: form.isPinned,
-      coverUrl: form.coverUrl.trim() || undefined,
+      coverUrl,
       tags,
-      contentMd: form.content
+      contentMd: resolvePasteImages(form.content)
     }
     const article = isEdit.value
       ? await updateArticleApi(detailId.value, payload)
@@ -409,7 +467,14 @@ async function submit() {
     ElMessage.success(isEdit.value ? '修改成功' : '添加成功')
     initialSnapshot.value = snapshotForm()
     unsavedState.dirty = false
-    router.push(`/article/${article.slug}`)
+    if (form.columnType === 'learn') {
+      const cat = learnCategories.value.find((c) => c.id === form.learnCategoryId)
+      router.push(cat ? `/learn/${cat.slug}` : '/learn')
+    } else if (form.columnType === 'topic') {
+      router.push(`/articles/${article.slug}`)
+    } else {
+      router.push(`/article/${article.slug}`)
+    }
   } finally {
     saving.value = false
   }
@@ -613,5 +678,12 @@ async function submit() {
   margin-top: 10px;
   font-size: 13px;
   color: var(--app-text);
+}
+
+.md-size-tip {
+  margin-top: 8px;
+  text-align: right;
+  font-size: 12px;
+  color: var(--app-text-secondary);
 }
 </style>

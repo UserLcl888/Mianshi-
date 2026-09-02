@@ -13,17 +13,32 @@
             <div class="back-sub">文章分享</div>
           </div>
         </router-link>
+        <router-link
+          v-if="isAdmin"
+          :to="`/admin/edit/${detail?.article.slug}`"
+          class="topic-edit-card"
+        >
+          <el-icon :size="16"><EditPen /></el-icon>
+          <span>编辑这篇文章</span>
+        </router-link>
       </aside>
 
       <main class="content">
         <el-breadcrumb class="breadcrumb-bar" separator="/">
-          <el-breadcrumb-item :to="{ path: '/home' }">首页</el-breadcrumb-item>
-          <el-breadcrumb-item v-if="isTopicArticle" :to="{ path: '/articles' }">文章</el-breadcrumb-item>
+          <el-breadcrumb-item :to="isTopicArticle ? { path: '/articles' } : { path: '/home' }">
+            {{ isTopicArticle ? '文章' : '首页' }}
+          </el-breadcrumb-item>
           <el-breadcrumb-item v-for="c in categoryPath" :key="c.id" :to="`/category/${c.slug}`">{{ c.name }}</el-breadcrumb-item>
           <el-breadcrumb-item>{{ detail?.article.title }}</el-breadcrumb-item>
         </el-breadcrumb>
 
         <article v-if="detail" class="app-card">
+          <img
+            v-if="detail.article.coverUrl"
+            :src="detail.article.coverUrl"
+            :alt="detail.article.title"
+            class="article-cover"
+          />
           <header class="article-header">
             <h1 class="article-title">{{ detail.article.title }}</h1>
             <div class="article-meta">
@@ -128,7 +143,7 @@ import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import hljs from 'highlight.js'
 import { ElMessage } from 'element-plus'
-import { Lock } from '@element-plus/icons-vue'
+import { EditPen, Lock } from '@element-plus/icons-vue'
 import AppHeader from '@/components/layout/AppHeader.vue'
 import AppFooter from '@/components/layout/AppFooter.vue'
 import CategorySidebar from '@/components/layout/CategorySidebar.vue'
@@ -391,6 +406,26 @@ onBeforeUnmount(() => {
   background: var(--app-card-hover);
 }
 
+.topic-edit-card {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 10px;
+  padding: 12px 14px;
+  border-radius: 10px;
+  background: rgba(232, 154, 31, 0.12);
+  border: 1px solid rgba(232, 154, 31, 0.45);
+  color: var(--app-accent);
+  font-size: 13.5px;
+  font-weight: 600;
+  transition: all 0.15s;
+}
+
+.topic-edit-card:hover {
+  background: rgba(232, 154, 31, 0.2);
+  border-color: var(--app-accent);
+}
+
 .back-arrow {
   color: var(--app-accent);
   font-size: 16px;
@@ -404,7 +439,7 @@ onBeforeUnmount(() => {
 .back-title {
   font-size: 14px;
   font-weight: 600;
-  color: #e8ecf3;
+  color: var(--app-text);
 }
 
 .back-sub {
@@ -418,9 +453,18 @@ onBeforeUnmount(() => {
   margin-bottom: 16px;
 }
 
+.article-cover {
+  display: block;
+  width: 100%;
+  max-height: 340px;
+  object-fit: cover;
+  border-radius: 10px;
+  margin-bottom: 18px;
+}
+
 .article-title {
   font-size: 24px;
-  color: #e8ecf3;
+  color: var(--app-text);
   margin: 0 0 10px;
 }
 
@@ -469,7 +513,7 @@ onBeforeUnmount(() => {
 
 .access-title {
   font-size: 20px;
-  color: #e8ecf3;
+  color: var(--app-text);
   margin: 0 0 10px;
 }
 
