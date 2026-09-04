@@ -104,13 +104,14 @@
 </template>
 
 <script setup lang="ts">
-import { computed, reactive, ref } from 'vue'
+import { computed, onMounted, reactive, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage, type FormInstance, type FormRules } from 'element-plus'
 import { Iphone, Key, Lock, Message, User } from '@element-plus/icons-vue'
 import { useAuthStore } from '@/stores/auth'
 import AuthLayout from '@/components/auth/AuthLayout.vue'
 import VerifyCodeButton from '@/components/common/VerifyCodeButton.vue'
+import { useDraftStorage } from '@/composables/useDraft'
 
 const router = useRouter()
 const auth = useAuthStore()
@@ -124,6 +125,27 @@ const phonePattern = /^1[3-9]\d{9}$/
 const emailValid = computed(() => emailPattern.test(form.account.trim()))
 // 输入完整 6 位验证码后，再显示自定义密码
 const codeFilled = computed(() => /^\d{6}$/.test(form.code))
+
+/** 草稿只保存账号/邮箱、昵称与注册方式，绝不保存密码与验证码 */
+const draft = useDraftStorage({
+  getKey: () => 'draft:register',
+  getSnapshot: () =>
+    JSON.stringify({
+      registerType: registerType.value,
+      account: form.account,
+      nickname: form.nickname
+    }),
+  restore: (raw) => {
+    const s = JSON.parse(raw) as Record<string, unknown>
+    if (s.registerType === 'email' || s.registerType === 'phone') registerType.value = s.registerType
+    if (typeof s.account === 'string') form.account = s.account
+    if (typeof s.nickname === 'string') form.nickname = s.nickname
+  }
+})
+
+onMounted(() => {
+  draft.restoreStored()
+})
 
 function switchType(type: 'email' | 'phone') {
   if (registerType.value === type) return
@@ -203,6 +225,7 @@ async function submit() {
     })
     ElMessage.success('注册成功，请登录')
     router.push({ path: '/login', query: { type: 'email', account: form.account.trim() } })
+    draft.clear()
   } catch (e) {
     // 错误提示由请求拦截器统一处理
   } finally {

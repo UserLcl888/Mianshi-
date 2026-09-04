@@ -32,10 +32,9 @@ public class UserUploadService {
 
     private final UserUploadMapper userUploadMapper;
     private final UserMapper userMapper;
-    private final MarkdownService markdownService;
     private final AdminLogService adminLogService;
     private final NotificationService notificationService;
-    private final MarkdownImageService markdownImageService;
+    private final ContentRenderService contentRenderService;
 
     /**
      * 普通用户上传 Markdown 内容：读取文件原文，复用 MarkdownService 渲染 HTML 后入库。
@@ -75,10 +74,10 @@ public class UserUploadService {
         upload.setCategoryName(dto.getCategoryName().trim());
         upload.setGroupName(dto.getGroupName() == null ? "" : dto.getGroupName().trim());
         upload.setFileName(fileName);
-        // md 里的图片自动上传 MinIO 并重写 URL（未配置 MinIO 时原样返回）
-        String processedMd = markdownImageService.processImages(contentMd, "upload");
-        upload.setContentMd(processedMd);
-        upload.setContentHtml(markdownService.render(processedMd));
+        // md 里的图片自动上传 MinIO 并重写 URL（未配置 MinIO 时原样返回），再渲染为消毒后的 HTML
+        ContentRenderService.RenderedContent rc = contentRenderService.render(contentMd, "upload");
+        upload.setContentMd(rc.contentMd());
+        upload.setContentHtml(rc.contentHtml());
         upload.setStatus(0);
         upload.setAdminReply("");
         userUploadMapper.insert(upload);

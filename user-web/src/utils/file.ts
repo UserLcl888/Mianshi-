@@ -10,3 +10,23 @@ export function dataUrlToFile(dataUrl: string, filename: string): File {
   }
   return new File([bytes], filename, { type: mime })
 }
+
+/** 读取本地文件为 base64 data URL（封面/头像/粘贴图片等预览用）。 */
+export function readFileAsDataUrl(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader()
+    reader.onload = () => resolve(String(reader.result || ''))
+    reader.onerror = () => reject(new Error('读取文件失败'))
+    reader.readAsDataURL(file)
+  })
+}
+
+/** 读取本地文本文件（.md/.markdown）为字符串。 */
+export function readFileAsText(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader()
+    reader.onload = () => resolve(String(reader.result || ''))
+    reader.onerror = () => reject(new Error('读取文件失败'))
+    reader.readAsText(file, 'utf-8')
+  })
+}

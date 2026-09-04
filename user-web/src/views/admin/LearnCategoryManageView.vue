@@ -78,7 +78,7 @@ import {
   updateAdminLearnCategoryApi,
   uploadCoverApi
 } from '@/api/admin'
-import { dataUrlToFile } from '@/utils/file'
+import { dataUrlToFile, readFileAsDataUrl } from '@/utils/file'
 import type { LearnCategory } from '@/types'
 
 const list = ref<LearnCategory[]>([])
@@ -159,15 +159,14 @@ function openEdit(row: LearnCategory) {
   visible.value = true
 }
 
-function onCoverUpload(options: { file: File; onSuccess: (res: unknown) => void; onError: (err: Error) => void }) {
-  const reader = new FileReader()
-  reader.onload = () => {
-    form.coverUrl = String(reader.result || '')
+async function onCoverUpload(options: { file: File; onSuccess: (res: unknown) => void; onError: (err: Error) => void }) {
+  try {
+    form.coverUrl = await readFileAsDataUrl(options.file)
     options.onSuccess({ url: form.coverUrl })
     ElMessage.success('封面已选择，保存时上传')
+  } catch (e) {
+    options.onError(e as Error)
   }
-  reader.onerror = () => options.onError(new Error('读取图片失败'))
-  reader.readAsDataURL(options.file)
 }
 
 function beforeCoverUpload(file: File): boolean {

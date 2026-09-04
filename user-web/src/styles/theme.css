@@ -400,7 +400,16 @@ a {
   border-radius: 8px;
   box-shadow: 0 10px 50px rgba(0, 0, 0, 0.6);
   background: #fff;
-  cursor: zoom-out;
+  cursor: zoom-in;
+  transform-origin: 50% 50%;
+  will-change: transform;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
+/* 放大后（scale>1）光标变为可拖动平移 */
+.image-lightbox-body img.is-zoomed {
+  cursor: grab;
 }
 
 .image-lightbox-close {
@@ -437,6 +446,41 @@ a {
   padding-bottom: 10px;
   border-bottom: 2px solid var(--app-accent);
   color: var(--app-accent);
+}
+
+/* 目录点击/锚点跳转时，让标题落在吸顶页头下方，避免被遮挡 */
+.article-body h1,
+.article-body h2,
+.article-body h3,
+.article-body h4,
+.article-body h5,
+.article-body h6 {
+  scroll-margin-top: 84px;
+}
+
+/* Mermaid 流程图容器：居中展示，宽图可横向滚动 */
+.mermaid-render {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  margin: 16px 0;
+  overflow-x: auto;
+}
+
+.mermaid-render svg {
+  display: block;
+  width: 100% !important;
+  max-width: 100% !important;
+  height: auto !important;
+  /* 放宽 svg 边界：多行/长标签若略超出 mermaid 计算的 viewBox，也不会被裁切 */
+  overflow: visible;
+}
+
+/* 节点标签放在固定尺寸的 <foreignObject> 里，mermaid 按“测得宽度”定尺寸；
+   当真实渲染的中文比测得更宽/更高（字体度量不一致、<br/> 多行）时内容会被 foreignObject 默认裁掉。
+   设为 visible 作为兜底，保证文字一定完整显示。 */
+.mermaid-render svg foreignObject {
+  overflow: visible;
 }
 
 .article-body h3 {

@@ -106,7 +106,7 @@ import AppHeader from '@/components/layout/AppHeader.vue'
 import AppFooter from '@/components/layout/AppFooter.vue'
 import { useAuthStore } from '@/stores/auth'
 import { updateNicknameApi, updateAvatarApi } from '@/api/auth'
-import { dataUrlToFile } from '@/utils/file'
+import { dataUrlToFile, readFileAsDataUrl } from '@/utils/file'
 
 const auth = useAuthStore()
 const avatarText = computed(() => (auth.userInfo?.nickname || 'U').trim().charAt(0).toUpperCase())
@@ -150,12 +150,12 @@ async function onAvatarChange(e: Event) {
     input.value = ''
     return
   }
-  const reader = new FileReader()
-  reader.onload = () => {
-    pendingAvatar.value = String(reader.result || '')
+  try {
+    pendingAvatar.value = await readFileAsDataUrl(file)
     avatarDialogVisible.value = true
+  } catch {
+    // 读取失败忽略
   }
-  reader.readAsDataURL(file)
   input.value = ''
 }
 

@@ -180,7 +180,7 @@ import {
   getAdminUploadsApi,
   replyAdminUploadApi
 } from '@/api/upload'
-import { highlightCodeBlocks } from '@/utils/markdown'
+import { highlightCodeBlocks, renderDiagrams } from '@/utils/markdown'
 import { formatDateTime } from '@/utils/format'
 import type { UserUploadDetail, UserUploadItem } from '@/types'
 
@@ -317,6 +317,7 @@ async function viewContent(id: number) {
   contentVisible.value = true
   await nextTick()
   highlightCodeBlocks(detailPreview.value)
+  await renderDiagrams(detailPreview.value)
 }
 
 // 快速回复：内容 + 历史对话 + 回复框

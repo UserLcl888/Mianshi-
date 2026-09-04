@@ -51,6 +51,7 @@ public class ArticleService {
     private final AccessService accessService;
     private final TagService tagService;
     private final MarkdownService markdownService;
+    private final ContentRenderService contentRenderService;
     private final StringRedisTemplate redis;
     private final ObjectMapper objectMapper;
     private final ContentCacheService contentCacheService;
@@ -505,10 +506,11 @@ public class ArticleService {
         article.setStatus(1);
         article.setIsPinned(dto.getIsPinned() != null && dto.getIsPinned() == 1 ? 1 : 0);
         article.setCoverUrl(dto.getCoverUrl() == null ? "" : dto.getCoverUrl().trim());
-        // 正文里的图片自动上传 MinIO 并重写 URL（未配置 MinIO 时原样返回）
-        String contentMd = markdownImageService.processImages(dto.getContentMd() == null ? "" : dto.getContentMd(), "article");
-        article.setContentMd(contentMd);
-        article.setContentHtml(markdownService.render(contentMd));
+        // 正文里的图片自动上传 MinIO 并重写 URL（未配置 MinIO 时原样返回），再渲染为消毒后的 HTML
+        ContentRenderService.RenderedContent rc =
+                contentRenderService.render(dto.getContentMd() == null ? "" : dto.getContentMd(), "article");
+        article.setContentMd(rc.contentMd());
+        article.setContentHtml(rc.contentHtml());
     }
 
     private String normalizeColumnType(String columnType) {

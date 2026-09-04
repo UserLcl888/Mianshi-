@@ -37,7 +37,7 @@
             </router-link>
           </div>
           <p v-if="detail.article.summary" class="cat-article-summary">{{ detail.article.summary }}</p>
-          <div ref="contentEl" class="article-body" v-html="detail.article.contentHtml"></div>
+          <div ref="contentEl" class="article-body" v-html="detail.article.contentHtml || renderMarkdown(detail.article.contentMd)" @click="onBodyClick"></div>
         </article>
         <div v-else class="cat-empty">文章不存在或已下架</div>
       </main>
@@ -64,15 +64,16 @@
 
 <script setup lang="ts">
 import { computed, nextTick, ref, watch } from 'vue'
-import { useRoute } from 'vue-router'
-import hljs from 'highlight.js'
+import { useRoute, useRouter } from 'vue-router'
 import AppHeader from '@/components/layout/AppHeader.vue'
 import AppFooter from '@/components/layout/AppFooter.vue'
 import { useAuthStore } from '@/stores/auth'
 import { getArticleDetail, getLearnArticlesApi, getLearnCategoriesApi } from '@/api/article'
+import { handleBodyLinkClick, highlightCodeBlocks, renderDiagrams, renderMarkdown } from '@/utils/markdown'
 import type { ArticleDetailResp, ArticleListItem } from '@/types'
 
 const route = useRoute()
+const router = useRouter()
 const auth = useAuthStore()
 const isAdmin = computed(() => auth.userInfo?.role === 'ADMIN')
 const categorySlug = computed(() => String(route.params.categorySlug || ''))
@@ -83,6 +84,8 @@ const detail = ref<ArticleDetailResp | null>(null)
 const loadingList = ref(false)
 const loadingDetail = ref(false)
 const contentEl = ref<HTMLElement | null>(null)
+
+const onBodyClick = (e: MouseEvent) => handleBodyLinkClick(e, router)
 
 async function loadList() {
   loadingList.value = true
@@ -95,7 +98,9 @@ async function loadList() {
     if (hit) categoryName.value = hit.name
     articles.value = res.list
     if (res.list.length && !currentSlug.value) {
-      select(res.list[0].slug)
+      const wantedSlug = String(route.query.article || '')
+      const target = wantedSlug && res.list.some((a) => a.slug === wantedSlug) ? wantedSlug : res.list[0].slug
+      select(target)
     }
   } catch {
     // 拦截器已提示
@@ -112,9 +117,8 @@ async function select(slug: string) {
     detail.value = await getArticleDetail(slug)
     await nextTick()
     if (contentEl.value) {
-      contentEl.value.querySelectorAll('pre code').forEach((block) => {
-        hljs.highlightElement(block as HTMLElement)
-      })
+      highlightCodeBlocks(contentEl.value)
+      await renderDiagrams(contentEl.value)
     }
   } catch {
     detail.value = null

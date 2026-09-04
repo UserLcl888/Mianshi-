@@ -167,7 +167,8 @@ import AppHeader from '@/components/layout/AppHeader.vue'
 import AppFooter from '@/components/layout/AppFooter.vue'
 import { useCategoryStore } from '@/stores/category'
 import { createUserUploadApi, deleteMyUploadApi, getMyUploadDetailApi, getMyUploadsApi } from '@/api/upload'
-import { highlightCodeBlocks, renderMarkdown } from '@/utils/markdown'
+import { highlightCodeBlocks, renderDiagrams, renderMarkdown } from '@/utils/markdown'
+import { readFileAsText } from '@/utils/file'
 import { formatDateTime } from '@/utils/format'
 import type { UserUploadDetail, UserUploadItem } from '@/types'
 
@@ -264,7 +265,7 @@ function onMdExceed() {
   ElMessage.warning('只能选择一个 .md 文件')
 }
 
-function onMdFileChange(file: UploadFile, files: UploadUserFile[]) {
+async function onMdFileChange(file: UploadFile, files: UploadUserFile[]) {
   mdFileList.value = files.slice(-1)
   const raw = file.raw
   if (!raw) return
@@ -272,16 +273,19 @@ function onMdFileChange(file: UploadFile, files: UploadUserFile[]) {
     ElMessage.warning('文档不能超过 20MB')
     return
   }
-  const reader = new FileReader()
-  reader.onload = () => {
-    mdContent.value = String(reader.result || '')
+  try {
+    mdContent.value = await readFileAsText(raw)
     selectedRawFile.value = raw
+  } catch {
+    // 读取失败忽略
   }
-  reader.readAsText(raw, 'utf-8')
 }
 
 function onPreviewOpen() {
-  nextTick(() => highlightCodeBlocks(previewBody.value))
+  nextTick(async () => {
+    highlightCodeBlocks(previewBody.value)
+    await renderDiagrams(previewBody.value)
+  })
 }
 
 async function submit() {
@@ -427,6 +431,7 @@ async function openDetail(id: number) {
   detailVisible.value = true
   await nextTick()
   highlightCodeBlocks(detailPreview.value)
+  await renderDiagrams(detailPreview.value)
 }
 
 onMounted(async () => {

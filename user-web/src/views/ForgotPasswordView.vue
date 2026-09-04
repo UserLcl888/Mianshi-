@@ -71,13 +71,14 @@
 </template>
 
 <script setup lang="ts">
-import { computed, reactive, ref } from 'vue'
+import { computed, onMounted, reactive, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage, type FormInstance, type FormRules } from 'element-plus'
 import { Key, Lock, Message } from '@element-plus/icons-vue'
 import { resetPasswordByCodeApi } from '@/api/auth'
 import AuthLayout from '@/components/auth/AuthLayout.vue'
 import VerifyCodeButton from '@/components/common/VerifyCodeButton.vue'
+import { useDraftStorage } from '@/composables/useDraft'
 
 const router = useRouter()
 const formRef = ref<FormInstance>()
@@ -85,6 +86,20 @@ const loading = ref(false)
 const emailPattern = /^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/
 const form = reactive({ email: '', code: '', newPassword: '', confirmPassword: '' })
 const emailValid = computed(() => emailPattern.test(form.email.trim()))
+
+/** 草稿只保存邮箱，避免刷新后需重输；不保存密码/验证码 */
+const draft = useDraftStorage({
+  getKey: () => 'draft:forgot-password',
+  getSnapshot: () => JSON.stringify({ email: form.email }),
+  restore: (raw) => {
+    const s = JSON.parse(raw) as Record<string, unknown>
+    if (typeof s.email === 'string') form.email = s.email
+  }
+})
+
+onMounted(() => {
+  draft.restoreStored()
+})
 
 const rules: FormRules = {
   email: [
@@ -127,6 +142,7 @@ async function submit() {
     await resetPasswordByCodeApi(form.email.trim(), form.code.trim(), form.newPassword)
     ElMessage.success('密码已重置，请重新登录')
     router.push('/login')
+    draft.clear()
   } catch (e) {
     // 错误提示由请求拦截器统一处理
   } finally {

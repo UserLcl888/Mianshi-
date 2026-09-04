@@ -63,7 +63,7 @@
           </header>
 
           <div class="article-layout">
-            <div ref="contentEl" class="article-body" v-html="detail.article.contentHtml" @click="onBodyClick"></div>
+            <div ref="contentEl" class="article-body" v-html="detail.article.contentHtml || renderMarkdown(detail.article.contentMd)" @click="onBodyClick"></div>
           </div>
 
           <PrevNextNav :prev="detail.prev" :next="detail.next" :base="isTopicArticle ? '/articles' : '/article'" />
@@ -141,7 +141,6 @@
 <script setup lang="ts">
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import hljs from 'highlight.js'
 import { ElMessage } from 'element-plus'
 import { EditPen, Lock } from '@element-plus/icons-vue'
 import AppHeader from '@/components/layout/AppHeader.vue'
@@ -152,6 +151,7 @@ import TocPanel from '@/components/article/TocPanel.vue'
 import PrevNextNav from '@/components/article/PrevNextNav.vue'
 import EmptyState from '@/components/common/EmptyState.vue'
 import { getArticleDetail, recordViewApi } from '@/api/article'
+import { handleBodyLinkClick, highlightCodeBlocks, renderDiagrams, renderMarkdown } from '@/utils/markdown'
 import { applyAccessApi, getAccessStatusApi, getLockedCategoriesApi } from '@/api/access'
 import { useCategoryStore } from '@/stores/category'
 import { useAuthStore } from '@/stores/auth'
@@ -204,9 +204,8 @@ async function load() {
     detail.value = await getArticleDetail(activeSlug.value)
     await nextTick()
     if (contentEl.value) {
-      contentEl.value.querySelectorAll('pre code').forEach((block) => {
-        hljs.highlightElement(block as HTMLElement)
-      })
+      highlightCodeBlocks(contentEl.value)
+      await renderDiagrams(contentEl.value)
     }
     startViewTimer()
   } catch (e) {
@@ -323,18 +322,7 @@ function startAccessPoll() {
   }, 10000)
 }
 
-function onBodyClick(e: MouseEvent) {
-  const target = (e.target as HTMLElement).closest('a') as HTMLAnchorElement | null
-  if (!target) return
-  const href = target.getAttribute('href') || ''
-  if (href.startsWith('/article/') || href.startsWith('/category/')) {
-    e.preventDefault()
-    router.push(href)
-  } else if (/^https?:\/\//i.test(href)) {
-    e.preventDefault()
-    window.open(href, '_blank', 'noopener,noreferrer')
-  }
-}
+const onBodyClick = (e: MouseEvent) => handleBodyLinkClick(e, router)
 
 watch(activeSlug, load, { immediate: true })
 

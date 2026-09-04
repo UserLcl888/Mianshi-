@@ -2,6 +2,7 @@ import { createRouter, createWebHistory } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { ElMessageBox } from 'element-plus'
 import { unsavedState } from '@/utils/unsaved'
+import { readScroll, rememberScroll, restoreScroll } from '@/utils/scroll'
 
 const router = createRouter({
   history: createWebHistory(),
@@ -117,8 +118,18 @@ const router = createRouter({
     },
     { path: '/:pathMatch(.*)*', name: 'not-found', component: () => import('@/views/NotFoundView.vue') }
   ],
-  scrollBehavior() {
-    return { top: 0 }
+  scrollBehavior(to, _from, savedPosition) {
+    // 后退/前进：回到历史记录的滚动位置
+    if (savedPosition) return savedPosition
+    // 普通路由切换（点了某个链接）：先记住离开页面的位置，再回到顶部
+    if (_from.matched.length > 0) {
+      rememberScroll(_from.fullPath, window.scrollY)
+      return { top: 0 }
+    }
+    // 刷新 / 首次进入：不强制回顶，异步恢复到之前记住的位置（内容加载完后高度才够）
+    const saved = readScroll(to.fullPath)
+    if (saved > 0) restoreScroll(saved)
+    return undefined
   }
 })
 
@@ -135,6 +146,11 @@ router.beforeEach(async (to) => {
         cancelButtonText: '继续编辑',
         type: 'warning'
       })
+      // 用户确认放弃：清除该类编辑页草稿，避免下次被误恢复
+      for (let i = sessionStorage.length - 1; i >= 0; i--) {
+        const k = sessionStorage.key(i)
+        if (k && k.startsWith('draft:article:')) sessionStorage.removeItem(k)
+      }
     } catch {
       return false
     }

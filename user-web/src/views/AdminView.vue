@@ -165,7 +165,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { ElMessage, type UploadFile, type UploadUserFile } from 'element-plus'
 import { Plus, UploadFilled } from '@element-plus/icons-vue'
 import { unsavedState } from '@/utils/unsaved'
-import { highlightCodeBlocks, renderMarkdown } from '@/utils/markdown'
+import { highlightCodeBlocks, renderDiagrams, renderMarkdown } from '@/utils/markdown'
 import AppHeader from '@/components/layout/AppHeader.vue'
 import AppFooter from '@/components/layout/AppFooter.vue'
 import CategoryManageDialog from '@/components/admin/CategoryManageDialog.vue'
@@ -174,7 +174,8 @@ import { uploadCoverApi } from '@/api/admin'
 import { getLearnCategoriesApi } from '@/api/article'
 import { useCategoryStore } from '@/stores/category'
 import { getCategoryPath } from '@/utils/category'
-import { dataUrlToFile } from '@/utils/file'
+import { dataUrlToFile, readFileAsDataUrl, readFileAsText } from '@/utils/file'
+import { useDraftStorage } from '@/composables/useDraft'
 import type { LearnCategory } from '@/types'
 
 const router = useRouter()
@@ -251,6 +252,59 @@ function snapshotForm(): string {
   })
 }
 
+/** 草稿存储 key：按「新建/编辑+slug」隔离，路由切换（组件复用）时也能跟随变化 */
+const draftKey = computed(() =>
+  isEdit.value ? `draft:article:edit:${editingSlug.value}` : 'draft:article:create'
+)
+
+/** 草稿快照：额外包含粘贴图片（pasteImages），否则刷新后 `paste://` 占位符会变成死链 */
+function draftSnapshot(): string {
+  return JSON.stringify({
+    title: form.title,
+    slug: form.slug,
+    summary: form.summary,
+    docUrl: form.docUrl,
+    columnType: form.columnType,
+    learnCategoryId: form.learnCategoryId,
+    categoryId: form.categoryId,
+    difficulty: form.difficulty,
+    isPinned: form.isPinned,
+    coverUrl: form.coverUrl,
+    tagsText: form.tagsText,
+    content: form.content,
+    pasteImages: { ...pasteImages }
+  })
+}
+
+function draftRestore(raw: string) {
+  const s = JSON.parse(raw) as Record<string, unknown>
+  if (typeof s.title === 'string') form.title = s.title
+  if (typeof s.slug === 'string') form.slug = s.slug
+  if (typeof s.summary === 'string') form.summary = s.summary
+  if (typeof s.docUrl === 'string') form.docUrl = s.docUrl
+  if (s.columnType === 'tech' || s.columnType === 'topic' || s.columnType === 'learn') form.columnType = s.columnType
+  if (typeof s.learnCategoryId === 'number') form.learnCategoryId = s.learnCategoryId
+  if (typeof s.categoryId === 'number') form.categoryId = s.categoryId
+  if (s.difficulty === 'EASY' || s.difficulty === 'MEDIUM' || s.difficulty === 'HARD') form.difficulty = s.difficulty
+  if (s.isPinned === 1 || s.isPinned === 0) form.isPinned = s.isPinned
+  if (typeof s.coverUrl === 'string') form.coverUrl = s.coverUrl
+  if (typeof s.tagsText === 'string') form.tagsText = s.tagsText
+  if (typeof s.content === 'string') form.content = s.content
+  const paste = s.pasteImages
+  if (paste && typeof paste === 'object') {
+    for (const [k, v] of Object.entries(paste as Record<string, unknown>)) {
+      if (typeof v === 'string') pasteImages[k] = v
+    }
+  }
+}
+
+/** 草稿持久化：刷新/切页不丢未保存的修改（含粘贴图片与封面）。 */
+const draft = useDraftStorage({
+  getKey: () => draftKey.value,
+  getSnapshot: draftSnapshot,
+  restore: draftRestore
+})
+
 function onColumnTypeChange() {
   if (form.columnType === 'topic') {
     form.categoryId = undefined
@@ -272,15 +326,14 @@ function beforeCoverUpload(file: File) {
   return true
 }
 
-function onCoverUpload(options: { file: File; onSuccess: (res: unknown) => void; onError: (err: Error) => void }) {
-  const reader = new FileReader()
-  reader.onload = () => {
-    form.coverUrl = String(reader.result || '')
+async function onCoverUpload(options: { file: File; onSuccess: (res: unknown) => void; onError: (err: Error) => void }) {
+  try {
+    form.coverUrl = await readFileAsDataUrl(options.file)
     options.onSuccess({ url: form.coverUrl })
     ElMessage.success('封面已选择，保存时上传')
+  } catch (e) {
+    options.onError(e as Error)
   }
-  reader.onerror = () => options.onError(new Error('读取图片失败'))
-  reader.readAsDataURL(options.file)
 }
 
 function removeCover() {
@@ -294,8 +347,9 @@ watch(isDirty, (v) => {
 const previewHtml = computed(() => renderMarkdown(resolvePasteImages(form.content || '')))
 
 function onPreviewOpen() {
-  nextTick(() => {
+  nextTick(async () => {
     highlightCodeBlocks(previewBody.value)
+    await renderDiagrams(previewBody.value)
   })
 }
 
@@ -309,7 +363,7 @@ function onMdExceed() {
   ElMessage.warning('只能选择一个 .md 文件')
 }
 
-function onMdFileChange(file: UploadFile, files: UploadUserFile[]) {
+async function onMdFileChange(file: UploadFile, files: UploadUserFile[]) {
   mdFileList.value = files.slice(-1)
   const raw = file.raw
   if (!raw) return
@@ -317,12 +371,12 @@ function onMdFileChange(file: UploadFile, files: UploadUserFile[]) {
     ElMessage.warning('文档不能超过 20MB')
     return
   }
-  const reader = new FileReader()
-  reader.onload = () => {
-    mdContent.value = stripFrontmatter(String(reader.result || ''))
+  try {
+    mdContent.value = stripFrontmatter(await readFileAsText(raw))
     mdFileName.value = raw.name
+  } catch {
+    // 读取失败忽略
   }
-  reader.readAsText(raw, 'utf-8')
 }
 
 function stripFrontmatter(text: string): string {
@@ -347,18 +401,19 @@ function applyMdImport() {
 }
 
 /** 直接在正文粘贴图片：图片暂存前台（token -> base64），正文里只写短占位符，保存时再还原交给后端 */
-function onContentPaste(e: ClipboardEvent) {
+async function onContentPaste(e: ClipboardEvent) {
   const files = e.clipboardData?.files
   const img = files && Array.from(files).find((f) => f.type.startsWith('image/'))
   if (!img) return
   e.preventDefault()
-  const reader = new FileReader()
-  reader.onload = () => {
+  try {
+    const dataUrl = await readFileAsDataUrl(img)
     const token = `paste-${Date.now()}-${++pasteSeq}`
-    pasteImages[token] = String(reader.result || '')
+    pasteImages[token] = dataUrl
     insertImageUrl(`paste://${token}`)
+  } catch {
+    // 读取失败忽略
   }
-  reader.readAsDataURL(img)
 }
 
 /** 把正文里的 paste://token 占位符还原成 base64 dataURL（预览用；保存时也用它作为后端入参） */
@@ -389,7 +444,7 @@ function htmlToText(html: string): string {
 }
 
 
-onMounted(() => {
+onMounted(async () => {
   initialSnapshot.value = snapshotForm()
   categoryStore.fetchTree()
   getLearnCategoriesApi()
@@ -398,8 +453,11 @@ onMounted(() => {
     })
     .catch(() => {})
   if (isEdit.value) {
-    loadForEdit()
+    await loadForEdit()
   }
+  // 恢复未保存草稿（草稿优先于服务端数据）；随后重置“基线”，避免误判为未保存修改。
+  await draft.restoreStored()
+  initialSnapshot.value = snapshotForm()
 })
 
 async function loadForEdit() {
@@ -469,10 +527,11 @@ async function submit() {
     ElMessage.success(isEdit.value ? '修改成功' : '添加成功')
     initialSnapshot.value = snapshotForm()
     unsavedState.dirty = false
+    draft.clear()
     const savedColumnType = article.columnType || form.columnType
     if (savedColumnType === 'learn') {
       const cat = learnCategories.value.find((c) => c.id === form.learnCategoryId)
-      router.push(cat ? `/learn/${cat.slug}` : '/learn')
+      router.push({ path: cat ? `/learn/${cat.slug}` : '/learn', query: { article: article.slug } })
     } else if (savedColumnType === 'topic') {
       router.push(`/articles/${article.slug}`)
     } else {
