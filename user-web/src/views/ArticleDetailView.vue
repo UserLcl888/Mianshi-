@@ -63,7 +63,7 @@
           </header>
 
           <div class="article-layout">
-            <div ref="contentEl" class="article-body" v-html="detail.article.contentHtml || renderMarkdown(detail.article.contentMd)" @click="onBodyClick"></div>
+            <div ref="contentEl" class="article-body" v-html="detail.article.contentHtml || renderMarkdown(detail.article.contentMd)"></div>
           </div>
 
           <PrevNextNav :prev="detail.prev" :next="detail.next" :base="isTopicArticle ? '/articles' : '/article'" />
@@ -151,7 +151,7 @@ import TocPanel from '@/components/article/TocPanel.vue'
 import PrevNextNav from '@/components/article/PrevNextNav.vue'
 import EmptyState from '@/components/common/EmptyState.vue'
 import { getArticleDetail, recordViewApi } from '@/api/article'
-import { handleBodyLinkClick, highlightCodeBlocks, renderDiagrams, renderMarkdown } from '@/utils/markdown'
+import { highlightCodeBlocks, renderDiagrams, renderMarkdown } from '@/utils/markdown'
 import { applyAccessApi, getAccessStatusApi, getLockedCategoriesApi } from '@/api/access'
 import { useCategoryStore } from '@/stores/category'
 import { useAuthStore } from '@/stores/auth'
@@ -321,8 +321,6 @@ function startAccessPoll() {
     }
   }, 10000)
 }
-
-const onBodyClick = (e: MouseEvent) => handleBodyLinkClick(e, router)
 
 watch(activeSlug, load, { immediate: true })
 

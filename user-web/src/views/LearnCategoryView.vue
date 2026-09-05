@@ -37,7 +37,7 @@
             </router-link>
           </div>
           <p v-if="detail.article.summary" class="cat-article-summary">{{ detail.article.summary }}</p>
-          <div ref="contentEl" class="article-body" v-html="detail.article.contentHtml || renderMarkdown(detail.article.contentMd)" @click="onBodyClick"></div>
+          <div ref="contentEl" class="article-body" v-html="detail.article.contentHtml || renderMarkdown(detail.article.contentMd)"></div>
         </article>
         <div v-else class="cat-empty">文章不存在或已下架</div>
       </main>
@@ -64,16 +64,15 @@
 
 <script setup lang="ts">
 import { computed, nextTick, ref, watch } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
+import { useRoute } from 'vue-router'
 import AppHeader from '@/components/layout/AppHeader.vue'
 import AppFooter from '@/components/layout/AppFooter.vue'
 import { useAuthStore } from '@/stores/auth'
 import { getArticleDetail, getLearnArticlesApi, getLearnCategoriesApi } from '@/api/article'
-import { handleBodyLinkClick, highlightCodeBlocks, renderDiagrams, renderMarkdown } from '@/utils/markdown'
+import { highlightCodeBlocks, renderDiagrams, renderMarkdown } from '@/utils/markdown'
 import type { ArticleDetailResp, ArticleListItem } from '@/types'
 
 const route = useRoute()
-const router = useRouter()
 const auth = useAuthStore()
 const isAdmin = computed(() => auth.userInfo?.role === 'ADMIN')
 const categorySlug = computed(() => String(route.params.categorySlug || ''))
@@ -84,8 +83,6 @@ const detail = ref<ArticleDetailResp | null>(null)
 const loadingList = ref(false)
 const loadingDetail = ref(false)
 const contentEl = ref<HTMLElement | null>(null)
-
-const onBodyClick = (e: MouseEvent) => handleBodyLinkClick(e, router)
 
 async function loadList() {
   loadingList.value = true

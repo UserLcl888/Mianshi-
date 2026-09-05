@@ -5,8 +5,13 @@ import type { Router } from 'vue-router'
 
 /** 渲染 Markdown 为消毒后的 HTML（题目、用户上传等多处复用）。 */
 export function renderMarkdown(md: string): string {
+  // gfm:false —— 只让符合 [文字](链接) 语法的生成 <a>。
+  // marked 默认 GFM 会把正文里裸写的 https://xxx（以及畸形链接里的 URL）自动转成链接，
+  // 甚至出现 %5D 之类的乱码；关掉 gfm 后只有真正的 md 链接才会高亮、可点，
+  // 裸 URL / 畸形写法一律保持纯文本。（正文主要用服务端 contentHtml，此逻辑用于前端回退/预览）
+  const html = marked.parse(md || '', { gfm: false }) as string
   // 允许 data:image URI：编辑器里粘贴/复制的 base64 图片，在保存前也能预览和复制
-  return DOMPurify.sanitize(marked.parse(md || '') as string, {
+  return DOMPurify.sanitize(html, {
     ADD_DATA_URI_TAGS: ['img'],
     ADD_DATA_URI_ATTRS: ['src']
   })
@@ -94,22 +99,37 @@ export async function renderDiagrams(container: HTMLElement | null): Promise<voi
   }
 }
 
+let linkHandlerInited = false
+
 /**
- * 处理 Markdown 正文里的链接点击。
- * - 站内文章/分类链接（/article/、/category/）走 SPA 跳转；
- * - 外链用新标签页打开，被拦截时退回当前页打开。
- * 用于文章详情、学习专栏等 v-html 正文，避免 <a target="_blank"> 的默认跳转。
+ * 全局处理正文（.article-body）里 Markdown 链接的点击，一处生效，覆盖文章详情、学习专栏、
+ * 后台/投稿预览、用户上传详情等所有渲染正文的地方：
+ * - 站内路由（以 / 开头的链接）：SPA 跳转（当前页切换，但不整页刷新）；
+ * - 外链（http/https）：设置 target="_blank" + rel="noopener noreferrer"，交给浏览器原生行为在
+ *   新标签页打开，当前页保持不变。不再用 window.open，避免它带 noopener 时返回 null，
+ *   触发“新开标签页的同时当前页也被跳走”的问题；
+ * - mailto / #锚点 / 其它协议：交给浏览器默认行为，不做拦截。
  */
-export function handleBodyLinkClick(e: MouseEvent, router: Router): void {
-  const target = (e.target as HTMLElement).closest('a') as HTMLAnchorElement | null
-  if (!target) return
-  const href = target.getAttribute('href') || ''
-  if (href.startsWith('/article/') || href.startsWith('/category/')) {
-    e.preventDefault()
-    router.push(href)
-  } else if (/^https?:\/\//i.test(href)) {
-    e.preventDefault()
-    const w = window.open(href, '_blank', 'noopener,noreferrer')
-    if (!w) window.location.href = href
-  }
+export function enableBodyLinkHandler(router: Router): void {
+  if (linkHandlerInited) return
+  linkHandlerInited = true
+  document.addEventListener('click', (e: MouseEvent) => {
+    const target = (e.target as HTMLElement).closest('a') as HTMLAnchorElement | null
+    if (!target) return
+    if (!target.closest('.article-body')) return // 只处理正文内容区，不影响页头/导航/后台菜单
+    const href = target.getAttribute('href') || ''
+    if (!href) return
+    if (href.startsWith('#')) return // 页内锚点：保留默认滚动
+    if (href.startsWith('/')) {
+      // 站内路由：SPA 跳转，不整页刷新
+      e.preventDefault()
+      router.push(href)
+      return
+    }
+    if (/^(https?:)?\/\//i.test(href)) {
+      // 外链：新标签页打开，当前页不变
+      target.setAttribute('target', '_blank')
+      target.setAttribute('rel', 'noopener noreferrer')
+    }
+  })
 }
